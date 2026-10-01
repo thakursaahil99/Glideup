@@ -57,14 +57,21 @@ export function ResumeCard() {
                 ))}
               </ul>
               <p className="mt-3 text-sm text-muted-foreground">
-                Next up: matching jobs to these skills (coming in phase 3).
+                Next: browse real jobs. Match scores for these skills arrive in phase 4.
               </p>
             </div>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/profile">
-                Review skills <ArrowRight />
-              </Link>
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button asChild variant="sunrise" size="lg">
+                <Link
+                  href={resume.skills[0] ? `/jobs?q=${encodeURIComponent(resume.skills[0].name)}` : "/jobs"}
+                >
+                  Find jobs <ArrowRight />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/profile">Review skills</Link>
+              </Button>
+            </div>
           </>
         ) : (
           <div className="md:col-span-2">

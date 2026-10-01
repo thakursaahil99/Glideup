@@ -37,3 +37,30 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
   "soft",
   "other",
 ];
+
+export type JobCard = Schemas["JobCard"];
+export type JobDetail = Schemas["JobDetail"];
+export type JobSearchResponse = Schemas["JobSearchResponse"];
+export type SavedJob = Schemas["SavedJobOut"];
+export type WorkMode = JobCard["work_mode"];
+export type ExperienceLevel = JobCard["experience_level"];
+export type JobSource = Schemas["JobSourceOut"];
+export type IngestionRun = Schemas["IngestionRunOut"];
+export type Company = Schemas["CompanyOut"];
+export type AdminJob = Schemas["AdminJobOut"];
+export type CompanyImportResult = Schemas["CompanyImportResult"];
+
+export const WORK_MODES: { value: WorkMode; label: string }[] = [
+  { value: "remote", label: "Remote" },
+  { value: "hybrid", label: "Hybrid" },
+  { value: "onsite", label: "On-site" },
+];
+
+export const EXPERIENCE_LEVELS: { value: ExperienceLevel; label: string }[] = [
+  { value: "internship", label: "Internship" },
+  { value: "entry", label: "Entry level" },
+  { value: "mid", label: "Mid level" },
+  { value: "senior", label: "Senior" },
+  { value: "staff", label: "Staff / Principal" },
+  { value: "manager", label: "Manager / Director" },
+];

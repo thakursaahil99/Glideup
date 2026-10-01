@@ -59,7 +59,7 @@ services:
     restart: unless-stopped
 
   meilisearch:
-    image: getmeili/meilisearch:v1.12
+    image: getmeili/meilisearch:v1.54
     environment:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-local-dev-master-key-change-me}
       MEILI_ENV: development
@@ -120,7 +120,8 @@ services:
   # ---------------------------------------------------------------- backend
   migrate:
     <<: *backend
-    command: ["alembic", "upgrade", "head"]
+    # Migrations, then idempotent reference data (job sources + verified company boards).
+    command: ["sh", "-c", "alembic upgrade head && python -m app.scripts.seed"]
     depends_on:
       postgres: { condition: service_healthy }
     restart: "no"

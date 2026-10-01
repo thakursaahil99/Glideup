@@ -34,7 +34,7 @@ export type NavItem = {
 export const APP_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Profile", href: "/profile", icon: UserRound },
-  { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness, phase: 3 },
+  { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness },
   { label: "Interviews", href: "/interviews", icon: MessagesSquare, phase: 5 },
   { label: "Tests", href: "/tests", icon: Code2, phase: 6 },
   { label: "Tracker", href: "/tracker", icon: KanbanSquare, phase: 8 },
@@ -48,7 +48,6 @@ export const ADMIN_NAV: NavItem[] = [
     href: "/admin/jobs",
     icon: BriefcaseBusiness,
     permission: "jobs:manage",
-    phase: 3,
   },
   {
     label: "Question Bank",
@@ -103,12 +102,12 @@ export const JOURNEY = [
   { title: "Upload your resume", body: "We extract your skills and experience.", icon: FileText },
   { title: "See matching jobs", body: "Real openings, ranked by fit.", icon: BriefcaseBusiness },
   { title: "Close skill gaps", body: "Know exactly what's missing.", icon: ClipboardList },
+  { title: "Apply and track", body: "Every application in one place.", icon: KanbanSquare },
   {
-    title: "Practice the interview",
-    body: "Job-specific mock interviews and coding tests.",
+    title: "Practice and get hired",
+    body: "Job-specific mock interviews and coding tests, right before the real one.",
     icon: MessagesSquare,
   },
-  { title: "Apply and track", body: "From application to offer.", icon: KanbanSquare },
 ] as const;
 
 export function hasPermission(permissions: readonly string[] | undefined, permission?: string) {

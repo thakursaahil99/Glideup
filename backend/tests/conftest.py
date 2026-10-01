@@ -25,6 +25,7 @@ from app.db.session import dispose_engine, get_engine, init_engine, session_fact
 from app.llm.factory import set_gateway
 from app.main import create_app
 from app.modules.auth.service import _grant, ensure_roles
+from app.modules.jobs.search import set_search
 from app.workers.runtime import drain_inline_jobs
 
 ROOT_ADMIN_EMAIL = "root@glideup.dev"
@@ -51,6 +52,8 @@ def settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
         local_storage_path=str(tmp_path_factory.mktemp("storage")),
         llm_routes={"resume_parse": ["mock:mock-1"], "embedding": ["mock:mock-1"]},
         llm_allow_mock_fallback=True,
+        search_backend="database",
+        inline_scheduler_minutes=0,
     )
     override_settings(test_settings)
     return test_settings
@@ -71,6 +74,7 @@ async def _database(settings: Settings) -> AsyncIterator[None]:
 @pytest.fixture(autouse=True)
 async def _clean_tables(_database: None) -> AsyncIterator[None]:
     set_gateway(None)  # fresh providers and circuit breakers per test
+    set_search(None)
     storage._build.cache_clear()
     yield
     await drain_inline_jobs()

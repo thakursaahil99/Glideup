@@ -156,3 +156,35 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Third-party job descriptions (sanitised server-side): calm, readable typography. */
+.job-description {
+  @apply text-[0.95rem] leading-relaxed text-foreground/90;
+}
+.job-description :where(p, ul, ol, blockquote, pre, table) {
+  @apply my-3;
+}
+.job-description :where(h2, h3, h4, h5) {
+  @apply mt-6 mb-2 font-semibold text-foreground;
+}
+.job-description :where(ul) {
+  @apply list-disc pl-6;
+}
+.job-description :where(ol) {
+  @apply list-decimal pl-6;
+}
+.job-description :where(li) {
+  @apply my-1;
+}
+.job-description :where(a) {
+  @apply text-primary underline underline-offset-2;
+}
+.job-description :where(strong, b) {
+  @apply font-semibold text-foreground;
+}
+.job-description :where(table) {
+  @apply block overflow-x-auto;
+}
+.job-description :where(td, th) {
+  @apply border px-2 py-1;
+}

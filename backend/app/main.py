@@ -14,6 +14,7 @@ from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import REQUEST_ID_HEADER, RequestContextMiddleware
 from app.db.session import dispose_engine, init_engine
+from app.workers.scheduler import inline_scheduler
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -24,7 +25,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         init_engine(settings)
         get_logger(__name__).info("startup", environment=settings.environment)
-        yield
+        async with inline_scheduler(settings):
+            yield
         await dispose_engine()
 
     app = FastAPI(

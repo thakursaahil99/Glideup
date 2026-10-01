@@ -121,6 +121,30 @@ sequenceDiagram
 LLM design and eval results: [ADR 0006](adr/0006-llm-gateway.md). Jobs and storage:
 [ADR 0007](adr/0007-background-jobs-and-storage.md).
 
+## Job ingestion & search (Phase 3)
+
+```mermaid
+flowchart LR
+    beat[Celery Beat<br/>every 5 min: which sources are due?] --> run
+    admin[Admin: Run now] --> run
+    subgraph run[Ingestion run, per source]
+      direction LR
+      fetch[Plugin fetch<br/>rate limit + backoff] --> norm[Normalise<br/>sanitise, skills, level, mode]
+      norm --> upsert[Upsert per scope<br/>raw-hash skip]
+      upsert --> dedup[Dedup<br/>title+company+location]
+      dedup --> stale[Retire stale<br/>only for scopes read OK]
+    end
+    stale --> pg[(Postgres<br/>source of truth)]
+    stale --> meili[(Meilisearch index)]
+    user[Job seeker] --> api[GET /jobs]
+    api --> meili
+    api -. Meilisearch down .-> pg
+    meili -- job ids --> api
+    api -- load by id --> pg
+```
+
+Details and measurements: [ADR 0008](adr/0008-job-ingestion-and-search.md).
+
 ## Data model (Phase 1)
 
 ```mermaid

@@ -25,9 +25,16 @@ celery_app.conf.update(
     task_track_started=True,
     result_expires=60 * 60 * 24,
     broker_connection_retry_on_startup=True,
-    beat_schedule={},
+    beat_schedule={
+        # Cheap check; each source has its own admin-editable schedule (default 6 hours).
+        "ingest-due-job-sources": {"task": "jobs.ingest_due", "schedule": 300.0},
+    },
 )
-celery_app.conf.include = ["app.workers.tasks", "app.modules.resumes.tasks"]
+celery_app.conf.include = [
+    "app.workers.tasks",
+    "app.modules.resumes.tasks",
+    "app.modules.jobs.tasks",
+]
 
 
 @setup_logging.connect

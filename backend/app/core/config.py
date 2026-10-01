@@ -73,6 +73,18 @@ class Settings(BaseSettings):
     s3_secret_key: SecretStr | None = None
     s3_bucket_resumes: str = "resumes"
 
+    # --- Job search & ingestion ---
+    # "meilisearch" (falls back to the database if Meilisearch is unreachable) or "database".
+    search_backend: Literal["meilisearch", "database"] = "meilisearch"
+    meili_url: str = "http://localhost:7700"
+    meili_master_key: SecretStr | None = None
+    meili_jobs_index: str = "jobs"
+    adzuna_app_id: str | None = None
+    adzuna_app_key: SecretStr | None = None
+    # Run due ingestions from the API process every N minutes when TASK_EXECUTION=inline
+    # (development without Celery Beat). 0 disables it.
+    inline_scheduler_minutes: int = 5
+
     # --- Resumes ---
     resume_max_bytes: int = 5 * 1024 * 1024
     resume_max_pages: int = 10

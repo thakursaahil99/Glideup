@@ -10,7 +10,7 @@ import { requireUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-const PHASE_FOR_STEP = [2, 3, 4, 5, 8];
+const PHASE_FOR_STEP = [2, 3, 4, 8, 5];
 
 const EMPTY_STATS = [
   { label: "Applications", icon: Target, hint: "Track your first application" },
