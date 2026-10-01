@@ -61,6 +61,26 @@ docker compose up --build
 Ports already taken? Change `WEB_PORT`, `API_PORT`, … in `.env` (and keep `AUTH_URL` /
 `CORS_ORIGINS` in sync with `WEB_PORT`).
 
+### Admin accounts
+
+There are two ways to make someone an admin, both recorded in the audit log:
+
+1. **`ADMIN_EMAILS`** in `.env`: these emails become `super_admin` when they sign in.
+2. **The command line** (works in production, where dev login is off):
+
+```bash
+cd backend
+uv run python -m app.scripts.manage_admins grant you@example.com                 # super_admin
+uv run python -m app.scripts.manage_admins grant helper@example.com --role support
+uv run python -m app.scripts.manage_admins revoke old-admin@example.com
+uv run python -m app.scripts.manage_admins list
+
+# with Docker
+docker compose exec api python -m app.scripts.manage_admins list
+```
+
+After that, admins manage everyone else from **Admin → Users**. The last `super_admin` can't be removed.
+
 ### Signing in
 - **Without Google setup:** `AUTH_DEV_LOGIN_ENABLED=true` (default in `.env.example`) shows a
   developer sign-in form on `/login`. Local only — the API refuses it in staging/production.
