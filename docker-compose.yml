@@ -1,0 +1,196 @@
+# GlideUp — local stack. One command: `docker compose up --build`
+# Optional extras:  --profile monitoring  (Prometheus + Grafana)
+# The code sandbox (Judge0 / Piston) is added in Phase 6.
+# Memory limits keep the whole default stack under ~4 GB so it fits a 16 GB laptop
+# alongside Ollama on the host.
+
+name: glideup
+
+x-backend: &backend
+  build:
+    context: ./backend
+  image: glideup-backend:local
+  env_file: .env
+  environment: &backend-env
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-glideup}:${POSTGRES_PASSWORD:-glideup}@postgres:5432/${POSTGRES_DB:-glideup}
+    REDIS_URL: redis://redis:6379/0
+    MEILI_URL: http://meilisearch:7700
+    S3_ENDPOINT_URL: http://minio:9000
+    SMTP_HOST: mailpit
+    SMTP_PORT: "1025"
+    OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  restart: unless-stopped
+
+services:
+  # ---------------------------------------------------------------- data
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-glideup}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-glideup}
+      POSTGRES_DB: ${POSTGRES_DB:-glideup}
+    ports: ["${POSTGRES_PORT:-5432}:5432"]
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    deploy: { resources: { limits: { memory: 1g } } }
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    ports: ["${REDIS_PORT:-6379}:6379"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    deploy: { resources: { limits: { memory: 384m } } }
+    restart: unless-stopped
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-local-dev-master-key-change-me}
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: "true"
+    ports: ["${MEILI_PORT:-7700}:7700"]
+    volumes: [meili-data:/meili_data]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7700/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    deploy: { resources: { limits: { memory: 512m } } }
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-glideup}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-glideup-dev-secret}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes: [minio-data:/data]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    deploy: { resources: { limits: { memory: 512m } } }
+    restart: unless-stopped
+
+  # Creates the private resume bucket once; exits when done.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio: { condition: service_healthy }
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        mc alias set local http://minio:9000 "$${S3_ACCESS_KEY}" "$${S3_SECRET_KEY}" &&
+        mc mb --ignore-existing "local/$${S3_BUCKET_RESUMES}" &&
+        mc anonymous set none "local/$${S3_BUCKET_RESUMES}"
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-glideup}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-glideup-dev-secret}
+      S3_BUCKET_RESUMES: ${S3_BUCKET_RESUMES:-resumes}
+    restart: "no"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    deploy: { resources: { limits: { memory: 128m } } }
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------- backend
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    <<: *backend
+    ports: ["${API_PORT:-8000}:8000"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    deploy: { resources: { limits: { memory: 512m } } }
+
+  worker:
+    <<: *backend
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=INFO", "--concurrency=2"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$HOSTNAME --timeout 5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    deploy: { resources: { limits: { memory: 768m } } }
+
+  beat:
+    <<: *backend
+    command: ["celery", "-A", "app.workers.celery_app", "beat", "--loglevel=INFO", "--schedule=/tmp/celerybeat-schedule"]
+    healthcheck: { disable: true }
+    depends_on:
+      redis: { condition: service_healthy }
+    deploy: { resources: { limits: { memory: 256m } } }
+
+  # ---------------------------------------------------------------- frontend
+  web:
+    build:
+      context: ./frontend
+    image: glideup-web:local
+    env_file: .env
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      AUTH_TRUST_HOST: "true"
+    ports: ["${WEB_PORT:-3000}:3000"]
+    depends_on:
+      api: { condition: service_healthy }
+    deploy: { resources: { limits: { memory: 512m } } }
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------- monitoring (opt-in)
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v3.1.0
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports: ["${PROMETHEUS_PORT:-9090}:9090"]
+    deploy: { resources: { limits: { memory: 512m } } }
+
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:11.4.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports: ["${GRAFANA_PORT:-3001}:3000"]
+    depends_on: [prometheus]
+    deploy: { resources: { limits: { memory: 256m } } }
+
+volumes:
+  postgres-data:
+  redis-data:
+  meili-data:
+  minio-data:
+  grafana-data:
