@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { errorMessage } from "@/lib/api/client";
+import { remoteLabel } from "@/components/jobs/location-filters";
 import { useToggleSave } from "@/lib/api/jobs";
 import { EXPERIENCE_LEVELS, type JobCard as Job, WORK_MODES } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -57,7 +58,7 @@ export function SaveButton({
 }
 
 export function JobCard({ job }: { job: Job }) {
-  const mode = workModeLabel(job.work_mode);
+  const mode = remoteLabel(job) ?? workModeLabel(job.work_mode);
   const level = levelLabel(job.experience_level);
   const posted = postedAgo(job.posted_at ?? job.first_seen_at);
   return (

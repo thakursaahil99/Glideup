@@ -139,8 +139,16 @@ class Job(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     company_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    location: Mapped[str | None] = mapped_column(String(300))
-    country: Mapped[str | None] = mapped_column(String(2))
+    location: Mapped[str | None] = mapped_column(String(300))  # as published by the source
+    country: Mapped[str | None] = mapped_column(String(2))  # primary country (ISO 3166-1)
+    # Structured location parsed from `location` (a job can list several places).
+    countries: Mapped[list[str]] = mapped_column(default=list, server_default="[]")
+    states: Mapped[list[str]] = mapped_column(default=list, server_default="[]")
+    cities: Mapped[list[str]] = mapped_column(default=list, server_default="[]")
+    # For remote jobs: "country" (restricted to `countries`) or "worldwide". None if not remote.
+    remote_scope: Mapped[str | None] = mapped_column(String(10))
+    # "|c:IN|s:Karnataka|ci:Bengaluru|" for exact filtering in the database search fallback.
+    location_index: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     work_mode: Mapped[WorkMode] = mapped_column(
         _enum(WorkMode, "work_mode"), default=WorkMode.UNKNOWN, nullable=False
     )

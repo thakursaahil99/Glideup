@@ -42,6 +42,12 @@ class FakePlugin:
     def is_configured(self, config: dict[str, Any]) -> str | None:
         return self.ready
 
+    def validate_config(self, config: dict[str, Any]) -> dict[str, Any]:
+        return config
+
+    def config_options(self) -> dict[str, Any] | None:
+        return None
+
     async def fetch(self, ctx: FetchContext) -> AsyncIterator[ScopeResult]:
         for scope, postings in self.scopes.items():
             if postings is None:
@@ -600,3 +606,130 @@ async def test_reindex_endpoint(
     response = await client.post("/api/v1/admin/search/reindex", headers=admin)
     assert response.json() == {"indexed": 4}
     assert len(recorder.docs) == 4
+
+
+# --- structured locations ---
+
+
+@pytest.fixture
+async def located(
+    session: AsyncSession, fake: FakePlugin, fake_source: JobSource
+) -> dict[str, Job]:
+    fake.scopes = {
+        "fake:geo": [
+            posting("blr", title="Platform Engineer", location="Bangalore, IND"),
+            posting("pune", title="Data Engineer", location="Pune, Maharashtra"),
+            posting("in-remote", title="Remote Engineer", location="Remote - India"),
+            posting("anywhere", title="Remote Engineer", company="Beta", location="Remote, Global"),
+            posting("sf", title="Product Engineer", company="Gamma", location="San Francisco, CA"),
+            posting("ldn", title="Data Engineer", company="Delta", location="London, UK"),
+            posting("multi", title="SRE", company="Echo", location="Bengaluru, India; Seattle, WA"),
+        ]
+    }
+    await ingest_source("fake")
+    return await jobs_by_ext(session)
+
+
+async def test_ingestion_stores_structured_locations(located: dict[str, Job]) -> None:
+    blr = located["blr"]
+    assert (blr.countries, blr.states, blr.cities) == (["IN"], ["Karnataka"], ["Bengaluru"])
+    assert blr.location_index == "|c:IN|s:Karnataka|ci:Bengaluru|"
+    assert located["in-remote"].remote_scope == "country"
+    assert located["anywhere"].remote_scope == "worldwide"
+    assert located["sf"].remote_scope is None
+    assert located["multi"].countries == ["IN", "US"]
+
+
+async def test_location_filters(session: AsyncSession, located: dict[str, Job]) -> None:
+    ids = {j.id: name for name, j in located.items()}
+
+    async def names(**kwargs: Any) -> set[str]:
+        return {ids[i] for i in (await search(session, **kwargs)).ids}
+
+    assert await names(countries=("IN",)) == {"blr", "pune", "in-remote", "multi"}
+    assert await names(countries=("IN",), states=("Karnataka",)) == {"blr", "multi"}
+    assert await names(cities=("Bengaluru",)) == {"blr", "multi"}
+    assert await names(countries=("US", "GB")) == {"sf", "ldn", "multi"}
+    assert await names(region="india") == {"blr", "pune", "in-remote", "multi"}
+    assert await names(region="international") == {"anywhere", "sf", "ldn"}
+    assert await names(remote="india") == {"in-remote"}
+    assert await names(remote="worldwide") == {"anywhere"}
+    # Free text is resolved through the gazetteer, aliases included.
+    assert await names(location="Bangalore") == {"blr", "multi"}
+
+
+async def test_location_facets_are_disjunctive(
+    session: AsyncSession, located: dict[str, Job]
+) -> None:
+    facets = (await search(session, countries=("IN",), states=("Karnataka",))).facets
+    # Choosing India still shows the other countries (with their own counts)...
+    assert facets["countries"]["IN"] == 4
+    assert facets["countries"]["US"] == 2
+    # ...states are counted within India regardless of the chosen state...
+    assert facets["states"] == {"Karnataka": 2, "Maharashtra": 1}
+    # ...and cities within the chosen state.
+    assert facets["cities"] == {"Bengaluru": 2}
+
+
+async def test_search_api_location_params(
+    client: AsyncClient, login: LoginFn, located: dict[str, Job]
+) -> None:
+    headers = await login("seeker@example.com")
+    params: list[tuple[str, str | int | float | bool | None]] = [
+        ("country", "IN"),
+        ("state", "Maharashtra"),
+    ]
+    body = (await client.get("/api/v1/jobs", params=params, headers=headers)).json()
+    assert [j["cities"] for j in body["items"]] == [["Pune"]]
+    assert body["facets"]["countries"]["US"] == 2
+
+    remote = (await client.get("/api/v1/jobs", params={"remote": "india"}, headers=headers)).json()
+    assert [(j["remote_scope"], j["countries"]) for j in remote["items"]] == [("country", ["IN"])]
+
+    for bad in ({"country": "india"}, {"remote": "mars"}, {"region": "europe"}):
+        response = await client.get("/api/v1/jobs", params=bad, headers=headers)
+        assert response.status_code == 422, bad
+
+
+async def test_admin_source_config_is_validated(
+    client: AsyncClient, login: LoginFn, session: AsyncSession
+) -> None:
+    await catalog.ensure_sources(session)
+    await session.commit()
+    admin = await login(ROOT_ADMIN_EMAIL)
+
+    listing = (await client.get("/api/v1/admin/job-sources", headers=admin)).json()
+    sources = {s["key"]: s for s in listing}
+    options = sources["adzuna"]["config_options"]
+    assert len(options["supported_countries"]) == 19
+    assert {"code": "in", "name": "India"} in options["supported_countries"]
+    assert sources["greenhouse"]["config_options"] is None
+
+    ok = await client.patch(
+        "/api/v1/admin/job-sources/adzuna",
+        json={"config": {"countries": ["IN", "gb", "us"], "queries": [" python  developer "]}},
+        headers=admin,
+    )
+    assert ok.status_code == 200, ok.text
+    config = ok.json()["config"]
+    assert config["countries"] == ["in", "gb", "us"]
+    assert config["queries"] == ["python developer"]
+
+    bad_configs: list[dict[str, object]] = [
+        {"countries": ["xx"]},
+        {"countries": "in"},
+        {"queries": []},
+        {"pages_per_query": 99},
+        {"surprise": True},
+    ]
+    for bad in bad_configs:
+        response = await client.patch(
+            "/api/v1/admin/job-sources/adzuna", json={"config": bad}, headers=admin
+        )
+        assert response.status_code == 400, bad
+        assert response.json()["error"]["code"] == "invalid_source_config"
+
+    ats = await client.patch(
+        "/api/v1/admin/job-sources/greenhouse", json={"config": {"x": 1}}, headers=admin
+    )
+    assert ats.status_code == 400

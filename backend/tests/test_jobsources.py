@@ -9,7 +9,7 @@ import pytest
 
 from app.db.models import ExperienceLevel, WorkMode
 from app.jobsources.base import BoardTarget, FetchContext, Posting
-from app.jobsources.geo import guess_country, location_terms
+from app.jobsources.geo import guess_country, location_variants
 from app.jobsources.http import SourceHttpClient, SourceHttpError
 from app.jobsources.normalize import (
     dedup_hash,
@@ -137,8 +137,8 @@ def test_location_helpers() -> None:
     assert guess_country("Bangalore - WF") == "IN"
     assert guess_country("San Francisco, CA") == "US"
     assert guess_country("Remote") is None
-    assert "bengaluru" in location_terms("Bangalore - WF")
-    assert "in" in location_terms("Bangalore - WF")
+    assert location_variants("Bengaluru") >= {"bengaluru", "bangalore"}
+    assert location_variants("gurgaon") >= {"gurugram", "gurgaon"}
 
 
 # --- HTTP client ---
@@ -340,3 +340,68 @@ def test_normalizer_version_is_part_of_the_hash(monkeypatch: pytest.MonkeyPatch)
     before = module.posting_hash(p)
     monkeypatch.setattr(module, "NORMALIZER_VERSION", "999")
     assert module.posting_hash(p) != before  # rule changes re-normalise every job once
+
+
+# --- Adzuna ---
+
+
+def test_adzuna_supports_all_its_countries() -> None:
+    from app.jobsources.plugins.adzuna import SUPPORTED_COUNTRIES
+
+    assert len(SUPPORTED_COUNTRIES) == 19
+    assert SUPPORTED_COUNTRIES["in"] == ("IN", "India", "INR")
+
+
+def test_adzuna_posting_uses_structured_area() -> None:
+    from app.jobsources.plugins.adzuna import posting_from_adzuna
+
+    posting = posting_from_adzuna(
+        {
+            "id": 42,
+            "title": "Python Developer",
+            "company": {"display_name": "Acme"},
+            "location": {
+                "display_name": "Bangalore, Karnataka",
+                "area": ["India", "Karnataka", "Bangalore"],
+            },
+            "redirect_url": "https://www.adzuna.in/details/42",
+            "salary_min": 1200000,
+            "salary_max": 1800000,
+            "contract_time": "full_time",
+            "created": "2026-09-30T10:00:00Z",
+        },
+        "in",
+    )
+    assert (posting.country, posting.salary_currency) == ("IN", "INR")
+    assert posting.region_hint == ["India", "Karnataka", "Bangalore"]
+    job = normalize(posting)
+    assert (job.geo.countries, job.geo.states, job.geo.cities) == (
+        ["IN"],
+        ["Karnataka"],
+        ["Bengaluru"],
+    )
+
+
+async def test_adzuna_fetches_every_enabled_country(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pydantic import SecretStr
+
+    from app.core import config as config_module
+    from app.jobsources.plugins.adzuna import AdzunaPlugin
+
+    settings = config_module.get_settings().model_copy(
+        update={"adzuna_app_id": "id", "adzuna_app_key": SecretStr("key")}
+    )
+    monkeypatch.setattr("app.jobsources.plugins.adzuna.get_settings", lambda: settings)
+    seen: list[str] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        return httpx.Response(200, json={"results": []})
+
+    plugin = AdzunaPlugin()
+    assert plugin.is_configured({"countries": ["in", "sg"]}) is None
+    ctx = FetchContext(client_for(handle), {"countries": ["in", "sg"], "queries": ["python"]}, [])
+    scopes = [r.scope async for r in plugin.fetch(ctx)]
+    assert scopes == ["adzuna:in:python", "adzuna:sg:python"]
+    assert seen == ["/v1/api/jobs/in/search/1", "/v1/api/jobs/sg/search/1"]
+    assert plugin.is_configured({"countries": []}) == "Choose at least one country"

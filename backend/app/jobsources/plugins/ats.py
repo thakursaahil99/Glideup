@@ -44,6 +44,14 @@ class _ATSPlugin:
     def is_configured(self, config: dict[str, Any]) -> str | None:
         return None
 
+    def validate_config(self, config: dict[str, Any]) -> dict[str, Any]:
+        if config:
+            raise ValueError("This source has no settings; manage its companies instead.")
+        return {}
+
+    def config_options(self) -> dict[str, Any] | None:
+        return None
+
     async def _read_board(self, ctx: FetchContext, board: BoardTarget) -> list[Posting]:
         raise NotImplementedError
 

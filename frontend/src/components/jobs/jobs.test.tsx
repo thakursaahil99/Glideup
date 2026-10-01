@@ -24,6 +24,10 @@ const job: Job = {
   company_name: "Groww",
   location: "Bengaluru, India",
   country: "IN",
+  countries: ["IN"],
+  states: ["Karnataka"],
+  cities: ["Bengaluru"],
+  remote_scope: null,
   work_mode: "hybrid",
   experience_level: "senior",
   employment_type: "Full-time",
@@ -42,6 +46,11 @@ describe("filters <-> URL", () => {
     const filters: JobFilters = {
       q: "python",
       location: "Bengaluru",
+      countries: ["IN"],
+      states: ["Karnataka"],
+      cities: ["Bengaluru"],
+      remote: "india",
+      region: "india",
       modes: ["remote", "hybrid"],
       levels: ["senior"],
       skills: ["Python", "Kafka"],
@@ -52,11 +61,13 @@ describe("filters <-> URL", () => {
     const params = filtersToParams(filters);
     expect(params.toString()).toContain("mode=remote&mode=hybrid");
     expect(filtersFromParams(params)).toEqual(filters);
-    expect(activeFilterCount(filters)).toBe(8);
+    expect(activeFilterCount(filters)).toBe(13);
   });
 
   it("ignores junk and defaults safely", () => {
-    const filters = filtersFromParams(new URLSearchParams("days=abc&sort=evil"));
+    const filters = filtersFromParams(
+      new URLSearchParams("days=abc&sort=evil&country=india&remote=mars&region=europe"),
+    );
     expect(filters).toEqual(EMPTY_FILTERS);
     expect(filtersToParams(EMPTY_FILTERS).toString()).toBe("");
   });

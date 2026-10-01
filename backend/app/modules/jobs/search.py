@@ -6,35 +6,49 @@
 
 The index only returns job ids; jobs are always loaded from Postgres (the source of truth),
 so a slightly stale index can never show a hidden or deleted job.
+
+Location facets are *disjunctive*: the country counts ignore the selected country, the state
+counts ignore the selected state, and so on, so a dropdown always shows every option with
+an honest count instead of collapsing to the one already chosen.
 """
 
 import time
 import uuid
-from dataclasses import dataclass, field
+from collections import Counter
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, Protocol
 
 import structlog
 from meilisearch_python_sdk import AsyncClient
+from meilisearch_python_sdk.models.search import SearchParams
 from meilisearch_python_sdk.models.settings import Faceting, MeilisearchSettings, Pagination
-from sqlalchemy import Select, and_, case, func, or_, select
+from sqlalchemy import Select, and_, case, func, not_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.db.models import Job
-from app.jobsources.geo import CITY_ALIASES, location_terms, location_variants
+from app.jobsources.geo import city_place, location_variants, parse_location, state_countries
 
 logger = structlog.stdlib.get_logger(__name__)
 
 Sort = Literal["relevance", "newest"]
-FACETS = ("work_mode", "experience_level", "skills", "company")
+RemoteFilter = Literal["india", "worldwide"]
+Region = Literal["india", "international"]
+FACETS = ("work_mode", "experience_level", "skills", "company", "countries", "states", "cities")
 MAX_RESULTS = 5000
+INDIA = "IN"
 
 
 @dataclass(frozen=True, slots=True)
 class SearchQuery:
     q: str = ""
-    location: str | None = None
+    location: str | None = None  # free text (older clients); resolved to a structured filter
+    countries: tuple[str, ...] = ()
+    states: tuple[str, ...] = ()
+    cities: tuple[str, ...] = ()
+    remote: RemoteFilter | None = None
+    region: Region | None = None
     work_modes: tuple[str, ...] = ()
     levels: tuple[str, ...] = ()
     skills: tuple[str, ...] = ()
@@ -43,6 +57,22 @@ class SearchQuery:
     sort: Sort = "relevance"
     offset: int = 0
     limit: int = 20
+
+    def resolved(self) -> "SearchQuery":
+        """Turn the free-text `location` into structured filters when it can be recognised."""
+        if not self.location or self.countries or self.states or self.cities:
+            return self
+        places = parse_location(self.location).places
+        if len(places) != 1:
+            return self
+        place = places[0]
+        if place.city:
+            return replace(self, location=None, cities=(place.city,))
+        if place.state:
+            return replace(self, location=None, states=(place.state,))
+        if place.country:
+            return replace(self, location=None, countries=(place.country,))
+        return self
 
 
 @dataclass(slots=True)
@@ -68,8 +98,10 @@ def to_document(job: Job) -> dict[str, Any]:
         "title": job.title,
         "company": job.company_name,
         "location": job.location or "",
-        "location_terms": location_terms(job.location),
-        "country": (job.country or "").lower(),
+        "countries": job.countries,
+        "states": job.states,
+        "cities": job.cities,
+        "remote_scope": job.remote_scope or "",
         "work_mode": job.work_mode.value,
         "experience_level": job.experience_level.value,
         "skills": job.skills,
@@ -83,6 +115,39 @@ def to_document(job: Job) -> dict[str, Any]:
 
 def _quote(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+# The facets whose own filter is dropped when computing their counts (see module docstring).
+def scope_location_facets(query: SearchQuery, facets: dict[str, dict[str, int]]) -> None:
+    """A job listed in "Bengaluru; Seattle" matches India, but "Washington" must not appear
+    in India's state list. Keep states/cities that belong to the selection (or are unknown
+    to the gazetteer, so nothing is ever silently hidden)."""
+    countries, states = set(query.countries), set(query.states)
+    if query.region == "india" or query.remote == "india":
+        countries.add(INDIA)
+    if countries and "states" in facets:
+        facets["states"] = {
+            s: n
+            for s, n in facets["states"].items()
+            if not (owners := state_countries(s)) or owners & countries
+        }
+    if (countries or states) and "cities" in facets:
+        kept = {}
+        for city, n in facets["cities"].items():
+            place = city_place(city)
+            if place is None or (
+                (not countries or place[0] in countries) and (not states or place[1] in states)
+            ):
+                kept[city] = n
+        facets["cities"] = kept
+
+
+# State and city depend on country, so each level ignores its own and deeper selections.
+_DISJUNCTIVE = {
+    "countries": {"countries", "states", "cities"},
+    "states": {"states", "cities"},
+    "cities": {"cities"},
+}
 
 
 class MeiliSearchBackend:
@@ -101,33 +166,46 @@ class MeiliSearchBackend:
         task = await index.update_settings(
             MeilisearchSettings(
                 searchable_attributes=[
-                    "title", "skills", "company", "department", "location", "description",
+                    "title", "skills", "company", "department", "location", "cities",
+                    "states", "description",
                 ],
                 filterable_attributes=[
-                    "work_mode", "experience_level", "skills", "company",
-                    "location_terms", "country", "posted_ts", "featured",
+                    "work_mode", "experience_level", "skills", "company", "countries",
+                    "states", "cities", "remote_scope", "posted_ts", "featured",
                 ],
                 sortable_attributes=["posted_ts", "featured"],
                 ranking_rules=["words", "typo", "proximity", "attribute", "sort", "exactness"],
-                faceting=Faceting(max_values_per_facet=40),
+                faceting=Faceting(max_values_per_facet=100),
                 pagination=Pagination(max_total_hits=MAX_RESULTS),
             )
         )  # fmt: skip
         await self._client.wait_for_task(task.task_uid, timeout_in_ms=30_000)
         self._ready = True
 
-    def _filters(self, query: SearchQuery) -> list[str | list[str]]:
-        filters: list[str | list[str]] = []
-        if query.work_modes:
-            filters.append([f"work_mode = {_quote(m)}" for m in query.work_modes])
-        if query.levels:
-            filters.append([f"experience_level = {_quote(lv)}" for lv in query.levels])
-        if query.companies:
-            filters.append([f"company = {_quote(c)}" for c in query.companies])
+    def _filters(
+        self, query: SearchQuery, *, skip: set[str] | frozenset[str] = frozenset()
+    ) -> list[Any]:
+        filters: list[Any] = []
+
+        def any_of(attr: str, values: tuple[str, ...]) -> None:
+            if values and attr not in skip:
+                filters.append([f"{attr} = {_quote(v)}" for v in values])
+
+        any_of("work_mode", query.work_modes)
+        any_of("experience_level", query.levels)
+        any_of("company", query.companies)
+        any_of("countries", query.countries)
+        any_of("states", query.states)
+        any_of("cities", query.cities)
         filters.extend(f"skills = {_quote(s)}" for s in query.skills)  # every skill required
-        if query.location:
-            term = " ".join(query.location.lower().split())
-            filters.append(f"location_terms = {_quote(CITY_ALIASES.get(term, term))}")
+        if query.region == "india":
+            filters.append(f"countries = {_quote(INDIA)}")
+        elif query.region == "international":
+            filters.append(f"NOT countries = {_quote(INDIA)}")
+        if query.remote == "india":
+            filters.append(f'work_mode = "remote" AND countries = {_quote(INDIA)}')
+        elif query.remote == "worldwide":
+            filters.append('remote_scope = "worldwide"')
         if query.posted_within_days:
             since = datetime.now(UTC) - timedelta(days=query.posted_within_days)
             filters.append(f"posted_ts >= {int(since.timestamp())}")
@@ -136,24 +214,50 @@ class MeiliSearchBackend:
     async def search(self, session: AsyncSession, query: SearchQuery) -> SearchHits:
         await self.ensure_index()
         started = time.perf_counter()
+        query = query.resolved()
         sort = (
             ["featured:desc", "posted_ts:desc"] if query.sort == "newest" or not query.q else None
         )
-        result = await self._client.index(self._index_name).search(
-            query.q or None,
+        common: dict[str, Any] = {"query": query.q or None, "matching_strategy": "all"}
+        main = SearchParams(
+            index_uid=self._index_name,
             offset=query.offset,
             limit=query.limit,
             filter=self._filters(query) or None,
             facets=list(FACETS),
             sort=sort,
             attributes_to_retrieve=["id"],
-            matching_strategy="all",
+            **common,
         )
+        # One extra facet-only query per active location filter (disjunctive counts).
+        extra = [
+            (facet, skip)
+            for facet, skip in _DISJUNCTIVE.items()
+            if any(getattr(query, attr) for attr in skip)
+        ]
+        params = [main] + [
+            SearchParams(
+                index_uid=self._index_name,
+                limit=0,
+                filter=self._filters(query, skip=skip) or None,
+                facets=[facet],
+                **common,
+            )
+            for facet, skip in extra
+        ]
+        results = await self._client.multi_search(params)
+        if not isinstance(results, list):  # only federated searches return a single object
+            raise TypeError("Unexpected federated multi-search response")
+        first = results[0]
+        facets = {k: dict(v) for k, v in (first.facet_distribution or {}).items()}
+        for (facet, _), result in zip(extra, results[1:], strict=True):
+            facets[facet] = dict((result.facet_distribution or {}).get(facet, {}))
+        scope_location_facets(query, facets)
         return SearchHits(
-            ids=[uuid.UUID(hit["id"]) for hit in result.hits],
-            total=result.estimated_total_hits or 0,
+            ids=[uuid.UUID(hit["id"]) for hit in first.hits],
+            total=first.estimated_total_hits or 0,
             backend=self.name,
-            facets={k: dict(v) for k, v in (result.facet_distribution or {}).items()},
+            facets=facets,
             took_ms=int((time.perf_counter() - started) * 1000),
         )
 
@@ -180,12 +284,23 @@ def listed() -> Any:
     return and_(Job.is_active.is_(True), Job.is_hidden.is_(False), Job.duplicate_of_id.is_(None))
 
 
+def _index_has(prefix: str, value: str) -> Any:
+    return Job.location_index.like(f"%|{prefix}:{value}|%")
+
+
 class DatabaseSearchBackend:
     """Degraded-mode search: titles, companies and skills only (no full text, no typos)."""
 
     name = "database"
+    FACET_SCAN_LIMIT = 20_000
 
-    def _apply_filters[*Ts](self, stmt: Select[*Ts], query: SearchQuery) -> Select[*Ts]:
+    def _apply_filters[*Ts](
+        self,
+        stmt: Select[*Ts],
+        query: SearchQuery,
+        *,
+        skip: set[str] | frozenset[str] = frozenset(),
+    ) -> Select[*Ts]:
         stmt = stmt.where(listed())
         for term in query.q.lower().split()[:8]:
             like = f"%{term}%"
@@ -205,7 +320,19 @@ class DatabaseSearchBackend:
             stmt = stmt.where(Job.company_name.in_(query.companies))
         for skill in query.skills:
             stmt = stmt.where(Job.skills_index.like(f"%|{skill.lower()}|%"))
-        if query.location:
+        for attr, prefix in (("countries", "c"), ("states", "s"), ("cities", "ci")):
+            values: tuple[str, ...] = getattr(query, attr)
+            if values and attr not in skip:
+                stmt = stmt.where(or_(*(_index_has(prefix, v) for v in values)))
+        if query.region == "india":
+            stmt = stmt.where(_index_has("c", INDIA))
+        elif query.region == "international":
+            stmt = stmt.where(not_(_index_has("c", INDIA)))
+        if query.remote == "india":
+            stmt = stmt.where(Job.work_mode == "remote", _index_has("c", INDIA))
+        elif query.remote == "worldwide":
+            stmt = stmt.where(Job.remote_scope == "worldwide")
+        if query.location:  # unrecognised free text: match the raw location string
             names = location_variants(query.location)
             stmt = stmt.where(or_(*(func.lower(Job.location).like(f"%{n}%") for n in names)))
         if query.posted_within_days:
@@ -213,8 +340,25 @@ class DatabaseSearchBackend:
             stmt = stmt.where(func.coalesce(Job.posted_at, Job.first_seen_at) >= since)
         return stmt
 
+    async def _location_facet(
+        self, session: AsyncSession, query: SearchQuery, facet: str
+    ) -> dict[str, int]:
+        column = getattr(Job, facet)
+        rows: list[list[str] | None] = list(
+            await session.scalars(
+                self._apply_filters(select(column), query, skip=_DISJUNCTIVE[facet]).limit(
+                    self.FACET_SCAN_LIMIT
+                )
+            )
+        )
+        counts: Counter[str] = Counter()
+        for values in rows:
+            counts.update(values or [])
+        return dict(counts.most_common(100))
+
     async def search(self, session: AsyncSession, query: SearchQuery) -> SearchHits:
         started = time.perf_counter()
+        query = query.resolved()
         base = self._apply_filters(select(Job.id), query)
         total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
         order: list[Any] = [Job.is_featured.desc()]
@@ -238,6 +382,9 @@ class DatabaseSearchBackend:
                 .limit(40)
             )
             facets[name] = {str(getattr(k, "value", k)): int(n) for k, n in rows.all()}
+        for facet in ("countries", "states", "cities"):
+            facets[facet] = await self._location_facet(session, query, facet)
+        scope_location_facets(query, facets)
         return SearchHits(
             ids=ids,
             total=min(total, MAX_RESULTS),

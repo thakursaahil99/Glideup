@@ -4,7 +4,8 @@ import { Check, X } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input, Label, NativeSelect } from "@/components/ui/primitives";
+import { LocationFilters } from "@/components/jobs/location-filters";
+import { Label, NativeSelect } from "@/components/ui/primitives";
 import { TagInput } from "@/components/ui/tag-input";
 import { activeFilterCount, EMPTY_FILTERS, type JobFilters } from "@/lib/api/jobs";
 import { EXPERIENCE_LEVELS, WORK_MODES } from "@/lib/api/types";
@@ -76,20 +77,7 @@ export function JobFiltersPanel({
         )}
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="location">Location</Label>
-        <Input
-          id="location"
-          defaultValue={filters.location}
-          placeholder="e.g. Bengaluru, Pune, United States"
-          onBlur={(e) =>
-            e.target.value.trim() !== filters.location && set({ location: e.target.value.trim() })
-          }
-          onKeyDown={(e) => {
-            if (e.key === "Enter") set({ location: e.currentTarget.value.trim() });
-          }}
-        />
-      </div>
+      <LocationFilters filters={filters} facets={facets} onChange={onChange} />
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Work style</legend>

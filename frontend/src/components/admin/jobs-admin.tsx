@@ -67,36 +67,144 @@ function schedule(minutes: number) {
 
 // ------------------------------------------------------------------ sources
 
+const NEWLINE = String.fromCharCode(10);
+type CountryOption = { code: string; name: string };
+type AdzunaConfig = { countries: string[]; queries: string[]; pages_per_query: number; max_days_old: number };
+
+/** Adzuna: pick countries with checkboxes instead of editing JSON. */
+function AdzunaConfigEditor({
+  options,
+  value,
+  onChange,
+}: {
+  options: CountryOption[];
+  value: AdzunaConfig;
+  onChange: (next: AdzunaConfig) => void;
+}) {
+  const toggle = (code: string) =>
+    onChange({
+      ...value,
+      countries: value.countries.includes(code)
+        ? value.countries.filter((c) => c !== code)
+        : [...value.countries, code],
+    });
+  return (
+    <div className="space-y-4">
+      <fieldset>
+        <legend className="mb-2 flex w-full items-center justify-between text-sm font-medium">
+          <span>
+            Countries to read{" "}
+            <span className="text-muted-foreground">({value.countries.length} selected)</span>
+          </span>
+          <span className="flex gap-2 text-xs">
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => onChange({ ...value, countries: options.map((o) => o.code) })}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => onChange({ ...value, countries: [] })}
+            >
+              None
+            </button>
+          </span>
+        </legend>
+        <div className="grid max-h-48 grid-cols-2 gap-1 overflow-y-auto rounded-lg border p-2 sm:grid-cols-3">
+          {options.map((o) => (
+            <label
+              key={o.code}
+              className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-sm hover:bg-accent"
+            >
+              <input
+                type="checkbox"
+                checked={value.countries.includes(o.code)}
+                onChange={() => toggle(o.code)}
+                className="size-4 accent-[var(--primary)]"
+              />
+              {o.name}
+            </label>
+          ))}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Each country × search term is one request batch: more countries means longer runs.
+        </p>
+      </fieldset>
+      <div className="space-y-1.5">
+        <Label htmlFor="queries">Search terms (one per line)</Label>
+        <textarea
+          id="queries"
+          value={value.queries.join(NEWLINE)}
+          onChange={(e) => onChange({ ...value, queries: e.target.value.split(NEWLINE) })}
+          className="min-h-24 w-full rounded-md border border-input bg-card p-2 text-sm"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="pages">Pages per term (50 jobs each)</Label>
+          <Input
+            id="pages"
+            type="number"
+            min={1}
+            max={5}
+            value={value.pages_per_query}
+            onChange={(e) => onChange({ ...value, pages_per_query: Number(e.target.value) })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="days-old">Max job age (days)</Label>
+          <Input
+            id="days-old"
+            type="number"
+            min={1}
+            max={90}
+            value={value.max_days_old}
+            onChange={(e) => onChange({ ...value, max_days_old: Number(e.target.value) })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SourceSettingsDialog({ source, onClose }: { source: JobSource; onClose: () => void }) {
   const [hours, setHours] = useState(String(source.schedule_minutes / 60));
   const [rate, setRate] = useState(String(source.rate_limit_per_minute));
-  const [config, setConfig] = useState(JSON.stringify(source.config, null, 2));
+  const options = source.config_options as {
+    supported_countries?: CountryOption[];
+    defaults?: AdzunaConfig;
+  } | null;
+  const [adzuna, setAdzuna] = useState<AdzunaConfig | null>(
+    options?.supported_countries ? ({ ...options.defaults, ...source.config } as AdzunaConfig) : null,
+  );
   const invalidate = useInvalidate();
   const save = useMutation({
-    mutationFn: () => {
-      const parsed = config.trim() ? JSON.parse(config) : {};
-      return unwrap(
+    mutationFn: () =>
+      unwrap(
         api.PATCH("/api/v1/admin/job-sources/{key}", {
           params: { path: { key: source.key } },
           body: {
             schedule_minutes: Math.round(Number(hours) * 60),
             rate_limit_per_minute: Number(rate),
-            config: parsed,
+            // Sources without settings (ATS boards) never send a config.
+            ...(adzuna ? { config: { ...adzuna, queries: adzuna.queries.filter((q) => q.trim()) } } : {}),
           },
         }),
-      );
-    },
+      ),
     onSuccess: () => {
       toast.success(`${source.name} updated`);
       invalidate();
       onClose();
     },
-    onError: (e) => toast.error(e instanceof SyntaxError ? "Config must be valid JSON" : errorMessage(e)),
+    onError,
   });
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>{source.name} settings</DialogTitle>
           <DialogDescription>
@@ -127,21 +235,17 @@ function SourceSettingsDialog({ source, onClose }: { source: JobSource; onClose:
             />
           </div>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="config">Plugin config (JSON)</Label>
-          <textarea
-            id="config"
-            value={config}
-            onChange={(e) => setConfig(e.target.value)}
-            spellCheck={false}
-            className="min-h-32 w-full rounded-md border border-input bg-card p-3 font-mono text-xs"
-          />
-        </div>
+        {adzuna && options?.supported_countries && (
+          <AdzunaConfigEditor options={options.supported_countries} value={adzuna} onChange={setAdzuna} />
+        )}
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+          <Button
+            onClick={() => save.mutate()}
+            disabled={save.isPending || (adzuna !== null && adzuna.countries.length === 0)}
+          >
             Save
           </Button>
         </DialogFooter>

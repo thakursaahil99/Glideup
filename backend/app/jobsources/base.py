@@ -27,6 +27,7 @@ class Posting:
     description_html: str = ""
     location: str | None = None
     country: str | None = None
+    region_hint: list[str] | None = None  # structured place from the source (Adzuna "area")
     remote_hint: bool | None = None  # the source says remote/not remote explicitly
     workplace_hint: str | None = None  # e.g. Ashby "Hybrid"
     employment_type: str | None = None
@@ -77,6 +78,14 @@ class JobSourcePlugin(Protocol):
 
     def is_configured(self, config: dict[str, Any]) -> str | None:
         """None if ready to run, otherwise a human-readable reason (e.g. missing API key)."""
+        ...
+
+    def validate_config(self, config: dict[str, Any]) -> dict[str, Any]:
+        """Return the cleaned config or raise ValueError with a message for the admin."""
+        ...
+
+    def config_options(self) -> dict[str, Any] | None:
+        """Choices the admin UI can offer (e.g. supported countries), or None."""
         ...
 
     def fetch(self, ctx: FetchContext) -> AsyncIterator[ScopeResult]: ...

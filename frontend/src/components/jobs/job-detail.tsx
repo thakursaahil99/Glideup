@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 
 import { levelLabel, postedAgo, SaveButton, workModeLabel } from "@/components/jobs/job-card";
+import { remoteLabel } from "@/components/jobs/location-filters";
 import { ErrorState } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
       </Card>
     );
 
-  const mode = workModeLabel(job.work_mode);
+  const mode = remoteLabel(job) ?? workModeLabel(job.work_mode);
   const level = levelLabel(job.experience_level);
   return (
     <div className="mx-auto max-w-5xl">

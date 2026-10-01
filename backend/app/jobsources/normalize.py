@@ -9,6 +9,7 @@ import nh3
 
 from app.db.models import ExperienceLevel, WorkMode
 from app.jobsources.base import Posting
+from app.jobsources.geo import ParsedLocation, parse_location
 from app.modules.resumes.skills import detect_skills
 
 # Job descriptions are third-party HTML rendered in our pages: allow formatting only.
@@ -21,7 +22,7 @@ MAX_DESCRIPTION_CHARS = 60_000
 
 
 # Bump when normalisation rules change: every job is re-normalised on its next run.
-NORMALIZER_VERSION = "2"
+NORMALIZER_VERSION = "5"  # 3-4: structured locations (country / state / city, remote scope)
 
 # Job descriptions are full of boilerplate (HR and equal-opportunity text) that mentions
 # "communication", "accessibility", "security"... Only concrete technical skills count.
@@ -128,6 +129,8 @@ class NormalizedJob:
     work_mode: WorkMode
     experience_level: ExperienceLevel
     skills: list[str]
+    geo: ParsedLocation
+    remote_scope: str | None
     dedup_hash: str
     content_hash: str
 
@@ -141,17 +144,31 @@ def normalize(posting: Posting) -> NormalizedJob:
         for name, category in detect_skills(f"{title}\n{text}")
         if category not in JOB_SKILL_EXCLUDED_CATEGORIES and name not in JOB_SKILL_STOPLIST
     ]
+    geo = parse_location(
+        posting.location, country_hint=posting.country, region_hint=posting.region_hint
+    )
+    work_mode = detect_work_mode(posting, text)
     return NormalizedJob(
         posting=posting,
         title=title,
         description_html=clean_html,
         description_text=text,
-        work_mode=detect_work_mode(posting, text),
+        work_mode=work_mode,
         experience_level=detect_experience_level(title),
         skills=skills,
+        geo=geo,
+        remote_scope=remote_scope(work_mode, geo),
         dedup_hash=dedup_hash(title, posting.company_name, posting.location),
         content_hash=posting_hash(posting),
     )
+
+
+def remote_scope(work_mode: WorkMode, geo: ParsedLocation) -> str | None:
+    """ "country" = remote within the listed countries ("Remote - India");
+    "worldwide" = remote with no country restriction ("Remote", "Anywhere", "Distributed")."""
+    if work_mode != WorkMode.REMOTE:
+        return None
+    return "worldwide" if geo.worldwide or not geo.countries else "country"
 
 
 def posting_hash(posting: Posting) -> str:
@@ -168,4 +185,6 @@ def posting_hash(posting: Posting) -> str:
         posting.employment_type,
         posting.workplace_hint,
         posting.remote_hint,
+        posting.country,
+        tuple(posting.region_hint or ()),
     )

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError, ConflictError, NotFoundError
 from app.db.models import Company, IngestionRun, Job, JobSource, SavedJob, User
-from app.jobsources.registry import PLUGINS
+from app.jobsources.registry import PLUGINS, get_plugin
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestMeta
 from app.modules.jobs.search import MAX_RESULTS, SearchHits, SearchQuery, get_search
@@ -149,6 +149,11 @@ async def update_source(
     session: AsyncSession, *, actor: User, key: str, changes: dict[str, Any], meta: RequestMeta
 ) -> JobSource:
     source = await get_source(session, key)
+    if changes.get("config") is not None:
+        try:
+            changes["config"] = get_plugin(source.key).validate_config(changes["config"])
+        except ValueError as exc:
+            raise AppError(str(exc), code="invalid_source_config") from exc
     before = {f: getattr(source, f) for f in _SOURCE_FIELDS}
     for name, value in changes.items():
         if name in _SOURCE_FIELDS and value is not None:

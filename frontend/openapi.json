@@ -896,9 +896,23 @@
             ],
             "title": "Attribution"
           },
+          "cities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cities",
+            "type": "array"
+          },
           "company_name": {
             "title": "Company Name",
             "type": "string"
+          },
+          "countries": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Countries",
+            "type": "array"
           },
           "country": {
             "anyOf": [
@@ -966,6 +980,21 @@
             ],
             "title": "Posted At"
           },
+          "remote_scope": {
+            "anyOf": [
+              {
+                "enum": [
+                  "country",
+                  "worldwide"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Scope"
+          },
           "salary": {
             "anyOf": [
               {
@@ -988,6 +1017,13 @@
             "title": "Source",
             "type": "string"
           },
+          "states": {
+            "items": {
+              "type": "string"
+            },
+            "title": "States",
+            "type": "array"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -1002,6 +1038,10 @@
           "company_name",
           "location",
           "country",
+          "countries",
+          "states",
+          "cities",
+          "remote_scope",
           "work_mode",
           "experience_level",
           "employment_type",
@@ -1034,9 +1074,23 @@
             ],
             "title": "Attribution"
           },
+          "cities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cities",
+            "type": "array"
+          },
           "company_name": {
             "title": "Company Name",
             "type": "string"
+          },
+          "countries": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Countries",
+            "type": "array"
           },
           "country": {
             "anyOf": [
@@ -1128,6 +1182,21 @@
             ],
             "title": "Posted At"
           },
+          "remote_scope": {
+            "anyOf": [
+              {
+                "enum": [
+                  "country",
+                  "worldwide"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Scope"
+          },
           "salary": {
             "anyOf": [
               {
@@ -1150,6 +1219,13 @@
             "title": "Source",
             "type": "string"
           },
+          "states": {
+            "items": {
+              "type": "string"
+            },
+            "title": "States",
+            "type": "array"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -1164,6 +1240,10 @@
           "company_name",
           "location",
           "country",
+          "countries",
+          "states",
+          "cities",
+          "remote_scope",
           "work_mode",
           "experience_level",
           "employment_type",
@@ -1277,6 +1357,18 @@
             "title": "Config",
             "type": "object"
           },
+          "config_options": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config Options"
+          },
           "consecutive_failures": {
             "title": "Consecutive Failures",
             "type": "integer"
@@ -1370,6 +1462,7 @@
           "rate_limit_per_minute",
           "config",
           "uses_company_boards",
+          "config_options",
           "not_configured_reason",
           "last_run_at",
           "last_success_at",
@@ -4532,6 +4625,7 @@
             }
           },
           {
+            "description": "Free text; prefer country/state/city",
             "in": "query",
             "name": "location",
             "required": false,
@@ -4545,7 +4639,115 @@
                   "type": "null"
                 }
               ],
+              "description": "Free text; prefer country/state/city",
               "title": "Location"
+            }
+          },
+          {
+            "description": "ISO 3166-1 alpha-2, e.g. IN",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "pattern": "^[A-Z]{2}$",
+                    "type": "string"
+                  },
+                  "maxItems": 20,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO 3166-1 alpha-2, e.g. IN",
+              "title": "Country"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 20,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 20,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "City"
+            }
+          },
+          {
+            "description": "india = Remote - India; worldwide = no country limit",
+            "in": "query",
+            "name": "remote",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "india",
+                    "worldwide"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "india = Remote - India; worldwide = no country limit",
+              "title": "Remote"
+            }
+          },
+          {
+            "description": "Quick India / International toggle",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "india",
+                    "international"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Quick India / International toggle",
+              "title": "Region"
             }
           },
           {

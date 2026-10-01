@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import ATS, Company, IngestionRun, Job, JobSource, RunStatus
 from app.db.session import session_factory
 from app.jobsources.base import BoardTarget, FetchContext, Posting, ScopeResult
+from app.jobsources.geo import location_index
 from app.jobsources.http import SourceHttpClient
 from app.jobsources.normalize import NormalizedJob, normalize, posting_hash
 from app.jobsources.registry import get_plugin
@@ -51,7 +52,13 @@ def _apply(job: Job, item: NormalizedJob) -> None:
     job.title = item.title
     job.company_name = " ".join(p.company_name.split())[:200]
     job.location = (p.location or None) and p.location[:300]
-    job.country = p.country.upper()[:2] if p.country and len(p.country) == 2 else job.country
+    geo = item.geo
+    job.country = geo.countries[0] if geo.countries else None
+    job.countries = geo.countries
+    job.states = [s[:100] for s in geo.states]
+    job.cities = [c[:100] for c in geo.cities]
+    job.remote_scope = item.remote_scope
+    job.location_index = location_index(geo)
     job.work_mode = item.work_mode
     job.experience_level = item.experience_level
     job.employment_type = p.employment_type

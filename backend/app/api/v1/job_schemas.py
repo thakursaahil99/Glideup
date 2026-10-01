@@ -15,6 +15,10 @@ class JobCard(BaseModel):
     company_name: str
     location: str | None
     country: str | None
+    countries: list[str]
+    states: list[str]
+    cities: list[str]
+    remote_scope: Literal["country", "worldwide"] | None
     work_mode: WorkMode
     experience_level: ExperienceLevel
     employment_type: str | None
@@ -77,6 +81,8 @@ class JobSourceOut(BaseModel):
     rate_limit_per_minute: int
     config: dict[str, Any]
     uses_company_boards: bool
+    # Choices for the admin UI (e.g. Adzuna's supported countries); None = no settings.
+    config_options: dict[str, Any] | None
     not_configured_reason: str | None
     last_run_at: datetime | None
     last_success_at: datetime | None

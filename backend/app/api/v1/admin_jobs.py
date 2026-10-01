@@ -49,6 +49,7 @@ def _source_out(source: JobSource, last: IngestionRun | None) -> JobSourceOut:
         rate_limit_per_minute=source.rate_limit_per_minute,
         config=source.config or {},
         uses_company_boards=plugin.uses_company_boards,
+        config_options=plugin.config_options(),
         not_configured_reason=plugin.is_configured(source.config or {}),
         last_run_at=source.last_run_at,
         last_success_at=source.last_success_at,

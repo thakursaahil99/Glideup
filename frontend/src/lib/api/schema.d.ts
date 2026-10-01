@@ -974,8 +974,12 @@ export interface components {
         JobCard: {
             /** Attribution */
             attribution: string | null;
+            /** Cities */
+            cities: string[];
             /** Company Name */
             company_name: string;
+            /** Countries */
+            countries: string[];
             /** Country */
             country: string | null;
             /** Employment Type */
@@ -999,12 +1003,16 @@ export interface components {
             location: string | null;
             /** Posted At */
             posted_at: string | null;
+            /** Remote Scope */
+            remote_scope: ("country" | "worldwide") | null;
             /** Salary */
             salary: string | null;
             /** Skills */
             skills: string[];
             /** Source */
             source: string;
+            /** States */
+            states: string[];
             /** Title */
             title: string;
             work_mode: components["schemas"]["WorkMode"];
@@ -1015,8 +1023,12 @@ export interface components {
             apply_url: string;
             /** Attribution */
             attribution: string | null;
+            /** Cities */
+            cities: string[];
             /** Company Name */
             company_name: string;
+            /** Countries */
+            countries: string[];
             /** Country */
             country: string | null;
             /** Department */
@@ -1051,12 +1063,16 @@ export interface components {
             location: string | null;
             /** Posted At */
             posted_at: string | null;
+            /** Remote Scope */
+            remote_scope: ("country" | "worldwide") | null;
             /** Salary */
             salary: string | null;
             /** Skills */
             skills: string[];
             /** Source */
             source: string;
+            /** States */
+            states: string[];
             /** Title */
             title: string;
             work_mode: components["schemas"]["WorkMode"];
@@ -1095,6 +1111,10 @@ export interface components {
             config: {
                 [key: string]: unknown;
             };
+            /** Config Options */
+            config_options: {
+                [key: string]: unknown;
+            } | null;
             /** Consecutive Failures */
             consecutive_failures: number;
             /** Enabled */
@@ -2742,7 +2762,16 @@ export interface operations {
         parameters: {
             query?: {
                 q?: string;
+                /** @description Free text; prefer country/state/city */
                 location?: string | null;
+                /** @description ISO 3166-1 alpha-2, e.g. IN */
+                country?: string[] | null;
+                state?: string[] | null;
+                city?: string[] | null;
+                /** @description india = Remote - India; worldwide = no country limit */
+                remote?: ("india" | "worldwide") | null;
+                /** @description Quick India / International toggle */
+                region?: ("india" | "international") | null;
                 work_mode?: components["schemas"]["WorkMode"][] | null;
                 experience?: components["schemas"]["ExperienceLevel"][] | null;
                 skills?: string[] | null;
