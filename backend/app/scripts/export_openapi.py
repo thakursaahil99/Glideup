@@ -13,7 +13,9 @@ from app.main import app
 def main() -> None:
     target = Path(sys.argv[1] if len(sys.argv) > 1 else "openapi.json")
     schema = app.openapi()
-    target.write_text(json.dumps(schema, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    # Always LF, so the file is byte-identical on Windows and in Linux CI (drift check).
+    content = json.dumps(schema, indent=2, sort_keys=True) + "\n"
+    target.write_text(content, encoding="utf-8", newline="\n")
     print(f"wrote {target}")
 
 

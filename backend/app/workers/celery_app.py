@@ -27,7 +27,7 @@ celery_app.conf.update(
     broker_connection_retry_on_startup=True,
     beat_schedule={},
 )
-celery_app.autodiscover_tasks(["app.workers"], related_name="tasks")
+celery_app.conf.include = ["app.workers.tasks", "app.modules.resumes.tasks"]
 
 
 @setup_logging.connect

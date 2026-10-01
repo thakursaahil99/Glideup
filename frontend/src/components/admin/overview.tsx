@@ -1,7 +1,19 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, ShieldCheck, Table2, UserCheck, UserPlus, Users, UserX } from "lucide-react";
+import {
+  BarChart3,
+  Bot,
+  CheckCircle2,
+  DollarSign,
+  FileText,
+  ShieldCheck,
+  Table2,
+  UserCheck,
+  UserPlus,
+  Users,
+  UserX,
+} from "lucide-react";
 import { useState } from "react";
 
 import { SignupsChart } from "@/components/admin/signups-chart";
@@ -29,7 +41,21 @@ function rangeParams(days: number) {
   return { start: start.toISOString(), end: end.toISOString() };
 }
 
-function StatTile({ label, value, icon: Icon }: { label: string; value?: number; icon: typeof Users }) {
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 4 });
+
+function StatTile({
+  label,
+  value,
+  icon: Icon,
+  hint,
+  format = "number",
+}: {
+  label: string;
+  value?: number;
+  icon: typeof Users;
+  hint?: string;
+  format?: "number" | "usd";
+}) {
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between pb-2">
@@ -40,8 +66,11 @@ function StatTile({ label, value, icon: Icon }: { label: string; value?: number;
         {value === undefined ? (
           <Skeleton className="h-8 w-16" />
         ) : (
-          <p className="text-3xl font-semibold">{compact.format(value)}</p>
+          <p className="text-3xl font-semibold">
+            {format === "usd" ? usd.format(value) : compact.format(value)}
+          </p>
         )}
+        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
   );
@@ -96,6 +125,33 @@ export function AdminOverview() {
             <StatTile label={`New (${days} days)`} value={data?.new_users_in_range} icon={UserPlus} />
             <StatTile label="Suspended" value={data?.suspended_users} icon={UserX} />
             <StatTile label="Admins" value={data?.admin_users} icon={ShieldCheck} />
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatTile label={`Resumes uploaded (${days}d)`} value={data?.resumes_uploaded} icon={FileText} />
+            <StatTile
+              label="Parse success"
+              value={data ? data.resumes_parsed : undefined}
+              icon={CheckCircle2}
+              hint={data && data.resumes_failed ? `${data.resumes_failed} failed` : undefined}
+            />
+            <StatTile
+              label={`AI calls (${days}d)`}
+              value={data?.llm_calls}
+              icon={Bot}
+              hint={
+                data && data.llm_calls
+                  ? `${((data.llm_failed_calls / data.llm_calls) * 100).toFixed(1)}% failed · fallbacks included`
+                  : undefined
+              }
+            />
+            <StatTile
+              label="Est. AI cost"
+              value={data?.llm_estimated_cost_usd}
+              icon={DollarSign}
+              format="usd"
+              hint={data ? `${compact.format(data.llm_tokens)} tokens` : undefined}
+            />
           </div>
 
           <Card className="mt-6">

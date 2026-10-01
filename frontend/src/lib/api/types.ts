@@ -14,3 +14,26 @@ export type Page<T> = { items: T[]; total: number; page: number; page_size: numb
 export type ErrorEnvelope = Schemas["ErrorResponse"];
 
 export const ROLE_NAMES: RoleName[] = ["super_admin", "admin", "content_editor", "support", "user"];
+
+export type Profile = Schemas["ProfileOut"];
+export type ProfileUpdate = Schemas["ProfileUpdate"];
+export type RemotePreference = Profile["remote_preference"];
+export type Resume = Schemas["ResumeOut"];
+export type ResumeSummary = Schemas["ResumeSummary"];
+export type ResumeStatus = Resume["status"];
+export type ParsedResume = Schemas["ParsedResume"];
+export type ParsedSkill = Schemas["ParsedSkill"];
+export type SkillCategory = NonNullable<ParsedSkill["category"]>;
+export type AdminUserDetail = Schemas["AdminUserDetail"];
+
+export const SKILL_CATEGORIES: SkillCategory[] = [
+  "language",
+  "framework",
+  "database",
+  "cloud",
+  "devops",
+  "tool",
+  "practice",
+  "soft",
+  "other",
+];

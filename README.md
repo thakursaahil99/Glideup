@@ -9,8 +9,9 @@ GlideUp is an AI-powered platform that matches your resume to real jobs, shows y
 runs job-specific mock interviews and coding tests in many languages and frameworks, and tracks
 your applications — from job search to offer.
 
-> **Status:** Phase 1 of 10 — foundation (monorepo, Docker stack, Google sign-in, RBAC, admin
-> console shell with overview, users and audit log). See the [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
+> **Status:** Phase 2 of 10 — profile, resume upload and AI parsing, and the LLM gateway, on top
+> of Phase 1 (Docker stack, Google sign-in, RBAC, admin console). See the
+> [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
 
 ## Architecture
 
@@ -82,6 +83,38 @@ cp ../.env .env.local                            # Next.js reads env from its ow
 npm install
 npm run dev
 ```
+
+### AI models (free)
+
+GlideUp works with **no AI at all** (a heuristic fallback parser), but a real model is far better:
+
+```bash
+# Ollama on the host (https://ollama.com): ~2.2 GB of downloads, runs comfortably on 16 GB RAM
+ollama pull qwen2.5:3b          # resume parsing
+ollama pull nomic-embed-text    # embeddings for job matching
+```
+
+On a laptop CPU, a resume takes about 10–70 s to parse. For faster demos, add a free
+`GITHUB_MODELS_TOKEN`; it's used automatically as a fallback, or first via `LLM_ROUTES`.
+Measure any model or prompt change with the golden-set evals:
+
+```bash
+cd backend && uv run python -m app.llm.evals.run --route ollama:qwen2.5:3b
+```
+
+### Running without Docker
+
+Everything except the job board (Phase 3) runs on Windows/macOS/Linux without Docker:
+
+```bash
+# any Postgres with pgvector: DATABASE_URL=postgresql+asyncpg://...
+cd backend
+uv run alembic upgrade head
+TASK_EXECUTION=inline STORAGE_BACKEND=local uv run uvicorn app.main:app --port 8000
+```
+
+`TASK_EXECUTION=inline` runs background jobs inside the API, and `STORAGE_BACKEND=local` stores
+files under `backend/var/storage`. Docker Compose always uses Celery and MinIO.
 
 ## Tests and checks
 

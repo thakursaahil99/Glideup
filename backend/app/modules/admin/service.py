@@ -7,8 +7,9 @@ import uuid
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 
-from sqlalchemy import Select, delete, func, or_, select
+from sqlalchemy import Select, case, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import ConflictError, ForbiddenError, NotFoundError
@@ -22,7 +23,16 @@ from app.core.rbac import (
     permission_required_to_assign,
     permissions_for,
 )
-from app.db.models import AuditLog, User, UserRole, UserStatus
+from app.db.models import (
+    AuditLog,
+    LLMUsage,
+    Profile,
+    Resume,
+    ResumeStatus,
+    User,
+    UserRole,
+    UserStatus,
+)
 from app.db.models import Role as RoleModel
 from app.modules.audit import service as audit
 from app.modules.audit.service import RequestMeta
@@ -39,6 +49,13 @@ class Overview:
     signups_by_day: list[tuple[str, int]]
     range_start: datetime
     range_end: datetime
+    resumes_uploaded: int
+    resumes_parsed: int
+    resumes_failed: int
+    llm_calls: int
+    llm_failed_calls: int
+    llm_tokens: int
+    llm_estimated_cost_usd: Decimal
 
 
 async def get_overview(session: AsyncSession, start: datetime, end: datetime) -> Overview:
@@ -79,7 +96,34 @@ async def get_overview(session: AsyncSession, start: datetime, end: datetime) ->
         days.append((day.isoformat(), per_day.get(day, 0)))
         day += timedelta(days=1)
 
+    resume_stats = (
+        await session.execute(
+            select(
+                func.count(),
+                func.count().filter(Resume.status == ResumeStatus.PARSED),
+                func.count().filter(Resume.status == ResumeStatus.FAILED),
+            ).where(Resume.created_at >= start, Resume.created_at < end)
+        )
+    ).one()
+    llm_stats = (
+        await session.execute(
+            select(
+                func.count(),
+                func.coalesce(func.sum(case((LLMUsage.success.is_(False), 1), else_=0)), 0),
+                func.coalesce(func.sum(LLMUsage.prompt_tokens + LLMUsage.completion_tokens), 0),
+                func.coalesce(func.sum(LLMUsage.estimated_cost_usd), 0),
+            ).where(LLMUsage.created_at >= start, LLMUsage.created_at < end)
+        )
+    ).one()
+
     return Overview(
+        resumes_uploaded=resume_stats[0],
+        resumes_parsed=resume_stats[1],
+        resumes_failed=resume_stats[2],
+        llm_calls=llm_stats[0],
+        llm_failed_calls=int(llm_stats[1]),
+        llm_tokens=int(llm_stats[2]),
+        llm_estimated_cost_usd=Decimal(str(llm_stats[3])),
         total_users=total,
         active_users_30d=active,
         new_users_in_range=len(created),
@@ -130,6 +174,37 @@ async def _get_user(session: AsyncSession, user_id: uuid.UUID) -> User:
     if user is None:
         raise NotFoundError("User not found")
     return user
+
+
+@dataclass(frozen=True, slots=True)
+class UserDetail:
+    user: User
+    profile: Profile | None
+    resumes: list[Resume]
+    llm_calls: int
+
+
+async def get_user_detail(
+    session: AsyncSession, *, actor: User, user_id: uuid.UUID, meta: RequestMeta
+) -> UserDetail:
+    """Full view of one user for support/admins. Viewing personal data is audited."""
+    target = await _get_user(session, user_id)
+    profile = await session.get(Profile, user_id)
+    resumes = list(
+        await session.scalars(
+            select(Resume).where(Resume.user_id == user_id).order_by(Resume.created_at.desc())
+        )
+    )
+    llm_calls = await session.scalar(select(func.count()).where(LLMUsage.user_id == user_id)) or 0
+    await audit.record(
+        session,
+        actor=actor,
+        action="user.viewed",
+        target_type="user",
+        target_id=target.id,
+        meta=meta,
+    )
+    return UserDetail(user=target, profile=profile, resumes=resumes, llm_calls=llm_calls)
 
 
 def _guard_target(actor: User, target: User) -> None:

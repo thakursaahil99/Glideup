@@ -8,8 +8,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import RequestMetaDep, SessionDep, require_permission
+from app.api.v1.resumes import to_out, to_summary
 from app.api.v1.schemas import (
     AdminOverview,
+    AdminUserDetail,
     AuditLogOut,
     DailyCount,
     Page,
@@ -18,6 +20,7 @@ from app.api.v1.schemas import (
     SetStatusRequest,
     UserSummary,
 )
+from app.api.v1.users import to_profile_out
 from app.core.errors import AppError, ErrorResponse
 from app.core.rbac import Permission, Role
 from app.db.models import User, UserStatus
@@ -62,6 +65,13 @@ async def overview(
         signups_by_day=[DailyCount(date=d, count=c) for d, c in data.signups_by_day],
         range_start=data.range_start,
         range_end=data.range_end,
+        resumes_uploaded=data.resumes_uploaded,
+        resumes_parsed=data.resumes_parsed,
+        resumes_failed=data.resumes_failed,
+        llm_calls=data.llm_calls,
+        llm_failed_calls=data.llm_failed_calls,
+        llm_tokens=data.llm_tokens,
+        llm_estimated_cost_usd=float(data.llm_estimated_cost_usd),
     )
 
 
@@ -83,6 +93,27 @@ async def list_users(
         total=total,
         page=page,
         page_size=page_size,
+    )
+
+
+@router.get("/users/{user_id}", response_model=AdminUserDetail)
+async def get_user(
+    user_id: uuid.UUID,
+    session: SessionDep,
+    meta: RequestMetaDep,
+    actor: Annotated[User, Depends(require_permission(Permission.USERS_READ))],
+) -> AdminUserDetail:
+    detail = await service.get_user_detail(session, actor=actor, user_id=user_id, meta=meta)
+    active = next((r for r in detail.resumes if r.is_active), None)
+    return AdminUserDetail(
+        user=UserSummary.model_validate(detail.user),
+        suspended_reason=detail.user.suspended_reason,
+        profile=to_profile_out(detail.user, detail.profile, has_resume=active is not None)
+        if detail.profile
+        else None,
+        resumes=[to_summary(r) for r in detail.resumes],
+        active_resume=to_out(active) if active else None,
+        llm_calls=detail.llm_calls,
     )
 
 

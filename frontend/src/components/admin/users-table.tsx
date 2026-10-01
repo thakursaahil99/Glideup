@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, MoreHorizontal, Search, ShieldCheck, UserCheck, UserX } from "lucide-react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -180,10 +181,13 @@ export function UsersAdmin() {
                         <div className="flex items-center gap-3">
                           <Avatar user={{ ...user, image: user.avatar_url, permissions: [] }} />
                           <div className="min-w-0">
-                            <p className="truncate font-medium">
-                              {user.name ?? "—"}{" "}
+                            <Link
+                              href={`/admin/users/${user.id}`}
+                              className="block truncate font-medium hover:text-primary hover:underline"
+                            >
+                              {user.name ?? user.email}{" "}
                               {isSelf && <span className="text-xs text-muted-foreground">(you)</span>}
-                            </p>
+                            </Link>
                             <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                           </div>
                         </div>

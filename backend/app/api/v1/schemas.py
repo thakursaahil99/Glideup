@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.api.v1.profile_schemas import ProfileOut, ResumeOut, ResumeSummary
 from app.core.rbac import Role
 from app.db.models import UserStatus
 
@@ -88,6 +89,13 @@ class AdminOverview(BaseModel):
     signups_by_day: list[DailyCount]
     range_start: datetime
     range_end: datetime
+    resumes_uploaded: int
+    resumes_parsed: int
+    resumes_failed: int
+    llm_calls: int
+    llm_failed_calls: int
+    llm_tokens: int
+    llm_estimated_cost_usd: float
 
 
 class AuditLogOut(BaseModel):
@@ -110,3 +118,12 @@ class RoleOut(BaseModel):
     name: str
     description: str
     permissions: list[str]
+
+
+class AdminUserDetail(BaseModel):
+    user: UserSummary
+    suspended_reason: str | None
+    profile: ProfileOut | None
+    resumes: list[ResumeSummary]
+    active_resume: ResumeOut | None
+    llm_calls: int

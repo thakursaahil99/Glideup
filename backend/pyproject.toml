@@ -20,6 +20,11 @@ dependencies = [
     "pyjwt[crypto]>=2.10",
     "structlog>=24.4",
     "prometheus-fastapi-instrumentator>=7.0",
+    "pdfplumber>=0.11.10",
+    "pypdf>=6.19.0",
+    "python-multipart>=0.0.32",
+    "boto3>=1.43.106",
+    "jinja2>=3.1.6",
 ]
 
 [dependency-groups]
@@ -32,6 +37,8 @@ dev = [
     "mypy>=1.13",
     "celery-types>=0.22",
     "pre-commit>=4.0",
+    "boto3-stubs[s3]>=1.43.106",
+    "reportlab>=5.0.1",
 ]
 
 [tool.uv]
@@ -56,7 +63,7 @@ plugins = ["pydantic.mypy"]
 exclude = ["app/db/migrations/"]
 
 [[tool.mypy.overrides]]
-module = ["celery.*", "prometheus_fastapi_instrumentator.*"]
+module = ["celery.*", "prometheus_fastapi_instrumentator.*", "reportlab.*", "pgvector.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -16,9 +16,13 @@ x-backend: &backend
     REDIS_URL: redis://redis:6379/0
     MEILI_URL: http://meilisearch:7700
     S3_ENDPOINT_URL: http://minio:9000
+    # Containers always use the real queue and object store, whatever .env says for local dev.
+    TASK_EXECUTION: celery
+    STORAGE_BACKEND: s3
     SMTP_HOST: mailpit
     SMTP_PORT: "1025"
-    OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    # Inside containers "localhost" is the container itself; Ollama runs on the host.
+    OLLAMA_BASE_URL: ${OLLAMA_DOCKER_URL:-http://host.docker.internal:11434}
   extra_hosts:
     - "host.docker.internal:host-gateway"
   restart: unless-stopped

@@ -93,6 +93,34 @@ change writes an `audit_logs` row **in the same transaction**.
 4. `get_session` opens one transaction per request: commit on success, roll back on error.
 5. Errors leave as `{"error": {code, message, details, request_id}}`.
 
+## Resume pipeline (Phase 2)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant A as API
+    participant S as Storage (MinIO / local)
+    participant W as Worker (Celery or inline)
+    participant G as LLM gateway
+    B->>A: POST /resumes (PDF)
+    A->>A: Check magic bytes, size, pages, encryption; SHA-256 dedupe
+    A->>S: put users/{id}/{resume}.pdf
+    A->>A: COMMIT, then dispatch parse job
+    A-->>B: 202 {status: uploaded}
+    W->>S: get PDF
+    W->>W: Extract text (pdfplumber, pypdf fallback)
+    W->>G: complete_json(resume_parse@v2, ParsedResume)
+    G->>G: route -> circuit -> timeout -> validate -> repair -> fallback
+    W->>W: Ground facts in source text; canonicalise skills
+    W->>G: embed (nomic-embed-text, 768-dim)
+    W->>A: status=parsed, skills, embedding (pgvector), profile prefill
+    B->>A: GET /resumes/active (polls every 2 s while parsing)
+```
+
+LLM design and eval results: [ADR 0006](adr/0006-llm-gateway.md). Jobs and storage:
+[ADR 0007](adr/0007-background-jobs-and-storage.md).
+
 ## Data model (Phase 1)
 
 ```mermaid

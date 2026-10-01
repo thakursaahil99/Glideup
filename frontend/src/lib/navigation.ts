@@ -33,7 +33,7 @@ export type NavItem = {
 
 export const APP_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Profile", href: "/profile", icon: UserRound, phase: 2 },
+  { label: "Profile", href: "/profile", icon: UserRound },
   { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness, phase: 3 },
   { label: "Interviews", href: "/interviews", icon: MessagesSquare, phase: 5 },
   { label: "Tests", href: "/tests", icon: Code2, phase: 6 },

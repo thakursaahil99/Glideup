@@ -59,6 +59,45 @@ class Settings(BaseSettings):
     # Emails that are granted `super_admin` on sign-in. The only bootstrap path to admin.
     admin_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
 
+    # --- Background work ---
+    # "celery" sends tasks to Redis for the worker; "inline" runs them in the API process
+    # (local development without Redis, and tests). Same task code either way.
+    task_execution: Literal["celery", "inline"] = "celery"
+
+    # --- File storage ---
+    storage_backend: Literal["s3", "local"] = "s3"
+    local_storage_path: str = "./var/storage"
+    s3_endpoint_url: str | None = None  # None = AWS; set for MinIO / other S3-compatible stores
+    s3_region: str = "us-east-1"
+    s3_access_key: str | None = None
+    s3_secret_key: SecretStr | None = None
+    s3_bucket_resumes: str = "resumes"
+
+    # --- Resumes ---
+    resume_max_bytes: int = 5 * 1024 * 1024
+    resume_max_pages: int = 10
+
+    # --- LLM providers ---
+    ollama_base_url: str = "http://localhost:11434"
+    github_models_base_url: str = "https://models.github.ai/inference"
+    github_models_token: SecretStr | None = None
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_api_key: SecretStr | None = None
+    llm_timeout_seconds: float = 90.0
+    # Per-provider overrides (JSON). A 3B model on a laptop CPU can need minutes per resume.
+    llm_provider_timeouts: dict[str, float] = Field(default_factory=lambda: {"ollama": 240.0})
+    ollama_num_ctx: int = 8192  # context window; Ollama's default can silently truncate resumes
+    # Task -> ordered "provider:model" fallback chain, as JSON. Overrides the code defaults
+    # (app/llm/routing.py) per task. Phase 9 moves this into the admin console.
+    llm_routes: dict[str, list[str]] = Field(default_factory=dict)
+    # Append the mock provider as the last resort. Local/test only: it returns heuristic
+    # output, which must never silently replace a real model in production.
+    llm_allow_mock_fallback: bool = False
+    mock_llm_delay_ms: int = 0
+    mock_llm_error_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    circuit_breaker_failure_threshold: int = 3
+    circuit_breaker_cooldown_seconds: float = 30.0
+
     # --- Observability ---
     metrics_enabled: bool = True
 
@@ -79,6 +118,8 @@ class Settings(BaseSettings):
         if self.environment in ("staging", "production"):
             if self.auth_dev_login_enabled:
                 raise ValueError("AUTH_DEV_LOGIN_ENABLED must be false outside local/test")
+            if self.llm_allow_mock_fallback:
+                raise ValueError("LLM_ALLOW_MOCK_FALLBACK must be false outside local/test")
             secret = self.jwt_secret.get_secret_value()
             if secret == _INSECURE_DEFAULT_SECRET or len(secret) < 32:
                 raise ValueError("JWT_SECRET must be set to a strong value (32+ chars)")
@@ -97,6 +138,19 @@ class Settings(BaseSettings):
         return self.environment in ("local", "test")
 
 
+_override: Settings | None = None
+
+
 @lru_cache
-def get_settings() -> Settings:
+def _load_settings() -> Settings:
     return Settings()
+
+
+def get_settings() -> Settings:
+    return _override or _load_settings()
+
+
+def override_settings(settings: Settings | None) -> None:
+    """Tests and scripts swap the process-wide settings (None restores the environment's)."""
+    global _override
+    _override = settings

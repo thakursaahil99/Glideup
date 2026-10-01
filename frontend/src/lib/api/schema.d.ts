@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get User */
+        get: operations["get_user_api_v1_admin_users__user_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users/{user_id}/role": {
         parameters: {
             query?: never;
@@ -183,6 +200,133 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/resumes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Resumes */
+        get: operations["list_resumes_api_v1_resumes_get"];
+        put?: never;
+        /**
+         * Upload Resume
+         * @description Upload a PDF resume. Parsing runs in the background; poll GET /resumes/{id}.
+         */
+        post: operations["upload_resume_api_v1_resumes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resumes/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Active Resume */
+        get: operations["active_resume_api_v1_resumes_active_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resumes/{resume_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Resume */
+        get: operations["get_resume_api_v1_resumes__resume_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Resume */
+        delete: operations["delete_resume_api_v1_resumes__resume_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resumes/{resume_id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate */
+        post: operations["activate_api_v1_resumes__resume_id__activate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resumes/{resume_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Resume */
+        get: operations["download_resume_api_v1_resumes__resume_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resumes/{resume_id}/parsed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Edit Parsed
+         * @description Save the user's corrections to the parsed resume, then refresh its embedding.
+         */
+        put: operations["edit_parsed_api_v1_resumes__resume_id__parsed_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resumes/{resume_id}/reparse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reparse */
+        post: operations["reparse_api_v1_resumes__resume_id__reparse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me": {
         parameters: {
             query?: never;
@@ -193,6 +337,24 @@ export interface paths {
         /** Read Me */
         get: operations["read_me_api_v1_users_me_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Profile */
+        get: operations["read_profile_api_v1_users_me_profile_get"];
+        /** Update Profile */
+        put: operations["update_profile_api_v1_users_me_profile_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -250,6 +412,14 @@ export interface components {
             active_users_30d: number;
             /** Admin Users */
             admin_users: number;
+            /** Llm Calls */
+            llm_calls: number;
+            /** Llm Estimated Cost Usd */
+            llm_estimated_cost_usd: number;
+            /** Llm Failed Calls */
+            llm_failed_calls: number;
+            /** Llm Tokens */
+            llm_tokens: number;
             /** New Users In Range */
             new_users_in_range: number;
             /**
@@ -262,12 +432,30 @@ export interface components {
              * Format: date-time
              */
             range_start: string;
+            /** Resumes Failed */
+            resumes_failed: number;
+            /** Resumes Parsed */
+            resumes_parsed: number;
+            /** Resumes Uploaded */
+            resumes_uploaded: number;
             /** Signups By Day */
             signups_by_day: components["schemas"]["DailyCount"][];
             /** Suspended Users */
             suspended_users: number;
             /** Total Users */
             total_users: number;
+        };
+        /** AdminUserDetail */
+        AdminUserDetail: {
+            active_resume: components["schemas"]["ResumeOut"] | null;
+            /** Llm Calls */
+            llm_calls: number;
+            profile: components["schemas"]["ProfileOut"] | null;
+            /** Resumes */
+            resumes: components["schemas"]["ResumeSummary"][];
+            /** Suspended Reason */
+            suspended_reason: string | null;
+            user: components["schemas"]["UserSummary"];
         };
         /** AuditLogOut */
         AuditLogOut: {
@@ -304,6 +492,14 @@ export interface components {
             /** Target Type */
             target_type: string | null;
         };
+        /** Body_upload_resume_api_v1_resumes_post */
+        Body_upload_resume_api_v1_resumes_post: {
+            /**
+             * File
+             * @description Resume as a PDF
+             */
+            file: string;
+        };
         /** DailyCount */
         DailyCount: {
             /** Count */
@@ -321,6 +517,15 @@ export interface components {
             /** Name */
             name?: string | null;
         };
+        /** Education */
+        Education: {
+            /** Degree */
+            degree: string;
+            /** Institution */
+            institution: string;
+            /** Year */
+            year?: string | null;
+        };
         /** ErrorBody */
         ErrorBody: {
             /** Code */
@@ -335,6 +540,21 @@ export interface components {
         /** ErrorResponse */
         ErrorResponse: {
             error: components["schemas"]["ErrorBody"];
+        };
+        /** Experience */
+        Experience: {
+            /** Company */
+            company: string;
+            /** End */
+            end?: string | null;
+            /** Highlights */
+            highlights?: string[];
+            /** Location */
+            location?: string | null;
+            /** Start */
+            start?: string | null;
+            /** Title */
+            title: string;
         };
         /** GoogleSignInRequest */
         GoogleSignInRequest: {
@@ -403,6 +623,84 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** ParsedResume */
+        ParsedResume: {
+            /** Certifications */
+            certifications?: string[];
+            /** Education */
+            education?: components["schemas"]["Education"][];
+            /** Experience */
+            experience?: components["schemas"]["Experience"][];
+            /** Full Name */
+            full_name?: string | null;
+            /** Headline */
+            headline?: string | null;
+            /** Links */
+            links?: string[];
+            /** Location */
+            location?: string | null;
+            /** Skills */
+            skills?: components["schemas"]["ParsedSkill"][];
+            /** Summary */
+            summary?: string | null;
+            /** Total Years Experience */
+            total_years_experience?: number | null;
+        };
+        /** ParsedSkill */
+        ParsedSkill: {
+            /** Category */
+            category?: ("language" | "framework" | "database" | "cloud" | "devops" | "tool" | "practice" | "soft" | "other") | null;
+            /** Level */
+            level?: ("beginner" | "intermediate" | "advanced" | "expert") | null;
+            /** Name */
+            name: string;
+            /** Years */
+            years?: number | null;
+        };
+        /** ProfileOut */
+        ProfileOut: {
+            /** Bio */
+            bio: string | null;
+            /** Email */
+            email: string;
+            /** Has Resume */
+            has_resume: boolean;
+            /** Headline */
+            headline: string | null;
+            /** Name */
+            name: string | null;
+            /** Onboarding Completed */
+            onboarding_completed: boolean;
+            /** Preferred Locations */
+            preferred_locations: string[];
+            remote_preference: components["schemas"]["RemotePreference"];
+            /** Target Roles */
+            target_roles: string[];
+            /** Years Experience */
+            years_experience: number | null;
+        };
+        /** ProfileUpdate */
+        ProfileUpdate: {
+            /** Bio */
+            bio?: string | null;
+            /**
+             * Complete Onboarding
+             * @default false
+             */
+            complete_onboarding: boolean;
+            /** Headline */
+            headline?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Preferred Locations */
+            preferred_locations?: string[];
+            /** @default any */
+            remote_preference: components["schemas"]["RemotePreference"];
+            /** Target Roles */
+            target_roles?: string[];
+            /** Years Experience */
+            years_experience?: number | null;
+        };
         /** Readiness */
         Readiness: {
             /** Checks */
@@ -419,6 +717,92 @@ export interface components {
         RefreshRequest: {
             /** Refresh Token */
             refresh_token: string;
+        };
+        /**
+         * RemotePreference
+         * @enum {string}
+         */
+        RemotePreference: "remote" | "hybrid" | "onsite" | "any";
+        /** ResumeOut */
+        ResumeOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error */
+            error: string | null;
+            /** Has Embedding */
+            has_embedding: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Original Filename */
+            original_filename: string;
+            /** Page Count */
+            page_count: number | null;
+            parsed: components["schemas"]["ParsedResume"] | null;
+            /** Parsed At */
+            parsed_at: string | null;
+            /** Parsed By */
+            parsed_by: string | null;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Skills */
+            skills: components["schemas"]["ResumeSkillOut"][];
+            status: components["schemas"]["ResumeStatus"];
+            /** User Edited At */
+            user_edited_at: string | null;
+        };
+        /** ResumeSkillOut */
+        ResumeSkillOut: {
+            /** Category */
+            category: string | null;
+            /** Level */
+            level: string | null;
+            /** Name */
+            name: string;
+            /** Years */
+            years: string | null;
+        };
+        /**
+         * ResumeStatus
+         * @enum {string}
+         */
+        ResumeStatus: "uploaded" | "parsing" | "parsed" | "failed";
+        /** ResumeSummary */
+        ResumeSummary: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error */
+            error: string | null;
+            /** Has Embedding */
+            has_embedding: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Original Filename */
+            original_filename: string;
+            /** Page Count */
+            page_count: number | null;
+            /** Parsed At */
+            parsed_at: string | null;
+            /** Parsed By */
+            parsed_by: string | null;
+            /** Size Bytes */
+            size_bytes: number;
+            status: components["schemas"]["ResumeStatus"];
         };
         /**
          * Role
@@ -683,6 +1067,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_UserSummary_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_api_v1_admin_users__user_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserDetail"];
                 };
             };
             /** @description Unauthorized */
@@ -1031,6 +1464,438 @@ export interface operations {
             };
         };
     };
+    list_resumes_api_v1_resumes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumeSummary"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    upload_resume_api_v1_resumes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_resume_api_v1_resumes_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumeOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    active_resume_api_v1_resumes_active_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumeOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_resume_api_v1_resumes__resume_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resume_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumeOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_resume_api_v1_resumes__resume_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resume_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    activate_api_v1_resumes__resume_id__activate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resume_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumeOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_resume_api_v1_resumes__resume_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resume_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_parsed_api_v1_resumes__resume_id__parsed_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resume_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ParsedResume"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumeOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reparse_api_v1_resumes__resume_id__reparse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resume_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumeOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     read_me_api_v1_users_me_get: {
         parameters: {
             query?: never;
@@ -1047,6 +1912,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+        };
+    };
+    read_profile_api_v1_users_me_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileOut"];
+                };
+            };
+        };
+    };
+    update_profile_api_v1_users_me_profile_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

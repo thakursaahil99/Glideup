@@ -1,8 +1,8 @@
-import { Circle, FileUp, Flame, Gauge, Target } from "lucide-react";
+import { Circle, Flame, Gauge, Target } from "lucide-react";
 import type { Metadata } from "next";
 
+import { ResumeCard } from "@/components/dashboard/resume-card";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/primitives";
 import { JOURNEY } from "@/lib/navigation";
@@ -29,24 +29,7 @@ export default async function DashboardPage() {
         description="Your flight plan from resume to offer starts here."
       />
 
-      <Card className="overflow-hidden">
-        <div
-          className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-center"
-          style={{ background: "var(--sky-gradient)" }}
-        >
-          <div>
-            <Badge variant="sunrise">Step 1 of 5</Badge>
-            <h2 className="mt-3 text-xl font-semibold">Upload your resume to get started</h2>
-            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              GlideUp reads your resume, extracts your skills and experience, and uses them to match you with
-              real jobs and tailor every practice session.
-            </p>
-          </div>
-          <Button variant="sunrise" size="lg" disabled title="Resume upload arrives in phase 2">
-            <FileUp /> Upload resume
-          </Button>
-        </div>
-      </Card>
+      <ResumeCard />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {EMPTY_STATS.map(({ label, icon: Icon, hint }) => (
