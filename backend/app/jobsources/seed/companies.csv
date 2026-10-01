@@ -1,4 +1,4 @@
-# Verified against the live public APIs on 2026-10-01. Columns: name,ats,board_token
+# Verified against the live public APIs on 2026-10-01 (Greenhouse, Lever, Ashby, SmartRecruiters). Columns: name,ats,board_token
 name,ats,board_token
 Affirm,greenhouse,affirm
 Airbnb,greenhouse,airbnb
@@ -58,3 +58,23 @@ Udemy,greenhouse,udemy
 Webflow,greenhouse,webflow
 Zeta,lever,zeta
 Zscaler,greenhouse,zscaler
+Atlan,ashby,atlan
+Canva,smartrecruiters,canva
+Deliveroo,greenhouse,deliveroo
+Druva,greenhouse,druva
+Elastic,greenhouse,elastic
+Fivetran,greenhouse,fivetran
+Freshworks,smartrecruiters,freshworks
+Grab,smartrecruiters,grab
+HackerRank,greenhouse,hackerrank
+Mindtickle,lever,mindtickle
+MongoDB,greenhouse,mongodb
+Netskope,greenhouse,netskope
+Observe.AI,greenhouse,observeai
+PubMatic,greenhouse,pubmatic
+Sarvam AI,ashby,sarvam
+Snowflake,ashby,snowflake
+Swiggy,smartrecruiters,swiggy
+Thoughtworks,ashby,thoughtworks
+Turing,greenhouse,turing
+Wise,smartrecruiters,wise

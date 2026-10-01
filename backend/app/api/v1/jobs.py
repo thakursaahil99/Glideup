@@ -6,11 +6,26 @@ from pydantic import StringConstraints
 
 from app.api.deps import CurrentUser, SessionDep
 from app.api.v1.job_schemas import JobCard, JobDetail, JobSearchResponse, SavedJobOut
-from app.core.errors import ErrorResponse
+from app.core.errors import AppError, ErrorResponse
 from app.db.models import ExperienceLevel, Job, WorkMode
+from app.jobsources.geo_data import METROS
 from app.modules.jobs import service
 from app.modules.jobs.ingestion import salary_text
 from app.modules.jobs.search import Region, RemoteFilter, SearchQuery, Sort
+
+# A company is "hiring actively" with this many open roles, or this many new in 7 days.
+HIRING_OPEN_ROLES = 25
+HIRING_NEW_ROLES_7D = 10
+
+
+def _valid_metros(values: list[str] | None) -> tuple[str, ...]:
+    unknown = [v for v in values or [] if v not in METROS]
+    if unknown:
+        raise AppError(
+            f"Unknown metro area: {', '.join(unknown)}", code="invalid_metro", details=list(METROS)
+        )
+    return tuple(values or [])
+
 
 router = APIRouter(
     prefix="/jobs",
@@ -38,6 +53,10 @@ def to_card(job: Job, *, saved: bool) -> JobCard:
         first_seen_at=job.first_seen_at,
         salary=salary_text(job),
         is_featured=job.is_featured,
+        company_open_roles=job.company_open_roles,
+        company_new_roles_7d=job.company_new_roles_7d,
+        hiring_actively=job.company_open_roles >= HIRING_OPEN_ROLES
+        or job.company_new_roles_7d >= HIRING_NEW_ROLES_7D,
         is_saved=saved,
         source=job.source.key,
         attribution=service.attribution_for(job),
@@ -58,6 +77,10 @@ async def search_jobs(
     ] = None,
     state: Annotated[list[str] | None, Query(max_length=20)] = None,
     city: Annotated[list[str] | None, Query(max_length=20)] = None,
+    metro: Annotated[
+        list[str] | None,
+        Query(max_length=5, description=f"Metro areas: {', '.join(METROS)}"),
+    ] = None,
     remote: Annotated[
         RemoteFilter | None,
         Query(description="india = Remote - India; worldwide = no country limit"),
@@ -81,6 +104,7 @@ async def search_jobs(
         countries=tuple(country or []),
         states=tuple(s.strip() for s in state or [] if s.strip()),
         cities=tuple(c.strip() for c in city or [] if c.strip()),
+        metros=_valid_metros(metro),
         remote=remote,
         region=region,
         work_modes=tuple(m.value for m in work_mode or []),

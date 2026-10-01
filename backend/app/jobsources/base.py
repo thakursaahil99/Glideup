@@ -37,6 +37,9 @@ class Posting:
     salary_max: Decimal | None = None
     salary_currency: str | None = None
     salary_period: str | None = None
+    # True when the source said "unchanged since last run" and we skipped fetching details:
+    # ingestion only marks the job as still listed.
+    details_omitted: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +71,9 @@ class FetchContext:
     http: SourceHttpClient
     config: dict[str, Any]
     boards: list[BoardTarget]
+    # external_id -> posted_at (epoch seconds) of jobs we already have from this source, so
+    # plugins that need one request per posting can skip unchanged ones.
+    known: dict[str, int] = field(default_factory=dict)
 
 
 class JobSourcePlugin(Protocol):

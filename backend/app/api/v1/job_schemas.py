@@ -27,6 +27,9 @@ class JobCard(BaseModel):
     first_seen_at: datetime
     salary: str | None
     is_featured: bool
+    company_open_roles: int
+    company_new_roles_7d: int
+    hiring_actively: bool  # many open roles, or many opened this week
     is_saved: bool
     source: str
     attribution: str | None

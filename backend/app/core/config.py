@@ -89,6 +89,12 @@ class Settings(BaseSettings):
     resume_max_bytes: int = 5 * 1024 * 1024
     resume_max_pages: int = 10
 
+    # --- Portfolio analysis ---
+    portfolio_fetch_max_bytes: int = 2 * 1024 * 1024
+    portfolio_fetch_timeout_seconds: float = 10.0
+    # Optional: raises GitHub's API limit from 60 to 5,000 requests/hour. No scopes needed.
+    github_api_token: SecretStr | None = None
+
     # --- LLM providers ---
     ollama_base_url: str = "http://localhost:11434"
     github_models_base_url: str = "https://models.github.ai/inference"

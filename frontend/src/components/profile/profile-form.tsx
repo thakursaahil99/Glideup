@@ -18,6 +18,14 @@ const REMOTE_OPTIONS: { value: RemotePreference; label: string }[] = [
   { value: "any", label: "Open to all" },
 ];
 
+const LINK_FIELDS = [
+  { key: "portfolio_url", label: "Portfolio", placeholder: "yourname.dev" },
+  { key: "linkedin_url", label: "LinkedIn", placeholder: "linkedin.com/in/yourname" },
+  { key: "github_url", label: "GitHub", placeholder: "github.com/yourname" },
+] as const;
+
+type LinkKey = (typeof LINK_FIELDS)[number]["key"];
+
 export function ProfileForm({
   profile,
   submitLabel = "Save profile",
@@ -36,6 +44,11 @@ export function ProfileForm({
   const [locations, setLocations] = useState(profile.preferred_locations);
   const [remote, setRemote] = useState<RemotePreference>(profile.remote_preference);
   const [bio, setBio] = useState(profile.bio ?? "");
+  const [links, setLinks] = useState<Record<LinkKey, string>>({
+    portfolio_url: profile.portfolio_url ?? "",
+    linkedin_url: profile.linkedin_url ?? "",
+    github_url: profile.github_url ?? "",
+  });
   const update = useUpdateProfile();
 
   function submit(event: FormEvent) {
@@ -46,6 +59,9 @@ export function ProfileForm({
         headline: headline || null,
         bio: bio || null,
         years_experience: years === "" ? null : Number(years),
+        portfolio_url: links.portfolio_url || null,
+        linkedin_url: links.linkedin_url || null,
+        github_url: links.github_url || null,
         target_roles: roles,
         preferred_locations: locations,
         remote_preference: remote,
@@ -138,6 +154,28 @@ export function ProfileForm({
               />
               {option.label}
             </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="space-y-1.5">
+        <legend className="text-sm font-medium">Links (optional)</legend>
+        <p className="text-xs text-muted-foreground">
+          Recruiters see these next to your resume. We fill them in from your resume when we can.
+        </p>
+        <div className="mt-1.5 grid gap-3 sm:grid-cols-3">
+          {LINK_FIELDS.map((field) => (
+            <div key={field.key} className="space-y-1.5">
+              <Label htmlFor={field.key}>{field.label}</Label>
+              <Input
+                id={field.key}
+                inputMode="url"
+                autoComplete="url"
+                maxLength={300}
+                value={links[field.key]}
+                placeholder={field.placeholder}
+                onChange={(e) => setLinks((current) => ({ ...current, [field.key]: e.target.value }))}
+              />
+            </div>
           ))}
         </div>
       </fieldset>

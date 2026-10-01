@@ -33,6 +33,7 @@ class ATS(enum.StrEnum):
     GREENHOUSE = "greenhouse"
     LEVER = "lever"
     ASHBY = "ashby"
+    SMARTRECRUITERS = "smartrecruiters"
 
 
 class WorkMode(enum.StrEnum):
@@ -186,6 +187,11 @@ class Job(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     is_hidden: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+
+    # Hiring signal for the whole company, refreshed after every ingestion run: how many
+    # roles it has open, and how many it opened in the last 7 days.
+    company_open_roles: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    company_new_roles_7d: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     source: Mapped[JobSource] = relationship(lazy="joined")
 

@@ -11,7 +11,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import structlog
-from sqlalchemy import and_, func, or_, select, update
+from sqlalchemy import and_, case, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import ATS, Company, IngestionRun, Job, JobSource, RunStatus
@@ -105,6 +105,14 @@ async def _apply_scope(
 
     for external_id, posting in items.items():
         job = existing.get(external_id)
+        if posting.details_omitted:
+            # The source says it hasn't changed since our copy: just keep it listed.
+            if job is not None:
+                job.last_seen_at = now
+                if not job.is_active:
+                    job.is_active = True
+                    fresh.append(job)
+            continue
         if job is None:
             job = Job(
                 source_id=source.id,
@@ -247,12 +255,23 @@ async def ingest_source(
                 boards.append(BoardTarget(company.id, company.name, company.board_token))
                 companies[f"{source.key}:{company.board_token}"] = company
 
+        known = {
+            external_id: int(posted_at.replace(tzinfo=posted_at.tzinfo or UTC).timestamp())
+            for external_id, posted_at in await session.execute(
+                select(Job.external_id, Job.posted_at).where(
+                    Job.source_id == source.id, Job.posted_at.is_not(None)
+                )
+            )
+            if posted_at is not None
+        }
         http = SourceHttpClient(rate_limit_per_minute=source.rate_limit_per_minute)
         errors: list[str] = []
         scopes_ok = 0
         log = logger.bind(source=source_key, run_id=str(run.id))
         try:
-            async for result in plugin.fetch(FetchContext(http, source.config or {}, boards)):
+            async for result in plugin.fetch(
+                FetchContext(http, source.config or {}, boards, known=known)
+            ):
                 run.fetched += len(result.postings)
                 board_company = companies.get(result.scope)
                 if not result.complete:
@@ -299,8 +318,48 @@ async def ingest_source(
         )
         run_id = str(run.id)
 
+    touched |= await refresh_company_hiring()
     await sync_search(touched)
     return run_id
+
+
+HIRING_WINDOW = timedelta(days=7)
+
+
+async def refresh_company_hiring() -> set[uuid.UUID]:
+    """Recount open roles (and roles posted in the last 7 days) per company and store them
+    on every listed job, so search can sort by "most hiring" and show a hiring badge.
+    Returns the ids whose numbers changed (they need re-indexing)."""
+    since = _now() - HIRING_WINDOW
+    changed: set[uuid.UUID] = set()
+    async with session_factory()() as session:
+        posted = func.coalesce(Job.posted_at, Job.first_seen_at)
+        rows = await session.execute(
+            select(
+                Job.company_name,
+                func.count(),
+                func.coalesce(func.sum(case((posted >= since, 1), else_=0)), 0),
+            )
+            .where(listed())
+            .group_by(Job.company_name)
+        )
+        for company, open_roles, new_roles in rows.all():
+            result = await session.execute(
+                update(Job)
+                .where(
+                    Job.company_name == company,
+                    listed(),
+                    or_(
+                        Job.company_open_roles != open_roles,
+                        Job.company_new_roles_7d != int(new_roles),
+                    ),
+                )
+                .values(company_open_roles=open_roles, company_new_roles_7d=int(new_roles))
+                .returning(Job.id)
+            )
+            changed.update(result.scalars())
+        await session.commit()
+    return changed
 
 
 async def run_ingestion(

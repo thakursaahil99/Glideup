@@ -14,7 +14,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from app.llm.types import Message, Role
 
 PROMPT_DIR = Path(__file__).parent
-ACTIVE_VERSIONS: dict[str, str] = {"resume_parse": "v2"}
+ACTIVE_VERSIONS: dict[str, str] = {"resume_parse": "v2", "portfolio_parse": "v1"}
 _ROLES: tuple[Role, ...] = ("system", "user")
 
 

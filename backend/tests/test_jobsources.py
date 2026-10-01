@@ -405,3 +405,109 @@ async def test_adzuna_fetches_every_enabled_country(monkeypatch: pytest.MonkeyPa
     assert scopes == ["adzuna:in:python", "adzuna:sg:python"]
     assert seen == ["/v1/api/jobs/in/search/1", "/v1/api/jobs/sg/search/1"]
     assert plugin.is_configured({"countries": []}) == "Choose at least one country"
+
+
+# --- SmartRecruiters & Arbeitnow ---
+
+SR_LIST = {
+    "offset": 0,
+    "totalFound": 2,
+    "content": [
+        {
+            "id": "601",
+            "name": "Backend Engineer",
+            "releasedDate": "2026-09-30T10:00:00.000Z",
+            "location": {"city": "Bengaluru", "region": "KA", "country": "in", "remote": False,
+                         "hybrid": True, "fullLocation": "Bengaluru, KA, India"},
+            "typeOfEmployment": {"label": "Full-time"},
+            "function": {"label": "Engineering"},
+        },
+        {
+            "id": "602",
+            "name": "Data Analyst",
+            "releasedDate": "2026-09-01T10:00:00.000Z",
+            "location": {"city": "Gurugram", "country": "in", "remote": True,
+                         "fullLocation": "Gurugram, HR, India"},
+        },
+    ],
+}  # fmt: skip
+
+
+async def test_smartrecruiters_fetches_details_only_for_new_postings() -> None:
+    from datetime import UTC, datetime
+
+    from app.jobsources.plugins.ats import SmartRecruitersPlugin
+
+    seen: list[str] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        if request.url.path.endswith("/postings"):
+            return httpx.Response(200, json=SR_LIST)
+        return httpx.Response(
+            200,
+            json={
+                "postingUrl": "https://jobs.smartrecruiters.com/SWIGGY/"
+                + request.url.path.rsplit("/", 1)[1],
+                "jobAd": {
+                    "sections": {
+                        "jobDescription": {
+                            "title": "Job Description",
+                            "text": "<p>Python and Go</p>",
+                        },
+                        "qualifications": {
+                            "title": "Qualifications",
+                            "text": "<ul><li>Kafka</li></ul>",
+                        },
+                    }
+                },
+            },
+        )
+
+    # 602 is already known with the same release date: its detail is not fetched again.
+    known = {"602": int(datetime(2026, 9, 1, 10, tzinfo=UTC).timestamp())}
+    ctx = FetchContext(
+        client_for(handle), {}, [BoardTarget("cid", "Swiggy", "swiggy")], known=known
+    )
+    [result] = [r async for r in SmartRecruitersPlugin().fetch(ctx)]
+    new, unchanged = result.postings
+    assert seen == ["/v1/companies/swiggy/postings", "/v1/companies/swiggy/postings/601"]
+    assert (new.company_name, new.country, new.workplace_hint) == ("Swiggy", "IN", "Hybrid")
+    assert "<h3>Qualifications</h3>" in new.description_html
+    assert new.apply_url.startswith("https://jobs.smartrecruiters.com/SWIGGY/601")
+    assert unchanged.details_omitted
+    assert unchanged.remote_hint is True
+
+
+async def test_arbeitnow_paginates_until_the_last_page() -> None:
+    from app.jobsources.plugins.arbeitnow import ArbeitnowPlugin
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        page = int(request.url.params["page"])
+        jobs = [
+            {
+                "slug": f"job-{page}",
+                "company_name": "Preiswecker",
+                "title": "Software Engineer",
+                "remote": page == 2,
+                "url": f"https://example.com/{page}",
+                "location": "Berlin",
+                "job_types": ["Full-time"],
+                "created_at": 1786516800,
+                "description": "<p>Go</p>",
+            }
+        ]
+        links = {"next": "https://www.arbeitnow.com/api/job-board-api?page=3"} if page < 2 else {}
+        return httpx.Response(200, json={"data": jobs, "links": links})
+
+    ctx = FetchContext(client_for(handle), {"max_pages": 5}, [])
+    results = [r async for r in ArbeitnowPlugin().fetch(ctx)]
+    assert [r.scope for r in results] == ["arbeitnow:page-1", "arbeitnow:page-2"]
+    remote = results[1].postings[0]
+    assert (remote.remote_hint, remote.employment_type, remote.location) == (
+        True,
+        "Full-time",
+        "Berlin",
+    )
+    with pytest.raises(ValueError, match="between 1 and 20"):
+        ArbeitnowPlugin().validate_config({"max_pages": 99})

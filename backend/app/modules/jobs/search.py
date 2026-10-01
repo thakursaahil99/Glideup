@@ -28,11 +28,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.db.models import Job
-from app.jobsources.geo import city_place, location_variants, parse_location, state_countries
+from app.jobsources.geo import (
+    city_place,
+    location_variants,
+    lookup_metro,
+    metro_cities,
+    metro_country,
+    parse_location,
+    state_countries,
+)
+from app.jobsources.geo_data import METROS
 
 logger = structlog.stdlib.get_logger(__name__)
 
-Sort = Literal["relevance", "newest"]
+Sort = Literal["relevance", "newest", "hiring"]
 RemoteFilter = Literal["india", "worldwide"]
 Region = Literal["india", "international"]
 FACETS = ("work_mode", "experience_level", "skills", "company", "countries", "states", "cities")
@@ -47,6 +56,7 @@ class SearchQuery:
     countries: tuple[str, ...] = ()
     states: tuple[str, ...] = ()
     cities: tuple[str, ...] = ()
+    metros: tuple[str, ...] = ()  # e.g. "Delhi NCR": expands to its member cities
     remote: RemoteFilter | None = None
     region: Region | None = None
     work_modes: tuple[str, ...] = ()
@@ -59,7 +69,15 @@ class SearchQuery:
     limit: int = 20
 
     def resolved(self) -> "SearchQuery":
-        """Turn the free-text `location` into structured filters when it can be recognised."""
+        """Expand metros into cities, and turn free-text `location` into structured filters
+        when it can be recognised."""
+        if self.metros:
+            cities = dict.fromkeys(self.cities)
+            for metro in self.metros:
+                cities.update(dict.fromkeys(metro_cities(metro)))
+            return replace(self, metros=(), cities=tuple(cities)).resolved()
+        if self.location and (found := lookup_metro(self.location)):
+            return replace(self, location=None, metros=(found,)).resolved()
         if not self.location or self.countries or self.states or self.cities:
             return self
         places = parse_location(self.location).places
@@ -109,6 +127,7 @@ def to_document(job: Job) -> dict[str, Any]:
         "employment_type": job.employment_type or "",
         "posted_ts": int((job.posted_at or job.first_seen_at).timestamp()),
         "featured": job.is_featured,
+        "company_open_roles": job.company_open_roles,
         "description": job.description_text[:4000],
     }
 
@@ -142,6 +161,16 @@ def scope_location_facets(query: SearchQuery, facets: dict[str, dict[str, int]])
         facets["cities"] = kept
 
 
+def relevant_metros(query: SearchQuery) -> list[str]:
+    """Metros worth counting for this query: those in the selected country (or all)."""
+    countries = set(query.countries)
+    if query.region == "india" or query.remote == "india":
+        countries.add(INDIA)
+    if query.region == "international":
+        return [m for m in METROS if metro_country(m) != INDIA]
+    return [m for m in METROS if not countries or metro_country(m) in countries]
+
+
 # State and city depend on country, so each level ignores its own and deeper selections.
 _DISJUNCTIVE = {
     "countries": {"countries", "states", "cities"},
@@ -173,9 +202,10 @@ class MeiliSearchBackend:
                     "work_mode", "experience_level", "skills", "company", "countries",
                     "states", "cities", "remote_scope", "posted_ts", "featured",
                 ],
-                sortable_attributes=["posted_ts", "featured"],
+                sortable_attributes=["posted_ts", "featured", "company_open_roles"],
                 ranking_rules=["words", "typo", "proximity", "attribute", "sort", "exactness"],
-                faceting=Faceting(max_values_per_facet=100),
+                # Count order, so the biggest employers are never cut off alphabetically.
+                faceting=Faceting(max_values_per_facet=100, sort_facet_values_by={"*": "count"}),
                 pagination=Pagination(max_total_hits=MAX_RESULTS),
             )
         )  # fmt: skip
@@ -215,9 +245,12 @@ class MeiliSearchBackend:
         await self.ensure_index()
         started = time.perf_counter()
         query = query.resolved()
-        sort = (
-            ["featured:desc", "posted_ts:desc"] if query.sort == "newest" or not query.q else None
-        )
+        if query.sort == "hiring":
+            sort: list[str] | None = ["featured:desc", "company_open_roles:desc", "posted_ts:desc"]
+        elif query.sort == "newest" or not query.q:
+            sort = ["featured:desc", "posted_ts:desc"]
+        else:
+            sort = None
         common: dict[str, Any] = {"query": query.q or None, "matching_strategy": "all"}
         main = SearchParams(
             index_uid=self._index_name,
@@ -235,6 +268,7 @@ class MeiliSearchBackend:
             for facet, skip in _DISJUNCTIVE.items()
             if any(getattr(query, attr) for attr in skip)
         ]
+        metros = relevant_metros(query)
         params = [main] + [
             SearchParams(
                 index_uid=self._index_name,
@@ -245,13 +279,27 @@ class MeiliSearchBackend:
             )
             for facet, skip in extra
         ]
+        for metro in metros:  # exact count per metro (a job in two NCR cities counts once)
+            members = [f"cities = {_quote(c)}" for c in metro_cities(metro)]
+            params.append(
+                SearchParams(
+                    index_uid=self._index_name,
+                    limit=0,
+                    filter=[*self._filters(query, skip={"states", "cities"}), members],
+                    **common,
+                )
+            )
         results = await self._client.multi_search(params)
         if not isinstance(results, list):  # only federated searches return a single object
             raise TypeError("Unexpected federated multi-search response")
         first = results[0]
         facets = {k: dict(v) for k, v in (first.facet_distribution or {}).items()}
-        for (facet, _), result in zip(extra, results[1:], strict=True):
+        for (facet, _), result in zip(extra, results[1 : 1 + len(extra)], strict=True):
             facets[facet] = dict((result.facet_distribution or {}).get(facet, {}))
+        facets["metros"] = {
+            metro: result.estimated_total_hits or 0
+            for metro, result in zip(metros, results[1 + len(extra) :], strict=True)
+        }
         scope_location_facets(query, facets)
         return SearchHits(
             ids=[uuid.UUID(hit["id"]) for hit in first.hits],
@@ -362,6 +410,8 @@ class DatabaseSearchBackend:
         base = self._apply_filters(select(Job.id), query)
         total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
         order: list[Any] = [Job.is_featured.desc()]
+        if query.sort == "hiring":
+            order.append(Job.company_open_roles.desc())
         if query.q and query.sort == "relevance":
             order.append(case((func.lower(Job.title).like(f"%{query.q.lower()}%"), 0), else_=1))
         order += [func.coalesce(Job.posted_at, Job.first_seen_at).desc(), Job.id]
@@ -384,6 +434,11 @@ class DatabaseSearchBackend:
             facets[name] = {str(getattr(k, "value", k)): int(n) for k, n in rows.all()}
         for facet in ("countries", "states", "cities"):
             facets[facet] = await self._location_facet(session, query, facet)
+        facets["metros"] = {}
+        for metro in relevant_metros(query):
+            members = replace(query, states=(), cities=metro_cities(metro))
+            stmt = self._apply_filters(select(func.count(Job.id)), members)
+            facets["metros"][metro] = await session.scalar(stmt) or 0
         scope_location_facets(query, facets)
         return SearchHits(
             ids=ids,

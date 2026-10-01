@@ -27,6 +27,10 @@ class Profile(TimestampMixin, Base):
     headline: Mapped[str | None] = mapped_column(String(200))
     bio: Mapped[str | None] = mapped_column(Text)
     years_experience: Mapped[Decimal | None] = mapped_column(Numeric(4, 1))
+    # Public links recruiters open from the profile. Validated to plain http(s) URLs.
+    portfolio_url: Mapped[str | None] = mapped_column(String(300))
+    linkedin_url: Mapped[str | None] = mapped_column(String(300))
+    github_url: Mapped[str | None] = mapped_column(String(300))
     target_roles: Mapped[list[str]] = mapped_column(default=list)
     preferred_locations: Mapped[list[str]] = mapped_column(default=list)
     remote_preference: Mapped[RemotePreference] = mapped_column(

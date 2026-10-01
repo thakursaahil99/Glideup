@@ -433,3 +433,28 @@ CITIES: dict[str, tuple[str, str | None, tuple[str, ...]]] = {
     "Ljubljana": ("SI", None, ()), "Reykjavík": ("IS", None, ("reykjavik",)),
     "Phnom Penh": ("KH", None, ()), "Limassol": ("CY", None, ()), "Valletta": ("MT", None, ()),
 }  # fmt: skip
+
+# Metro areas people search as one place: name -> (country, member cities, aliases).
+# Members span states (Delhi NCR = Delhi + Haryana + Uttar Pradesh), which is why a city
+# filter alone can't express them.
+METROS: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
+    "Delhi NCR": (
+        "IN",
+        ("Delhi", "New Delhi", "Noida", "Greater Noida", "Gurugram", "Ghaziabad", "Faridabad"),
+        ("ncr", "delhi ncr", "delhi-ncr", "national capital region"),
+    ),
+    "Mumbai Metropolitan Region": (
+        "IN",
+        ("Mumbai", "Navi Mumbai", "Thane"),
+        ("mmr", "mumbai mmr", "greater mumbai region"),
+    ),
+    "San Francisco Bay Area": (
+        "US",
+        (
+            "San Francisco", "San Jose", "Santa Clara", "Sunnyvale", "Mountain View",
+            "Palo Alto", "Menlo Park", "Redwood City", "Foster City", "San Mateo",
+            "Cupertino", "Oakland", "Berkeley",
+        ),
+        ("bay area", "sf bay area", "silicon valley"),
+    ),
+}  # fmt: skip

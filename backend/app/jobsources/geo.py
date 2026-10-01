@@ -10,7 +10,7 @@ after "San Francisco" is California, and "Victoria" after "Melbourne" is the Aus
 import re
 from dataclasses import dataclass, field
 
-from app.jobsources.geo_data import CITIES, COUNTRIES, STATES
+from app.jobsources.geo_data import CITIES, COUNTRIES, METROS, STATES
 
 # ------------------------------------------------------------------ lookup tables
 
@@ -291,6 +291,24 @@ def city_place(city: str) -> tuple[str, str | None] | None:
     """(country, state) of a canonical city, or None if not in the gazetteer."""
     found = _CITY_LOOKUP.get(_key(city))
     return (found[1], found[2]) if found else None
+
+
+_METRO_LOOKUP: dict[str, str] = {}
+for _metro, (_metro_country, _members, _metro_aliases) in METROS.items():
+    for _alias in (_metro, *_metro_aliases):
+        _METRO_LOOKUP[_key(_alias)] = _metro
+
+
+def lookup_metro(text: str) -> str | None:
+    return _METRO_LOOKUP.get(_key(text))
+
+
+def metro_cities(metro: str) -> tuple[str, ...]:
+    return METROS[metro][1] if metro in METROS else ()
+
+
+def metro_country(metro: str) -> str | None:
+    return METROS[metro][0] if metro in METROS else None
 
 
 def guess_country(location: str | None) -> str | None:

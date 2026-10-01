@@ -733,3 +733,86 @@ async def test_admin_source_config_is_validated(
         "/api/v1/admin/job-sources/greenhouse", json={"config": {"x": 1}}, headers=admin
     )
     assert ats.status_code == 400
+
+
+# --- unchanged postings, metros, hiring signal ---
+
+
+async def test_details_omitted_postings_only_stay_listed(
+    session: AsyncSession, fake: FakePlugin, fake_source: JobSource
+) -> None:
+    fake.scopes = {"fake:a": [posting("1", body="<p>Python</p>")]}
+    await ingest_source("fake")
+    unchanged = posting("1", body="")
+    unchanged.details_omitted = True
+    ghost = posting("never-seen")
+    ghost.details_omitted = True
+    fake.scopes = {"fake:a": [unchanged, ghost]}
+    await ingest_source("fake")
+    jobs = await jobs_by_ext(session)
+    assert set(jobs) == {"1"}  # a ghost without details is never created
+    assert jobs["1"].is_active
+    assert "Python" in jobs["1"].description_text  # details were kept, not wiped
+
+
+@pytest.fixture
+async def metro_jobs(
+    session: AsyncSession, fake: FakePlugin, fake_source: JobSource
+) -> dict[str, Job]:
+    fake.scopes = {
+        "fake:ncr": [
+            posting("noida", title="Noida Engineer", location="Noida, Uttar Pradesh"),
+            posting("ggn", title="Gurugram Engineer", company="Beta", location="Gurgaon, IND"),
+            posting("del", title="Delhi Engineer", company="Gamma", location="New Delhi"),
+            posting("both", title="NCR Engineer", company="Delta", location="Noida, UP; Gurugram, HR"),  # noqa: E501
+            posting("blr", title="Bengaluru Engineer", company="Acme", location="Bengaluru"),
+            posting("blr2", title="Platform Engineer", company="Acme", location="Bengaluru"),
+            posting("blr3", title="Data Engineer", company="Acme", location="Bengaluru"),
+        ]
+    }  # fmt: skip
+    await ingest_source("fake")
+    return await jobs_by_ext(session)
+
+
+async def test_metro_filter_and_exact_counts(
+    session: AsyncSession, metro_jobs: dict[str, Job]
+) -> None:
+    ids = {j.id: name for name, j in metro_jobs.items()}
+    hits = await search(session, metros=("Delhi NCR",))
+    assert {ids[i] for i in hits.ids} == {"noida", "ggn", "del", "both"}
+    # "both" is in two NCR cities but counted once.
+    country_hits = await search(session, countries=("IN",))
+    assert country_hits.facets["metros"]["Delhi NCR"] == 4
+    assert "San Francisco Bay Area" not in country_hits.facets["metros"]
+    # Free text works too.
+    by_text = await search(session, location="Delhi NCR")
+    assert len(by_text.ids) == 4
+
+
+async def test_company_hiring_counts_and_sort(
+    session: AsyncSession, metro_jobs: dict[str, Job]
+) -> None:
+    acme_ids = {metro_jobs[n].id for n in ("noida", "blr", "blr2", "blr3")}  # all at Acme
+    session.expire_all()
+    acme = await session.get(Job, next(iter(acme_ids)))
+    assert acme is not None
+    assert (acme.company_open_roles, acme.company_new_roles_7d) == (4, 4)
+    hits = await search(session, sort="hiring")
+    assert set(hits.ids[:4]) == acme_ids  # the company with most open roles leads
+
+
+async def test_api_hiring_fields_and_metro_validation(
+    client: AsyncClient, login: LoginFn, metro_jobs: dict[str, Job]
+) -> None:
+    headers = await login("seeker@example.com")
+    body = (
+        await client.get("/api/v1/jobs", params={"sort": "hiring", "limit": 1}, headers=headers)
+    ).json()
+    card = body["items"][0]
+    assert (card["company_name"], card["company_open_roles"]) == ("Acme", 4)
+    assert card["hiring_actively"] is False  # 4 roles is not "actively hiring"
+    ncr = (await client.get("/api/v1/jobs", params={"metro": "Delhi NCR"}, headers=headers)).json()
+    assert ncr["total"] == 4
+    bad = await client.get("/api/v1/jobs", params={"metro": "Atlantis"}, headers=headers)
+    assert bad.status_code == 400
+    assert bad.json()["error"]["code"] == "invalid_metro"

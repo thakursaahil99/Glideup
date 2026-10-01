@@ -38,6 +38,9 @@ async def update(
     headline: str | None,
     bio: str | None,
     years_experience: float | None,
+    portfolio_url: str | None,
+    linkedin_url: str | None,
+    github_url: str | None,
     target_roles: list[str],
     preferred_locations: list[str],
     remote_preference: RemotePreference,
@@ -51,6 +54,10 @@ async def update(
     profile.years_experience = (
         Decimal(str(years_experience)) if years_experience is not None else None
     )
+    # Already normalized and validated by the request schema.
+    profile.portfolio_url = portfolio_url
+    profile.linkedin_url = linkedin_url
+    profile.github_url = github_url
     profile.target_roles = _clean_list(target_roles, 10)
     profile.preferred_locations = _clean_list(preferred_locations, 10)
     profile.remote_preference = remote_preference

@@ -1905,6 +1905,17 @@
             "title": "Email",
             "type": "string"
           },
+          "github_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Url"
+          },
           "has_resume": {
             "title": "Has Resume",
             "type": "boolean"
@@ -1920,6 +1931,17 @@
             ],
             "title": "Headline"
           },
+          "linkedin_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkedin Url"
+          },
           "name": {
             "anyOf": [
               {
@@ -1934,6 +1956,17 @@
           "onboarding_completed": {
             "title": "Onboarding Completed",
             "type": "boolean"
+          },
+          "portfolio_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio Url"
           },
           "preferred_locations": {
             "items": {
@@ -1970,6 +2003,9 @@
           "headline",
           "bio",
           "years_experience",
+          "portfolio_url",
+          "linkedin_url",
+          "github_url",
           "target_roles",
           "preferred_locations",
           "remote_preference",
@@ -1998,6 +2034,18 @@
             "title": "Complete Onboarding",
             "type": "boolean"
           },
+          "github_url": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Url"
+          },
           "headline": {
             "anyOf": [
               {
@@ -2010,6 +2058,18 @@
             ],
             "title": "Headline"
           },
+          "linkedin_url": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkedin Url"
+          },
           "name": {
             "anyOf": [
               {
@@ -2021,6 +2081,18 @@
               }
             ],
             "title": "Name"
+          },
+          "portfolio_url": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio Url"
           },
           "preferred_locations": {
             "items": {

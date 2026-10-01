@@ -30,7 +30,9 @@ async def ensure_sources(session: AsyncSession) -> list[JobSource]:
                 name=plugin.name,
                 enabled=key not in DISABLED_BY_DEFAULT,
                 schedule_minutes=360,
-                rate_limit_per_minute=30 if key == "adzuna" else 60,
+                rate_limit_per_minute={"adzuna": 30, "arbeitnow": 20, "smartrecruiters": 120}.get(
+                    key, 60
+                ),
                 config={},
             )
             session.add(source)
@@ -67,9 +69,7 @@ async def import_companies(session: AsyncSession, rows: list[dict[str, str]]) ->
             row.get("board_token", ""),
         )
         if not name or ats not in ATS._value2member_map_ or not _TOKEN.match(token):
-            result.errors.append(
-                f"row {number}: need name, ats (greenhouse|lever|ashby), board_token"
-            )
+            result.errors.append(f"row {number}: need name, ats ({'|'.join(ATS)}), board_token")
             result.skipped += 1
             continue
         company = await session.scalar(

@@ -1260,14 +1260,20 @@ export interface components {
             bio: string | null;
             /** Email */
             email: string;
+            /** Github Url */
+            github_url: string | null;
             /** Has Resume */
             has_resume: boolean;
             /** Headline */
             headline: string | null;
+            /** Linkedin Url */
+            linkedin_url: string | null;
             /** Name */
             name: string | null;
             /** Onboarding Completed */
             onboarding_completed: boolean;
+            /** Portfolio Url */
+            portfolio_url: string | null;
             /** Preferred Locations */
             preferred_locations: string[];
             remote_preference: components["schemas"]["RemotePreference"];
@@ -1285,10 +1291,16 @@ export interface components {
              * @default false
              */
             complete_onboarding: boolean;
+            /** Github Url */
+            github_url?: string | null;
             /** Headline */
             headline?: string | null;
+            /** Linkedin Url */
+            linkedin_url?: string | null;
             /** Name */
             name?: string | null;
+            /** Portfolio Url */
+            portfolio_url?: string | null;
             /** Preferred Locations */
             preferred_locations?: string[];
             /** @default any */

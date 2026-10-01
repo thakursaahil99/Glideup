@@ -34,6 +34,9 @@ def to_profile_out(user: User, profile: Profile, *, has_resume: bool) -> Profile
         years_experience=float(profile.years_experience)
         if profile.years_experience is not None
         else None,
+        portfolio_url=profile.portfolio_url,
+        linkedin_url=profile.linkedin_url,
+        github_url=profile.github_url,
         target_roles=profile.target_roles,
         preferred_locations=profile.preferred_locations,
         remote_preference=profile.remote_preference,
@@ -63,6 +66,9 @@ async def update_profile(body: ProfileUpdate, session: SessionDep, user: Current
         headline=body.headline,
         bio=body.bio,
         years_experience=body.years_experience,
+        portfolio_url=body.portfolio_url,
+        linkedin_url=body.linkedin_url,
+        github_url=body.github_url,
         target_roles=body.target_roles,
         preferred_locations=body.preferred_locations,
         remote_preference=body.remote_preference,

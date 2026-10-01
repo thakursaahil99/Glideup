@@ -13,6 +13,7 @@ from app.db.models.jobs import (
     WorkMode,
 )
 from app.db.models.llm import LLMUsage
+from app.db.models.portfolio import AnalysisStatus, PortfolioAnalysis, PortfolioKind
 from app.db.models.profile import Profile, RemotePreference
 from app.db.models.resume import EMBEDDING_DIMENSIONS, Resume, ResumeSkill, ResumeStatus
 from app.db.models.user import RefreshToken, Role, User, UserRole, UserStatus
@@ -20,6 +21,7 @@ from app.db.models.user import RefreshToken, Role, User, UserRole, UserStatus
 __all__ = [
     "ATS",
     "EMBEDDING_DIMENSIONS",
+    "AnalysisStatus",
     "AuditLog",
     "Company",
     "ExperienceLevel",
@@ -27,6 +29,8 @@ __all__ = [
     "Job",
     "JobSource",
     "LLMUsage",
+    "PortfolioAnalysis",
+    "PortfolioKind",
     "Profile",
     "RefreshToken",
     "RemotePreference",

@@ -2,11 +2,24 @@
 
 from app.jobsources.base import JobSourcePlugin
 from app.jobsources.plugins.adzuna import AdzunaPlugin
-from app.jobsources.plugins.ats import AshbyPlugin, GreenhousePlugin, LeverPlugin
+from app.jobsources.plugins.arbeitnow import ArbeitnowPlugin
+from app.jobsources.plugins.ats import (
+    AshbyPlugin,
+    GreenhousePlugin,
+    LeverPlugin,
+    SmartRecruitersPlugin,
+)
 
 PLUGINS: dict[str, JobSourcePlugin] = {
     plugin.key: plugin
-    for plugin in (GreenhousePlugin(), LeverPlugin(), AshbyPlugin(), AdzunaPlugin())
+    for plugin in (
+        GreenhousePlugin(),
+        LeverPlugin(),
+        AshbyPlugin(),
+        SmartRecruitersPlugin(),
+        AdzunaPlugin(),
+        ArbeitnowPlugin(),
+    )
 }
 
 # Sources that are disabled until an admin turns them on (e.g. they need an API key).

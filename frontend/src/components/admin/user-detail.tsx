@@ -24,6 +24,20 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+/** Links are validated server-side to plain http(s) URLs before they are stored. */
+function ExternalLink({ href }: { href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      className="break-all text-primary underline-offset-2 hover:underline"
+    >
+      {href.replace(/^https?:\/\/(www\.)?/, "")}
+    </a>
+  );
+}
+
 export function AdminUserDetail({ userId }: { userId: string }) {
   const query = useQuery({
     queryKey: ["admin", "user", userId],
@@ -87,6 +101,18 @@ export function AdminUserDetail({ userId }: { userId: string }) {
                       <Field
                         label="Experience"
                         value={profile?.years_experience != null ? `${profile.years_experience} years` : null}
+                      />
+                      <Field
+                        label="Portfolio"
+                        value={profile?.portfolio_url && <ExternalLink href={profile.portfolio_url} />}
+                      />
+                      <Field
+                        label="LinkedIn"
+                        value={profile?.linkedin_url && <ExternalLink href={profile.linkedin_url} />}
+                      />
+                      <Field
+                        label="GitHub"
+                        value={profile?.github_url && <ExternalLink href={profile.github_url} />}
                       />
                       <Field label="Target roles" value={profile?.target_roles.join(", ")} />
                       <Field label="Locations" value={profile?.preferred_locations.join(", ")} />

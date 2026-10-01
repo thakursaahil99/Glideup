@@ -19,6 +19,7 @@ from app.llm import prompts
 from app.llm.factory import get_gateway
 from app.llm.routing import Task
 from app.llm.types import AllProvidersFailedError, CallContext
+from app.modules.profiles import links
 from app.modules.resumes import heuristics  # noqa: F401  (registers the mock parser)
 from app.modules.resumes.grounding import ground
 from app.modules.resumes.pdf import InvalidPdfError, extract_text, inspect_pdf
@@ -225,6 +226,9 @@ async def _prefill_profile(session: AsyncSession, user_id: uuid.UUID, parsed: Pa
         profile.years_experience = Decimal(str(parsed.total_years_experience))
     if not profile.preferred_locations and parsed.location:
         profile.preferred_locations = [parsed.location]
+    for field, url in links.classify(parsed.links).items():
+        if not getattr(profile, field):
+            setattr(profile, field, url)
 
 
 # ------------------------------------------------------------------ background jobs

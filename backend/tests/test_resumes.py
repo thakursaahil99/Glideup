@@ -69,6 +69,7 @@ async def test_upload_parses_resume_in_background(
     # Empty profile fields were prefilled from the resume.
     profile = (await client.get("/api/v1/users/me/profile", headers=headers)).json()
     assert profile["years_experience"] == 7
+    assert profile["github_url"] == "https://github.com/ashaverma"
     assert profile["has_resume"] is True
 
 
@@ -318,6 +319,72 @@ async def test_profile_defaults_and_update(client: AsyncClient, login: LoginFn) 
     assert updated["headline"] == "Backend Engineer"
     assert updated["target_roles"] == ["Backend Engineer", "SRE"]
     assert updated["onboarding_completed"] is True
+    assert updated["portfolio_url"] is None
+
+
+async def test_profile_links_are_normalized(client: AsyncClient, login: LoginFn) -> None:
+    headers = await login("asha@example.com")
+    response = await client.put(
+        "/api/v1/users/me/profile",
+        json={
+            "portfolio_url": " ashaverma.dev/work ",
+            "linkedin_url": "https://in.linkedin.com/in/asha",
+            "github_url": "www.github.com/asha",
+        },
+        headers=headers,
+    )
+    assert response.status_code == 200, response.text
+    profile = response.json()
+    assert profile == profile | {
+        "portfolio_url": "https://ashaverma.dev/work",
+        "linkedin_url": "https://in.linkedin.com/in/asha",
+        "github_url": "https://www.github.com/asha",
+    }
+
+    # A blank field clears the link.
+    response = await client.put(
+        "/api/v1/users/me/profile", json={"portfolio_url": "  "}, headers=headers
+    )
+    assert response.json()["portfolio_url"] is None
+
+
+async def test_profile_links_reject_unsafe_or_wrong_sites(
+    client: AsyncClient, login: LoginFn
+) -> None:
+    headers = await login("asha@example.com")
+    response = await client.put(
+        "/api/v1/users/me/profile",
+        json={
+            "portfolio_url": "javascript:alert(1)",
+            "linkedin_url": "https://github.com/asha",
+            "github_url": "https://evilgithub.com/asha",
+        },
+        headers=headers,
+    )
+    assert response.status_code == 422
+    assert {d["loc"][-1] for d in response.json()["error"]["details"]} == {
+        "portfolio_url",
+        "linkedin_url",
+        "github_url",
+    }
+
+
+def test_resume_links_are_classified() -> None:
+    from app.modules.profiles.links import classify
+
+    assert classify(
+        [
+            "linkedin.com/in/asha",
+            "github.com/asha",
+            "github.com/asha/second",
+            "asha.dev",
+            "javascript:alert(1)",
+        ]
+    ) == {
+        "linkedin_url": "https://linkedin.com/in/asha",
+        "github_url": "https://github.com/asha",
+        "portfolio_url": "https://asha.dev",
+    }
 
 
 async def test_profile_validation(client: AsyncClient, login: LoginFn) -> None:

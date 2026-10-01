@@ -5,6 +5,7 @@ the company's official application page.
 - Greenhouse: https://developers.greenhouse.io/job-board.html
 - Lever:      https://github.com/lever/postings-api
 - Ashby:      https://developers.ashbyhq.com/docs/public-job-posting-api
+- SmartRecruiters: https://developers.smartrecruiters.com/docs/posting-api
 """
 
 from collections.abc import AsyncIterator, Callable
@@ -206,8 +207,75 @@ def _ashby_salary(compensation: dict[str, Any]) -> dict[str, Any]:
     return {}
 
 
+SMARTRECRUITERS_SECTIONS = (
+    "jobDescription",
+    "qualifications",
+    "additionalInformation",
+    "companyDescription",
+)
+
+
+class SmartRecruitersPlugin(_ATSPlugin):
+    """The list endpoint has no descriptions, so each posting needs a detail request.
+    Postings whose release date we already have are not re-fetched (see FetchContext.known),
+    which keeps a 400-job board to a handful of requests on a normal run."""
+
+    key = "smartrecruiters"
+    name = "SmartRecruiters job boards"
+    PAGE = 100
+    MAX_POSTINGS = 2000
+
+    async def _read_board(self, ctx: FetchContext, board: BoardTarget) -> list[Posting]:
+        base = f"https://api.smartrecruiters.com/v1/companies/{board.board_token}/postings"
+        listing: list[dict[str, Any]] = []
+        for offset in range(0, self.MAX_POSTINGS, self.PAGE):
+            page = await ctx.http.get_json(base, params={"limit": self.PAGE, "offset": offset})
+            content = page.get("content") or []
+            listing.extend(content)
+            if len(content) < self.PAGE or offset + self.PAGE >= int(page.get("totalFound") or 0):
+                break
+
+        postings = []
+        for item in listing:
+            external_id = str(item["id"])
+            released = _dt(item.get("releasedDate"))
+            location = item.get("location") or {}
+            posting = Posting(
+                external_id=external_id,
+                title=item.get("name") or "Untitled role",
+                company_name=board.name,
+                apply_url=f"https://jobs.smartrecruiters.com/{board.board_token}/{external_id}",
+                location=location.get("fullLocation")
+                or ", ".join(filter(None, [location.get("city"), location.get("country")])),
+                country=(location.get("country") or "").upper() or None,
+                remote_hint=True if location.get("remote") else None,
+                workplace_hint="Hybrid" if location.get("hybrid") else None,
+                employment_type=(item.get("typeOfEmployment") or {}).get("label"),
+                department=(item.get("department") or {}).get("label")
+                or (item.get("function") or {}).get("label"),
+                posted_at=released,
+            )
+            known = ctx.known.get(external_id)
+            if known is not None and released is not None and known == int(released.timestamp()):
+                posting.details_omitted = True  # unchanged since our last run
+            else:
+                detail = await ctx.http.get_json(f"{base}/{external_id}")
+                sections = ((detail.get("jobAd") or {}).get("sections")) or {}
+                posting.description_html = "".join(
+                    f"<h3>{part.get('title')}</h3>{part.get('text')}"
+                    if part.get("title")
+                    else str(part.get("text") or "")
+                    for key in SMARTRECRUITERS_SECTIONS
+                    if (part := sections.get(key)) and part.get("text")
+                )
+                posting.apply_url = detail.get("postingUrl") or posting.apply_url
+            postings.append(posting)
+        return postings
+
+
 ATS_PLUGINS: dict[str, Callable[[], _ATSPlugin]] = {
     "greenhouse": GreenhousePlugin,
     "lever": LeverPlugin,
     "ashby": AshbyPlugin,
+    "smartrecruiters": SmartRecruitersPlugin,
 }

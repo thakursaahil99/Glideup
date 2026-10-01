@@ -33,6 +33,7 @@ celery_app.conf.update(
 celery_app.conf.include = [
     "app.workers.tasks",
     "app.modules.resumes.tasks",
+    "app.modules.portfolio.tasks",
     "app.modules.jobs.tasks",
 ]
 
