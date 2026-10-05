@@ -6,6 +6,7 @@ import { useState, type KeyboardEvent } from "react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 
+import { ReportProblem } from "@/components/report-problem";
 import { DIFFICULTY_VARIANT } from "@/components/tests/problems-list";
 import { ErrorState } from "@/components/states";
 import { Button } from "@/components/ui/button";
@@ -188,6 +189,7 @@ function Solver({ problem, initialLanguage }: { problem: ProblemDetail; initialL
           Plus {problem.hidden_tests} hidden tests when you submit. Read from standard input; print to
           standard output.
         </p>
+        <ReportProblem kind="wrong_question" targetType="question" targetId={problem.slug} />
       </Card>
 
       <div className="space-y-4">

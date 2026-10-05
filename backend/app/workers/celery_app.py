@@ -32,6 +32,7 @@ celery_app.conf.update(
         "embed-pending-jobs": {"task": "matching.embed_jobs", "schedule": 900.0},
         # Finishes interviews whose time ran out with nobody connected (and queues reports).
         "expire-interviews": {"task": "interviews.expire", "schedule": 300.0},
+        "send-due-reminders": {"task": "tracker.send_reminders", "schedule": 300.0},
     },
 )
 celery_app.conf.include = [
@@ -43,6 +44,7 @@ celery_app.conf.include = [
     "app.modules.interviews.tasks",
     "app.modules.coding.tasks",
     "app.modules.skills.tasks",
+    "app.modules.tracker.tasks",
 ]
 
 

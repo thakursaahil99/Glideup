@@ -9,11 +9,11 @@ GlideUp is an AI-powered platform that matches your resume to real jobs, shows y
 runs job-specific mock interviews and coding tests in many languages and frameworks, and tracks
 your applications — from job search to offer.
 
-> **Status:** Phase 7 of 10. Timed React and FastAPI tests (MCQ, code review, viva,
-> mini-project) turn into verified skill levels and badges on your profile, alongside coding
-> problems in six languages graded in a sandbox (Phase 6), AI mock interviews (Phase 5), match
-> scores (Phase 4), the job board (Phase 3), resume parsing (Phase 2) and the foundation
-> (Phase 1). See the [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
+> **Status:** Phase 8 of 10. The full journey works end to end: resume → matched jobs →
+> skill gaps → mock interviews and tests → feedback → tracked applications with reminders,
+> all on one dashboard (score trend, skill radar, streak, next step), with voice mode and an
+> installable app. Phases 1-7 built the foundation, resume parsing, job board, matching,
+> interviews, coding and framework tests. See the [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
 
 ## Architecture
 
@@ -189,6 +189,16 @@ item by item against hidden rubrics, with the score computed by GlideUp. Results
 coding problems become **verified skills** and **badges** on your profile. Frameworks and
 their questions are managed in **Admin → Question Bank**. Design:
 [ADR 0012](docs/adr/0012-framework-tests-skills-badges.md).
+
+### Tracker, dashboard and app
+
+**Tracker** is a Kanban board of your applications (track jobs from the board or add your
+own), with a timeline and email reminders. The **dashboard** shows your pipeline, interview
+score trend, skill radar, weak topics, practice streak and a recommended next step. In
+interviews, **Speak** dictates your answer and **Read aloud** reads the interviewer (Web
+Speech API). GlideUp installs as an app (PWA). Users can **report a problem** from jobs,
+problems and reports; admins handle the queue in **Admin → User Reports**. Design:
+[ADR 0013](docs/adr/0013-tracker-dashboard-voice-pwa.md).
 
 ### Running without Docker
 

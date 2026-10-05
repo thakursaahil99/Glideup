@@ -126,3 +126,21 @@ export type FrameworkSummary = Schemas["FrameworkOut"];
 export type FrameworkAttempt = Schemas["AttemptOut"];
 export type AttemptQuestion = Schemas["AttemptQuestion"];
 export type SkillsOverview = Schemas["SkillsOverview"];
+
+export type Application = Schemas["ApplicationOut"];
+export type ApplicationStatus = Application["status"];
+export type Reminder = Schemas["ReminderOut"];
+export type DashboardData = Schemas["DashboardOut"];
+export type UserReport = Schemas["UserReportOut"];
+export type AdminUserReport = Schemas["AdminUserReportOut"];
+export type ReportKind = UserReport["kind"];
+
+export const APPLICATION_COLUMNS: { status: ApplicationStatus; label: string }[] = [
+  { status: "saved", label: "Saved" },
+  { status: "applied", label: "Applied" },
+  { status: "screening", label: "Screening" },
+  { status: "interviewing", label: "Interviewing" },
+  { status: "offer", label: "Offer" },
+  { status: "rejected", label: "Rejected" },
+  { status: "withdrawn", label: "Withdrawn" },
+];

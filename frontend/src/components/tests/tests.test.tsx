@@ -76,7 +76,8 @@ vi.mock("@/lib/api/problems", async (original) => ({
   useMySubmissions: () => ({ data: [] }),
 }));
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => "/tests/two-sum" }));
+vi.mock("@/lib/api/tracker", () => ({ useReportProblem: () => ({ mutate: vi.fn(), isPending: false }) }));
 
 vi.mock("@/lib/api/skills", () => ({
   useFrameworks: () => ({ data: [], isPending: false, isError: false }),

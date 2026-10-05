@@ -6,6 +6,8 @@ import Link from "next/link";
 import { HiringBadge, levelLabel, postedAgo, SaveButton, workModeLabel } from "@/components/jobs/job-card";
 import { remoteLabel } from "@/components/jobs/location-filters";
 import { MatchCard, PrepareCard, SkillGapCoach } from "@/components/matching/match-panel";
+import { ReportProblem } from "@/components/report-problem";
+import { TrackButton } from "@/components/tracker/track-button";
 import { ErrorState } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,8 +73,12 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                 </a>
               </Button>
               <SaveButton job={job} size="default" />
+              <TrackButton jobId={job.id} />
             </div>
-            {job.attribution && <p className="mt-3 text-xs text-muted-foreground">{job.attribution}</p>}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              {job.attribution && <p className="text-xs text-muted-foreground">{job.attribution}</p>}
+              <ReportProblem kind="broken_job_link" targetType="job" targetId={job.id} />
+            </div>
           </header>
 
           <SkillGapCoach jobId={job.id} />

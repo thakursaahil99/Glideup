@@ -45,12 +45,24 @@ from app.db.models.skills import (
     SkillScore,
     UserBadge,
 )
+from app.db.models.tracker import (
+    Application,
+    ApplicationEvent,
+    ApplicationStatus,
+    Reminder,
+    ReportKind,
+    ReportState,
+    UserReport,
+)
 from app.db.models.user import RefreshToken, Role, User, UserRole, UserStatus
 
 __all__ = [
     "ATS",
     "EMBEDDING_DIMENSIONS",
     "AnalysisStatus",
+    "Application",
+    "ApplicationEvent",
+    "ApplicationStatus",
     "AttemptStatus",
     "AuditLog",
     "Company",
@@ -81,7 +93,10 @@ __all__ = [
     "QuestionStatus",
     "QuestionTemplate",
     "RefreshToken",
+    "Reminder",
     "RemotePreference",
+    "ReportKind",
+    "ReportState",
     "ReportStatus",
     "Resume",
     "ResumeSkill",
@@ -94,6 +109,7 @@ __all__ = [
     "TestCase",
     "User",
     "UserBadge",
+    "UserReport",
     "UserRole",
     "UserStatus",
     "Verdict",

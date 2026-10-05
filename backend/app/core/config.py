@@ -127,6 +127,15 @@ class Settings(BaseSettings):
     judge0_auth_token: SecretStr | None = None
     code_runner_concurrency: int = Field(default=4, ge=1, le=32)  # test cases run in parallel
     submissions_per_minute: int = Field(default=10, ge=1)
+
+    # --- Email (reminders). Empty host = email disabled; Compose points it at Mailpit. ---
+    smtp_host: str | None = None
+    smtp_port: int = 1025
+    smtp_from: str = "GlideUp <no-reply@glideup.local>"
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_starttls: bool = False
+    web_url: str = "http://localhost:3000"  # links in emails
     mock_llm_delay_ms: int = 0
     mock_llm_error_rate: float = Field(default=0.0, ge=0.0, le=1.0)
     circuit_breaker_failure_threshold: int = 3

@@ -37,7 +37,7 @@ export const APP_NAV: NavItem[] = [
   { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness },
   { label: "Interviews", href: "/interviews", icon: MessagesSquare },
   { label: "Tests", href: "/tests", icon: Code2 },
-  { label: "Tracker", href: "/tracker", icon: KanbanSquare, phase: 8 },
+  { label: "Tracker", href: "/tracker", icon: KanbanSquare },
 ];
 
 export const ADMIN_NAV: NavItem[] = [
@@ -88,7 +88,6 @@ export const ADMIN_NAV: NavItem[] = [
     href: "/admin/reports",
     icon: MessageSquareWarning,
     permission: "reports:read",
-    phase: 8,
   },
   { label: "System Health", href: "/admin/health", icon: HeartPulse, permission: "system:read", phase: 9 },
   { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText, permission: "audit:read" },

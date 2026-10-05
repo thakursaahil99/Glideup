@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
+import { PwaRegister } from "@/components/pwa-register";
 
 import "./globals.css";
 
@@ -14,7 +15,8 @@ export const metadata: Metadata = {
     "GlideUp matches your resume to real jobs, shows your skill gaps, runs job-specific mock interviews and coding tests, and tracks your applications — from job search to offer.",
   applicationName: "GlideUp",
   authors: [{ name: "Sahil Thakur" }],
-  icons: { icon: "/icons/logo.svg" },
+  icons: { icon: "/icons/logo.svg", apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "GlideUp", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -35,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <Providers>{children}</Providers>
+        <PwaRegister />
       </body>
     </html>
   );

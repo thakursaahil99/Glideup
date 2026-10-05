@@ -8,6 +8,6 @@ export { auth as proxy } from "@/auth";
 export const config = {
   // Pages only: skip Next internals, static files and API routes (the BFF refreshes itself).
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|icons|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|webp|ico)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|icons|manifest.webmanifest|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|webp|ico)$).*)",
   ],
 };

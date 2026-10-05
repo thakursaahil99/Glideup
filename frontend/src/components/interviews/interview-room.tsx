@@ -6,13 +6,19 @@ import {
   Flag,
   Lightbulb,
   Loader2,
+  Mic,
+  MicOff,
   Play,
   SendHorizontal,
   SkipForward,
+  Volume2,
+  VolumeX,
   WifiOff,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+
+import { speak, speechInputSupported, speechOutputSupported, stopSpeaking, useDictation } from "@/lib/speech";
 
 import { ErrorState } from "@/components/states";
 import { Button } from "@/components/ui/button";
@@ -122,6 +128,18 @@ function Room({ detail }: { detail: InterviewDetail }) {
   const [draft, setDraft] = useState("");
   const [panel, setPanel] = useState("");
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [readAloud, setReadAloud] = useState(false);
+  const dictation = useDictation((text) => setDraft((d) => (d ? `${d} ${text}` : text)));
+  const lastSpoken = useRef<string | null>(null);
+  const lastMessage = state.messages.at(-1);
+  // Voice mode: read each new interviewer message aloud.
+  useEffect(() => {
+    if (!readAloud || !lastMessage || lastMessage.role !== "interviewer") return;
+    if (lastSpoken.current === lastMessage.id) return;
+    lastSpoken.current = lastMessage.id;
+    speak(lastMessage.content);
+  }, [readAloud, lastMessage]);
+  useEffect(() => () => stopSpeaking(), []);
   const kind = interview.current_kind;
   const showPanel = interview.status === "in_progress" && (kind === "coding" || kind === "design");
   const canAct = state.connection === "open" && !state.busy && interview.status === "in_progress";
@@ -177,9 +195,9 @@ function Room({ detail }: { detail: InterviewDetail }) {
         )}
       </header>
 
-      {state.error && (
+      {(state.error || dictation.error) && (
         <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-          {state.error}
+          {state.error ?? dictation.error}
         </p>
       )}
 
@@ -223,6 +241,32 @@ function Room({ detail }: { detail: InterviewDetail }) {
                   maxLength={6000}
                 />
                 <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {speechInputSupported() && (
+                    <Button
+                      type="button"
+                      variant={dictation.listening ? "sunrise" : "ghost"}
+                      size="sm"
+                      aria-pressed={dictation.listening}
+                      onClick={dictation.listening ? dictation.stop : dictation.start}
+                    >
+                      {dictation.listening ? <MicOff /> : <Mic />} {dictation.listening ? "Stop" : "Speak"}
+                    </Button>
+                  )}
+                  {speechOutputSupported() && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      aria-pressed={readAloud}
+                      onClick={() => {
+                        if (readAloud) stopSpeaking();
+                        else lastSpoken.current = lastMessage?.id ?? null; // only new messages
+                        setReadAloud(!readAloud);
+                      }}
+                    >
+                      {readAloud ? <Volume2 /> : <VolumeX />} Read aloud
+                    </Button>
+                  )}
                   <Button type="button" variant="ghost" size="sm" onClick={room.hint} disabled={!canAct}>
                     <Lightbulb /> Hint
                   </Button>
