@@ -58,6 +58,7 @@ def settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
             "interview_hint": ["mock:mock-1"],
             "interview_report": ["mock:mock-1"],
             "question_generate": ["mock:mock-1"],
+            "framework_grade": ["mock:mock-1"],
             "embedding": ["mock:mock-1"],
         },
         llm_allow_mock_fallback=True,

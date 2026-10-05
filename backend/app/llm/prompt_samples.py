@@ -83,4 +83,15 @@ SAMPLES: dict[str, dict[str, Any]] = {
         ],
     },
     "question_generate": {"topic": "sliding window", "difficulty": "medium"},
+    "framework_grade": {
+        "framework": "React",
+        "question_type": "viva",
+        "statement": "When does a React component re-render?",
+        "code": "",
+        "items": [
+            {"key": "state", "description": "Its state changes"},
+            {"key": "parent", "description": "Its parent re-renders"},
+        ],
+        "answer": "When state changes or the parent renders again.",
+    },
 }

@@ -38,16 +38,26 @@ from app.db.models.portfolio import AnalysisStatus, PortfolioAnalysis, Portfolio
 from app.db.models.profile import Profile, RemotePreference
 from app.db.models.prompts import PromptTemplate, PromptTemplateVersion
 from app.db.models.resume import EMBEDDING_DIMENSIONS, Resume, ResumeSkill, ResumeStatus
+from app.db.models.skills import (
+    AttemptStatus,
+    Framework,
+    FrameworkAttempt,
+    SkillScore,
+    UserBadge,
+)
 from app.db.models.user import RefreshToken, Role, User, UserRole, UserStatus
 
 __all__ = [
     "ATS",
     "EMBEDDING_DIMENSIONS",
     "AnalysisStatus",
+    "AttemptStatus",
     "AuditLog",
     "Company",
     "Difficulty",
     "ExperienceLevel",
+    "Framework",
+    "FrameworkAttempt",
     "GenerationStatus",
     "IngestionRun",
     "Interview",
@@ -79,9 +89,11 @@ __all__ = [
     "Role",
     "RunStatus",
     "SavedJob",
+    "SkillScore",
     "Submission",
     "TestCase",
     "User",
+    "UserBadge",
     "UserRole",
     "UserStatus",
     "Verdict",

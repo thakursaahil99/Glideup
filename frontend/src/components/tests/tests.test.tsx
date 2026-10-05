@@ -29,7 +29,15 @@ const runResult: RunResult = {
   compile_output: null,
   max_time_ms: 10,
   results: [
-    { position: 0, hidden: false, verdict: "wrong_answer", input: "4 9", expected: "0 1", stdout: "1 0", time_ms: 10 },
+    {
+      position: 0,
+      hidden: false,
+      verdict: "wrong_answer",
+      input: "4 9",
+      expected: "0 1",
+      stdout: "1 0",
+      time_ms: 10,
+    },
     { position: 1, hidden: true, verdict: "accepted", time_ms: 9 },
   ],
 };
@@ -41,8 +49,22 @@ vi.mock("@/lib/api/problems", async (original) => ({
   ...(await original<typeof import("@/lib/api/problems")>()),
   useProblems: () => ({
     data: [
-      { slug: "two-sum", title: "Two Sum", difficulty: "easy", topics: ["arrays"], solved: true, attempted: true },
-      { slug: "edit-distance", title: "Edit Distance", difficulty: "hard", topics: ["dp"], solved: false, attempted: false },
+      {
+        slug: "two-sum",
+        title: "Two Sum",
+        difficulty: "easy",
+        topics: ["arrays"],
+        solved: true,
+        attempted: true,
+      },
+      {
+        slug: "edit-distance",
+        title: "Edit Distance",
+        difficulty: "hard",
+        topics: ["dp"],
+        solved: false,
+        attempted: false,
+      },
     ],
     isPending: false,
     isError: false,
@@ -52,6 +74,13 @@ vi.mock("@/lib/api/problems", async (original) => ({
   useSubmitCode: () => ({ mutate: submit, isPending: false }),
   useSubmission: () => ({ data: undefined }),
   useMySubmissions: () => ({ data: [] }),
+}));
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+
+vi.mock("@/lib/api/skills", () => ({
+  useFrameworks: () => ({ data: [], isPending: false, isError: false }),
+  useStartAttempt: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 beforeEach(() => {

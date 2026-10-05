@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
+import { SkillsCard } from "@/components/profile/skills-card";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { ParseStatus } from "@/components/resume/parse-status";
 import { ResumeDetails } from "@/components/resume/resume-details";
@@ -201,6 +202,7 @@ export function ProfilePage() {
             </CardContent>
           </Card>
           <ResumeHistory />
+          <SkillsCard />
         </div>
 
         <Card className="h-fit">

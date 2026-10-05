@@ -9,12 +9,11 @@ GlideUp is an AI-powered platform that matches your resume to real jobs, shows y
 runs job-specific mock interviews and coding tests in many languages and frameworks, and tracks
 your applications — from job search to offer.
 
-> **Status:** Phase 6 of 10. Coding tests in six languages graded in a sandbox against hidden
-> tests, with an admin question bank and an AI generation queue whose questions are validated
-> by running their reference solutions. Before that: AI mock interviews with reports (Phase 5),
-> match scores and a skill-gap coach (Phase 4), the job board (Phase 3), resume parsing
-> (Phase 2) and the foundation (Phase 1). See the
-> [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
+> **Status:** Phase 7 of 10. Timed React and FastAPI tests (MCQ, code review, viva,
+> mini-project) turn into verified skill levels and badges on your profile, alongside coding
+> problems in six languages graded in a sandbox (Phase 6), AI mock interviews (Phase 5), match
+> scores (Phase 4), the job board (Phase 3), resume parsing (Phase 2) and the foundation
+> (Phase 1). See the [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
 
 ## Architecture
 
@@ -181,6 +180,15 @@ Admins manage problems, languages and limits in **Admin → Question Bank**, and
 problems in **Admin → AI Generation Queue**: the model writes the problem and a reference
 solution, and the sandbox produces the expected outputs. Design:
 [ADR 0011](docs/adr/0011-code-sandbox-and-question-bank.md).
+
+### Framework tests and skills
+
+**Tests → Framework tests** runs a timed React or FastAPI test: multiple choice, a code
+review, viva questions and a mini-project. MCQs are graded exactly; the others are judged
+item by item against hidden rubrics, with the score computed by GlideUp. Results and solved
+coding problems become **verified skills** and **badges** on your profile. Frameworks and
+their questions are managed in **Admin → Question Bank**. Design:
+[ADR 0012](docs/adr/0012-framework-tests-skills-badges.md).
 
 ### Running without Docker
 

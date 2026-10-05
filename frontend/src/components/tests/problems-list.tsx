@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { FrameworkTests } from "@/components/tests/framework-tests";
 import { EmptyState, ErrorState } from "@/components/states";
 import { Card } from "@/components/ui/card";
 import { Badge, Skeleton } from "@/components/ui/primitives";
@@ -23,9 +24,11 @@ export function ProblemsList({ language }: { language?: string | null }) {
   return (
     <div className="mx-auto max-w-4xl">
       <PageHeader
-        title="Coding tests"
-        description="Solve problems in Python, JavaScript, TypeScript, Java, C++ or Go. Your code runs in a sandbox against hidden tests."
+        title="Tests"
+        description="Framework tests and coding problems. Your code runs in a sandbox against hidden tests; scores become verified skills on your profile."
       />
+      <FrameworkTests />
+      <h2 className="mb-3 text-lg font-semibold">Coding problems</h2>
       <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Difficulty">
         {[{ value: null, label: "All" }, ...DIFFICULTIES].map((d) => (
           <button
@@ -74,7 +77,9 @@ export function ProblemsList({ language }: { language?: string | null }) {
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">{p.title}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{p.topics.join(" · ")}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {p.topics.join(" · ")}
+                      </span>
                     </span>
                     <Badge variant={DIFFICULTY_VARIANT[p.difficulty]}>{p.difficulty}</Badge>
                   </Link>

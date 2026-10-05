@@ -129,7 +129,9 @@ async def list_problems(
     difficulty: Difficulty | None = None,
     topic: str | None = None,
 ) -> list[ProblemRow]:
-    stmt = select(Question).where(Question.status == QuestionStatus.PUBLISHED)
+    stmt = select(Question).where(
+        Question.status == QuestionStatus.PUBLISHED, Question.type == "dsa"
+    )
     if difficulty:
         stmt = stmt.where(Question.difficulty == difficulty)
     questions = list(await session.scalars(stmt.order_by(Question.difficulty, Question.title)))
@@ -150,7 +152,9 @@ async def list_problems(
 async def get_problem(
     session: AsyncSession, slug: str, *, include_drafts: bool = False
 ) -> Question:
-    question = await session.scalar(select(Question).where(Question.slug == slug))
+    question = await session.scalar(
+        select(Question).where(Question.slug == slug, Question.type == "dsa")
+    )
     if question is None or (not include_drafts and question.status != QuestionStatus.PUBLISHED):
         raise NotFoundError("Problem not found")
     return question
@@ -249,6 +253,12 @@ async def grade_submission_job(submission_id: str) -> None:
         submission.compile_output = result.compile_output
         submission.max_time_ms = result.max_time_ms
         submission.finished_at = datetime.now(UTC)
+        if result.verdict == Verdict.ACCEPTED:
+            from app.modules.skills import service as skills
+
+            await session.flush()
+            await skills.update_language_skill(session, submission.user_id, submission.language_key)
+            await skills.award_badges(session, submission.user_id)
         await session.commit()
         logger.info("submission_graded", submission_id=submission_id, verdict=result.verdict.value)
 
@@ -277,6 +287,26 @@ async def my_submissions(session: AsyncSession, user: User, question: Question) 
 async def validate_question(session: AsyncSession, question: Question) -> dict[str, Any]:
     """Run every reference solution against every test in the sandbox. A question can
     only be published when all of them pass."""
+    if question.type != "dsa":  # framework questions: their content schema is the check
+        from app.modules.skills.content import validate_content
+
+        try:
+            validate_content(question.type, question.content or {})
+            report = {
+                "ok": True,
+                "at": datetime.now(UTC).isoformat(),
+                "details": [],
+                "problems": [],
+            }
+        except ValueError as exc:
+            report = {
+                "ok": False,
+                "at": datetime.now(UTC).isoformat(),
+                "details": [],
+                "problems": [str(exc)[:500]],
+            }
+        question.validation = report
+        return report
     details: list[dict[str, Any]] = []
     references = [t for t in question.templates if t.reference_solution]
     tests = list(question.tests)

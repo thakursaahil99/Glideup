@@ -456,6 +456,179 @@
         "title": "AnalyzeRequest",
         "type": "object"
       },
+      "AnswersIn": {
+        "properties": {
+          "answers": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "maxProperties": 30,
+            "title": "Answers",
+            "type": "object"
+          }
+        },
+        "required": [
+          "answers"
+        ],
+        "title": "AnswersIn",
+        "type": "object"
+      },
+      "AttemptOut": {
+        "properties": {
+          "answers": {
+            "additionalProperties": true,
+            "title": "Answers",
+            "type": "object"
+          },
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "framework_key": {
+            "title": "Framework Key",
+            "type": "string"
+          },
+          "framework_name": {
+            "title": "Framework Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/AttemptQuestion"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "sections": {
+            "additionalProperties": true,
+            "title": "Sections",
+            "type": "object"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AttemptStatus"
+          }
+        },
+        "required": [
+          "id",
+          "framework_key",
+          "framework_name",
+          "status",
+          "ends_at",
+          "answers",
+          "questions",
+          "score",
+          "level",
+          "sections",
+          "error"
+        ],
+        "title": "AttemptOut",
+        "type": "object"
+      },
+      "AttemptQuestion": {
+        "properties": {
+          "content": {
+            "additionalProperties": true,
+            "title": "Content",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "statement": {
+            "title": "Statement",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "statement",
+          "content"
+        ],
+        "title": "AttemptQuestion",
+        "type": "object"
+      },
+      "AttemptStatus": {
+        "enum": [
+          "in_progress",
+          "grading",
+          "graded",
+          "failed"
+        ],
+        "title": "AttemptStatus",
+        "type": "string"
+      },
       "AuditLogOut": {
         "properties": {
           "action": {
@@ -578,6 +751,35 @@
           "created_at"
         ],
         "title": "AuditLogOut",
+        "type": "object"
+      },
+      "BadgeOut": {
+        "properties": {
+          "awarded_at": {
+            "format": "date-time",
+            "title": "Awarded At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description",
+          "awarded_at"
+        ],
+        "title": "BadgeOut",
         "type": "object"
       },
       "Body_import_companies_api_v1_admin_companies_import_post": {
@@ -1185,6 +1387,166 @@
         ],
         "title": "ExperienceLevel",
         "type": "string"
+      },
+      "FrameworkAdmin": {
+        "properties": {
+          "composition": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Composition",
+            "type": "object"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "duration_minutes": {
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "language_key": {
+            "title": "Language Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "language_key",
+          "description",
+          "enabled",
+          "duration_minutes",
+          "composition"
+        ],
+        "title": "FrameworkAdmin",
+        "type": "object"
+      },
+      "FrameworkOut": {
+        "properties": {
+          "best_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Score"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "duration_minutes": {
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "questions": {
+            "title": "Questions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description",
+          "duration_minutes",
+          "questions",
+          "best_score"
+        ],
+        "title": "FrameworkOut",
+        "type": "object"
+      },
+      "FrameworkUpdate": {
+        "properties": {
+          "composition": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Composition"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "maximum": 180.0,
+                "minimum": 5.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "FrameworkUpdate",
+        "type": "object"
       },
       "GenerationOut": {
         "properties": {
@@ -4479,8 +4841,31 @@
       },
       "QuestionAdminDetail": {
         "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
           "difficulty": {
             "$ref": "#/components/schemas/Difficulty"
+          },
+          "framework_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Framework Key"
           },
           "id": {
             "format": "uuid",
@@ -4539,6 +4924,10 @@
             "title": "Topics",
             "type": "array"
           },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
           "validation": {
             "anyOf": [
               {
@@ -4554,6 +4943,8 @@
         },
         "required": [
           "id",
+          "type",
+          "framework_key",
           "slug",
           "title",
           "difficulty",
@@ -4562,6 +4953,7 @@
           "status",
           "source",
           "validation",
+          "content",
           "templates",
           "tests",
           "stats"
@@ -4573,6 +4965,17 @@
         "properties": {
           "difficulty": {
             "$ref": "#/components/schemas/Difficulty"
+          },
+          "framework_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Framework Key"
           },
           "id": {
             "format": "uuid",
@@ -4617,6 +5020,10 @@
             "title": "Topics",
             "type": "array"
           },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
           "updated_at": {
             "format": "date-time",
             "title": "Updated At",
@@ -4629,6 +5036,8 @@
         },
         "required": [
           "id",
+          "type",
+          "framework_key",
           "slug",
           "title",
           "difficulty",
@@ -4645,8 +5054,32 @@
       },
       "QuestionIn": {
         "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
           "difficulty": {
             "$ref": "#/components/schemas/Difficulty"
+          },
+          "framework_key": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Framework Key"
           },
           "slug": {
             "maxLength": 100,
@@ -4674,7 +5107,6 @@
               "$ref": "#/components/schemas/TestCaseIn"
             },
             "maxItems": 100,
-            "minItems": 1,
             "title": "Tests",
             "type": "array"
           },
@@ -4691,14 +5123,25 @@
             "maxItems": 8,
             "title": "Topics",
             "type": "array"
+          },
+          "type": {
+            "default": "dsa",
+            "enum": [
+              "dsa",
+              "mcq",
+              "review",
+              "viva",
+              "project"
+            ],
+            "title": "Type",
+            "type": "string"
           }
         },
         "required": [
           "slug",
           "title",
           "difficulty",
-          "statement",
-          "tests"
+          "statement"
         ],
         "title": "QuestionIn",
         "type": "object"
@@ -5712,6 +6155,64 @@
           "summary"
         ],
         "title": "SkillGapAnalysis",
+        "type": "object"
+      },
+      "SkillOut": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          },
+          "skill": {
+            "title": "Skill",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill",
+          "kind",
+          "score",
+          "level",
+          "updated_at"
+        ],
+        "title": "SkillOut",
+        "type": "object"
+      },
+      "SkillsOverview": {
+        "properties": {
+          "badges": {
+            "items": {
+              "$ref": "#/components/schemas/BadgeOut"
+            },
+            "title": "Badges",
+            "type": "array"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/components/schemas/SkillOut"
+            },
+            "title": "Skills",
+            "type": "array"
+          }
+        },
+        "required": [
+          "skills",
+          "badges"
+        ],
+        "title": "SkillsOverview",
         "type": "object"
       },
       "SocketTicket": {
@@ -6764,6 +7265,135 @@
         "summary": "Update Company",
         "tags": [
           "admin: jobs"
+        ]
+      }
+    },
+    "/api/v1/admin/frameworks": {
+      "get": {
+        "operationId": "admin_frameworks_api_v1_admin_frameworks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FrameworkAdmin"
+                  },
+                  "title": "Response Admin Frameworks Api V1 Admin Frameworks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Frameworks",
+        "tags": [
+          "skills",
+          "admin: question bank"
+        ]
+      }
+    },
+    "/api/v1/admin/frameworks/{key}": {
+      "patch": {
+        "operationId": "update_framework_api_v1_admin_frameworks__key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FrameworkUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrameworkAdmin"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Framework",
+        "tags": [
+          "skills",
+          "admin: question bank"
         ]
       }
     },
@@ -9803,6 +10433,360 @@
         ]
       }
     },
+    "/api/v1/framework-attempts/{attempt_id}": {
+      "get": {
+        "operationId": "get_attempt_api_v1_framework_attempts__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Attempt",
+        "tags": [
+          "skills"
+        ]
+      }
+    },
+    "/api/v1/framework-attempts/{attempt_id}/answers": {
+      "put": {
+        "description": "Autosave: merges the given answers into the attempt.",
+        "operationId": "save_answers_api_v1_framework_attempts__attempt_id__answers_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswersIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Answers",
+        "tags": [
+          "skills"
+        ]
+      }
+    },
+    "/api/v1/framework-attempts/{attempt_id}/submit": {
+      "post": {
+        "description": "Grade in the background (poll until `graded`). Safe to repeat.",
+        "operationId": "submit_api_v1_framework_attempts__attempt_id__submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit",
+        "tags": [
+          "skills"
+        ]
+      }
+    },
+    "/api/v1/frameworks": {
+      "get": {
+        "operationId": "frameworks_api_v1_frameworks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FrameworkOut"
+                  },
+                  "title": "Response Frameworks Api V1 Frameworks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Frameworks",
+        "tags": [
+          "skills"
+        ]
+      }
+    },
+    "/api/v1/frameworks/{key}/attempts": {
+      "post": {
+        "description": "Start a timed test (or resume the open one).",
+        "operationId": "start_api_v1_frameworks__key__attempts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start",
+        "tags": [
+          "skills"
+        ]
+      }
+    },
     "/api/v1/interviews": {
       "get": {
         "operationId": "my_interviews_api_v1_interviews_get",
@@ -11165,6 +12149,52 @@
         "summary": "Recommended",
         "tags": [
           "matches"
+        ]
+      }
+    },
+    "/api/v1/me/skills": {
+      "get": {
+        "operationId": "my_skills_api_v1_me_skills_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillsOverview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Skills",
+        "tags": [
+          "skills"
         ]
       }
     },

@@ -36,6 +36,7 @@ DESCRIPTIONS: dict[str, str] = {
     "interview_hint": "A small hint when the candidate asks for one.",
     "interview_report": "Scores a finished interview against its rubric.",
     "question_generate": "Writes a coding problem, test inputs and a reference solution.",
+    "framework_grade": "Grades a code review, viva answer or mini-project against its rubric.",
 }
 
 _sandbox = SandboxedEnvironment(

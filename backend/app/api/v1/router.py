@@ -13,6 +13,7 @@ from app.api.v1 import (
     portfolio,
     problems,
     resumes,
+    skills,
     users,
 )
 
@@ -25,6 +26,7 @@ api_router.include_router(jobs.router)
 api_router.include_router(matches.router)
 api_router.include_router(interviews.router)
 api_router.include_router(problems.router)
+api_router.include_router(skills.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_jobs.router)
 api_router.include_router(admin_interviews.router)

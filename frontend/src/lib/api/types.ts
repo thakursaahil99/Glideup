@@ -121,3 +121,8 @@ export const VERDICT_LABELS: Record<Verdict, string> = {
   memory_limit: "Memory limit exceeded",
   sandbox_error: "Sandbox unavailable",
 };
+
+export type FrameworkSummary = Schemas["FrameworkOut"];
+export type FrameworkAttempt = Schemas["AttemptOut"];
+export type AttemptQuestion = Schemas["AttemptQuestion"];
+export type SkillsOverview = Schemas["SkillsOverview"];

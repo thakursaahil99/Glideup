@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -118,13 +118,16 @@ class TestCaseIn(BaseModel):
 
 
 class QuestionIn(BaseModel):
+    type: Literal["dsa", "mcq", "review", "viva", "project"] = "dsa"
+    framework_key: str | None = Field(default=None, max_length=30)
+    content: dict[str, Any] | None = None  # required for framework question types
     slug: str = Field(min_length=3, max_length=100, pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
     title: str = Field(min_length=3, max_length=200)
     difficulty: Difficulty
     topics: list[str] = Field(default_factory=list, max_length=8)
     statement: str = Field(min_length=10, max_length=20000)
     templates: list[TemplateIn] = Field(default_factory=list, max_length=12)
-    tests: list[TestCaseIn] = Field(min_length=1, max_length=100)
+    tests: list[TestCaseIn] = Field(default_factory=list, max_length=100)  # dsa only
 
     @field_validator("topics")
     @classmethod
@@ -134,6 +137,8 @@ class QuestionIn(BaseModel):
 
 class QuestionAdminSummary(BaseModel):
     id: uuid.UUID
+    type: str
+    framework_key: str | None
     slug: str
     title: str
     difficulty: Difficulty
@@ -148,6 +153,8 @@ class QuestionAdminSummary(BaseModel):
 
 class QuestionAdminDetail(BaseModel):
     id: uuid.UUID
+    type: str
+    framework_key: str | None
     slug: str
     title: str
     difficulty: Difficulty
@@ -156,6 +163,7 @@ class QuestionAdminDetail(BaseModel):
     status: QuestionStatus
     source: str
     validation: dict[str, Any] | None
+    content: dict[str, Any] | None
     templates: list[TemplateIn]
     tests: list[TestCaseIn]
     stats: dict[str, Any] | None

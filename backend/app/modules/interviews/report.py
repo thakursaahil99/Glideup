@@ -224,5 +224,9 @@ async def generate_report_job(interview_id: str) -> None:
         report.prompt_version = version
         report.generated_by = f"{result.provider}:{result.model}"
         report.status = ReportStatus.DONE
+        from app.modules.skills.service import award_badges
+
+        await session.flush()
+        await award_badges(session, interview.user_id)
         await session.commit()
         logger.info("interview_report_done", interview_id=interview_id, score=scored.overall_score)

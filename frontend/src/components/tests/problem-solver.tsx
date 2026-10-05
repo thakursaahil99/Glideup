@@ -54,7 +54,11 @@ export function handleEditorKey(event: KeyboardEvent<HTMLTextAreaElement>, setCo
 
 export function VerdictBadge({ verdict }: { verdict: Verdict }) {
   const variant =
-    verdict === "accepted" ? "success" : verdict === "queued" || verdict === "running" ? "muted" : "destructive";
+    verdict === "accepted"
+      ? "success"
+      : verdict === "queued" || verdict === "running"
+        ? "muted"
+        : "destructive";
   return <Badge variant={variant}>{VERDICT_LABELS[verdict]}</Badge>;
 }
 
@@ -109,7 +113,9 @@ function Results({
                 ).map(([label, value]) => (
                   <div key={label}>
                     <p className="text-xs font-medium text-muted-foreground">{label}</p>
-                    <pre className="mt-1 max-h-32 overflow-auto rounded bg-muted p-2 text-xs">{value || "(empty)"}</pre>
+                    <pre className="mt-1 max-h-32 overflow-auto rounded bg-muted p-2 text-xs">
+                      {value || "(empty)"}
+                    </pre>
                   </div>
                 ))}
               </div>
@@ -146,7 +152,7 @@ function Solver({ problem, initialLanguage }: { problem: ProblemDetail; initialL
   return (
     <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
       <Card className="h-fit p-5">
-        <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
+        <Button asChild variant="ghost" size="sm" className="mb-2 -ml-2">
           <Link href="/tests">
             <ArrowLeft /> All problems
           </Link>
@@ -172,12 +178,15 @@ function Solver({ problem, initialLanguage }: { problem: ProblemDetail; initialL
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Output</p>
-              <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-muted p-2 text-xs">{ex.expected_output}</pre>
+              <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-muted p-2 text-xs">
+                {ex.expected_output}
+              </pre>
             </div>
           </div>
         ))}
         <p className="text-xs text-muted-foreground">
-          Plus {problem.hidden_tests} hidden tests when you submit. Read from standard input; print to standard output.
+          Plus {problem.hidden_tests} hidden tests when you submit. Read from standard input; print to
+          standard output.
         </p>
       </Card>
 
@@ -297,7 +306,9 @@ function Solver({ problem, initialLanguage }: { problem: ProblemDetail; initialL
                     }}
                   >
                     <VerdictBadge verdict={s.verdict} />
-                    <span>{problem.languages.find((l) => l.key === s.language_key)?.name ?? s.language_key}</span>
+                    <span>
+                      {problem.languages.find((l) => l.key === s.language_key)?.name ?? s.language_key}
+                    </span>
                     <span className="ml-auto text-xs text-muted-foreground">
                       {s.passed}/{s.total} · {formatDateTime(s.created_at)}
                     </span>

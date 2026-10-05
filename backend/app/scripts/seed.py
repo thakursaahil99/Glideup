@@ -12,18 +12,20 @@ import asyncio
 from app.db.session import dispose_engine, session_factory
 from app.modules.coding.service import seed_problems
 from app.modules.jobs.catalog import seed
+from app.modules.skills.service import seed_frameworks
 
 
 async def main() -> None:
     async with session_factory()() as session:
         result = await seed(session)
         problems = await seed_problems(session)
+        framework_questions = await seed_frameworks(session)
         await session.commit()
     await dispose_engine()
     print(
         f"companies: {result.created} created, {result.updated} updated, {result.skipped} unchanged"
     )
-    print(f"problems: {problems} created")
+    print(f"problems: {problems} created, framework questions: {framework_questions} created")
 
 
 if __name__ == "__main__":

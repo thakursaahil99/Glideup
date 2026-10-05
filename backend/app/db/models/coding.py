@@ -76,7 +76,14 @@ class Question(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     slug: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
+    # dsa | mcq | review | viva | project (the last four belong to a framework test)
     type: Mapped[str] = mapped_column(String(20), nullable=False, default="dsa")
+    framework_key: Mapped[str | None] = mapped_column(
+        String(30), ForeignKey("frameworks.key", ondelete="SET NULL")
+    )
+    # Type-specific data, validated by app.modules.skills.content (options + answer for
+    # MCQ, the code and its planted issues for review, key points for viva, ...).
+    content: Mapped[dict[str, Any] | None]
     difficulty: Mapped[Difficulty] = mapped_column(_enum(Difficulty, "difficulty"), nullable=False)
     topics: Mapped[list[str]] = mapped_column(default=list)
     statement: Mapped[str] = mapped_column(Text, nullable=False)  # Markdown
@@ -100,7 +107,10 @@ class Question(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         cascade="all, delete-orphan", lazy="selectin", order_by="TestCase.position"
     )
 
-    __table_args__ = (Index("ix_questions_status_difficulty", "status", "difficulty"),)
+    __table_args__ = (
+        Index("ix_questions_status_difficulty", "status", "difficulty"),
+        Index("ix_questions_framework_type", "framework_key", "type"),
+    )
 
 
 class QuestionTemplate(UUIDPrimaryKeyMixin, Base):

@@ -23,6 +23,7 @@ from app.api.v1.coding_schemas import (
 from app.core.errors import AppError, ConflictError, ErrorResponse, NotFoundError
 from app.core.rbac import Permission
 from app.db.models import (
+    Framework,
     GenerationStatus,
     Language,
     Question,
@@ -34,6 +35,7 @@ from app.db.models import (
 )
 from app.modules.audit import service as audit
 from app.modules.coding import generation, service, tasks
+from app.modules.skills.content import validate_content
 
 router = APIRouter(
     prefix="/admin",
@@ -85,6 +87,9 @@ async def update_language(
 def _detail(question: Question, stats: dict[uuid.UUID, dict[str, Any]]) -> QuestionAdminDetail:
     return QuestionAdminDetail(
         id=question.id,
+        type=question.type,
+        framework_key=question.framework_key,
+        content=question.content,
         slug=question.slug,
         title=question.title,
         difficulty=question.difficulty,
@@ -117,6 +122,22 @@ async def _get(session: SessionDep, question_id: uuid.UUID) -> Question:
 
 
 async def _apply(session: SessionDep, question: Question, body: QuestionIn) -> None:
+    if body.type == "dsa":
+        if not body.tests:
+            raise AppError("Coding problems need at least one test.", code="tests_required")
+        question.content = None
+        question.framework_key = None
+    else:
+        if not body.framework_key or await session.get(Framework, body.framework_key) is None:
+            raise AppError(
+                "Pick the framework this question belongs to.", code="framework_required"
+            )
+        try:
+            question.content = validate_content(body.type, body.content or {})
+        except ValueError as exc:
+            raise AppError(f"Invalid {body.type} content: {exc}", code="invalid_content") from exc
+        question.framework_key = body.framework_key
+    question.type = body.type
     keys = {lang.key for lang in await service.list_languages(session, enabled_only=False)}
     unknown = {t.language_key for t in body.templates} - keys
     if unknown:
@@ -167,6 +188,8 @@ async def list_questions(
     return [
         QuestionAdminSummary(
             id=q.id,
+            type=q.type,
+            framework_key=q.framework_key,
             slug=q.slug,
             title=q.title,
             difficulty=q.difficulty,
