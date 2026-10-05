@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { levelLabel, postedAgo, SaveButton, workModeLabel } from "@/components/jobs/job-card";
+import { HiringBadge, levelLabel, postedAgo, SaveButton, workModeLabel } from "@/components/jobs/job-card";
 import { remoteLabel } from "@/components/jobs/location-filters";
 import { ErrorState } from "@/components/states";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
               </span>
             </p>
             <div className="mt-4 flex flex-wrap gap-1.5">
+              <HiringBadge job={job} />
               {mode && <Badge>{mode}</Badge>}
               {level && <Badge variant="outline">{level}</Badge>}
               {job.employment_type && <Badge variant="outline">{job.employment_type}</Badge>}

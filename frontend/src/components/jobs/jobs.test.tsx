@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { JobCard, postedAgo } from "@/components/jobs/job-card";
+import { hiringLabel, JobCard, postedAgo } from "@/components/jobs/job-card";
 import { JobFiltersPanel } from "@/components/jobs/job-filters";
+import { TopHiringCompanies } from "@/components/jobs/jobs-search";
 import {
   activeFilterCount,
   EMPTY_FILTERS,
@@ -39,6 +40,9 @@ const job: Job = {
   is_saved: false,
   source: "greenhouse",
   attribution: null,
+  company_open_roles: 3,
+  company_new_roles_7d: 0,
+  hiring_actively: false,
 };
 
 describe("filters <-> URL", () => {
@@ -49,6 +53,7 @@ describe("filters <-> URL", () => {
       countries: ["IN"],
       states: ["Karnataka"],
       cities: ["Bengaluru"],
+      metros: ["Delhi NCR"],
       remote: "india",
       region: "india",
       modes: ["remote", "hybrid"],
@@ -56,12 +61,12 @@ describe("filters <-> URL", () => {
       skills: ["Python", "Kafka"],
       companies: ["Groww"],
       days: 7,
-      sort: "newest",
+      sort: "hiring",
     };
     const params = filtersToParams(filters);
     expect(params.toString()).toContain("mode=remote&mode=hybrid");
     expect(filtersFromParams(params)).toEqual(filters);
-    expect(activeFilterCount(filters)).toBe(13);
+    expect(activeFilterCount(filters)).toBe(14);
   });
 
   it("ignores junk and defaults safely", () => {
@@ -82,6 +87,17 @@ describe("JobCard", () => {
     expect(screen.getByText("Featured")).toBeInTheDocument();
     expect(screen.getByText(/Posted 3 days ago/)).toBeInTheDocument();
     expect(screen.queryByText("Kubernetes")).not.toBeInTheDocument(); // only the first five skills
+  });
+
+  it("highlights companies that are hiring at scale", () => {
+    expect(hiringLabel(job)).toBeNull();
+    render(
+      <JobCard job={{ ...job, company_open_roles: 42, company_new_roles_7d: 6, hiring_actively: true }} />,
+    );
+    expect(screen.getByText(/Hiring actively · 42 open roles, 6 new this week/)).toBeInTheDocument();
+    expect(hiringLabel({ hiring_actively: true, company_open_roles: 1, company_new_roles_7d: 0 })).toBe(
+      "Hiring actively · 1 open role",
+    );
   });
 
   it("saves with one click", () => {
@@ -123,5 +139,21 @@ describe("JobFiltersPanel", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Clear/ }));
     expect(onChange).toHaveBeenLastCalledWith({ ...EMPTY_FILTERS, q: "go" }); // keeps the keyword
+  });
+});
+
+describe("TopHiringCompanies", () => {
+  it("lists the busiest companies first and narrows on click", () => {
+    const onPick = vi.fn();
+    render(<TopHiringCompanies counts={{ Groww: 7, Razorpay: 31, Zepto: 12 }} onPick={onPick} limit={2} />);
+    const buttons = screen.getAllByRole("button").map((b) => b.textContent);
+    expect(buttons).toEqual(["Razorpay · 31", "Zepto · 12"]);
+    fireEvent.click(screen.getByRole("button", { name: /Zepto/ }));
+    expect(onPick).toHaveBeenCalledWith("Zepto");
+  });
+
+  it("stays hidden when there is nothing to compare", () => {
+    const { container } = render(<TopHiringCompanies counts={{ Groww: 7 }} onPick={vi.fn()} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

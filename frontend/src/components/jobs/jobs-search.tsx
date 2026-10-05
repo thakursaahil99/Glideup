@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Loader2, Search, SlidersHorizontal } from "lucide-react";
+import { Bookmark, Flame, Loader2, Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -22,6 +22,42 @@ import {
 } from "@/lib/api/jobs";
 
 const number = new Intl.NumberFormat("en");
+
+/** Companies with the most openings for the current search; a click narrows to that company. */
+export function TopHiringCompanies({
+  counts,
+  onPick,
+  limit = 8,
+}: {
+  counts: Record<string, number> | undefined;
+  onPick: (company: string) => void;
+  limit?: number;
+}) {
+  const top = Object.entries(counts ?? {})
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit);
+  if (top.length < 2) return null;
+  return (
+    <section aria-labelledby="top-hiring-heading" className="mb-4">
+      <h3 id="top-hiring-heading" className="mb-2 flex items-center gap-1.5 text-sm font-medium">
+        <Flame className="size-4 text-sunrise" aria-hidden /> Hiring the most for this search
+      </h3>
+      <ul className="flex flex-wrap gap-2">
+        {top.map(([company, count]) => (
+          <li key={company}>
+            <button
+              type="button"
+              onClick={() => onPick(company)}
+              className="rounded-full border bg-card px-3 py-1 text-sm transition-colors hover:border-primary/50 hover:bg-accent"
+            >
+              {company} <span className="text-muted-foreground">· {number.format(count)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export function JobsSearch() {
   const router = useRouter();
@@ -127,6 +163,7 @@ export function JobsSearch() {
             >
               <option value="relevance">Most relevant</option>
               <option value="newest">Newest</option>
+              <option value="hiring">Most hiring</option>
             </NativeSelect>
           </div>
 
@@ -149,6 +186,12 @@ export function JobsSearch() {
             </Card>
           ) : (
             <>
+              {filters.companies.length === 0 && (
+                <TopHiringCompanies
+                  counts={first?.facets.company}
+                  onPick={(company) => apply({ ...filters, companies: [company] })}
+                />
+              )}
               <ul className="space-y-3" aria-busy={query.isFetching}>
                 {jobs.map((job) => (
                   <li key={job.id}>

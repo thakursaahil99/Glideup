@@ -467,6 +467,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/portfolio/analyses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Analyses */
+        get: operations["list_analyses_api_v1_portfolio_analyses_get"];
+        put?: never;
+        /**
+         * Analyze
+         * @description Analyze a GitHub profile or portfolio site in the background; poll GET /analyses.
+         *
+         *     Analyzing a new link of the same kind replaces the previous analysis.
+         */
+        post: operations["analyze_api_v1_portfolio_analyses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolio/analyses/{analysis_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Analysis */
+        delete: operations["delete_analysis_api_v1_portfolio_analyses__analysis_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolio/analyses/{analysis_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry */
+        post: operations["retry_api_v1_portfolio_analyses__analysis_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolio/skills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Combined Skills
+         * @description All of the user's skills: active resume plus finished portfolio analyses.
+         */
+        get: operations["combined_skills_api_v1_portfolio_skills_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/resumes": {
         parameters: {
             query?: never;
@@ -677,7 +754,7 @@ export interface components {
          * ATS
          * @enum {string}
          */
-        ATS: "greenhouse" | "lever" | "ashby";
+        ATS: "greenhouse" | "lever" | "ashby" | "smartrecruiters";
         /** AdminJobOut */
         AdminJobOut: {
             /** Apply Url */
@@ -767,6 +844,19 @@ export interface components {
             suspended_reason: string | null;
             user: components["schemas"]["UserSummary"];
         };
+        /**
+         * AnalysisStatus
+         * @enum {string}
+         */
+        AnalysisStatus: "pending" | "analyzing" | "done" | "failed";
+        /** AnalyzeRequest */
+        AnalyzeRequest: {
+            /**
+             * Url
+             * @description GitHub profile or portfolio site
+             */
+            url: string;
+        };
         /** AuditLogOut */
         AuditLogOut: {
             /** Action */
@@ -817,6 +907,15 @@ export interface components {
              * @description Resume as a PDF
              */
             file: string;
+        };
+        /** CombinedSkillOut */
+        CombinedSkillOut: {
+            /** Category */
+            category: string | null;
+            /** Name */
+            name: string;
+            /** Sources */
+            sources: string[];
         };
         /** CompanyCreate */
         CompanyCreate: {
@@ -978,6 +1077,10 @@ export interface components {
             cities: string[];
             /** Company Name */
             company_name: string;
+            /** Company New Roles 7D */
+            company_new_roles_7d: number;
+            /** Company Open Roles */
+            company_open_roles: number;
             /** Countries */
             countries: string[];
             /** Country */
@@ -990,6 +1093,8 @@ export interface components {
              * Format: date-time
              */
             first_seen_at: string;
+            /** Hiring Actively */
+            hiring_actively: boolean;
             /**
              * Id
              * Format: uuid
@@ -1027,6 +1132,10 @@ export interface components {
             cities: string[];
             /** Company Name */
             company_name: string;
+            /** Company New Roles 7D */
+            company_new_roles_7d: number;
+            /** Company Open Roles */
+            company_open_roles: number;
             /** Countries */
             countries: string[];
             /** Country */
@@ -1043,6 +1152,8 @@ export interface components {
              * Format: date-time
              */
             first_seen_at: string;
+            /** Hiring Actively */
+            hiring_actively: boolean;
             /**
              * Id
              * Format: uuid
@@ -1254,6 +1365,66 @@ export interface components {
             /** Years */
             years?: number | null;
         };
+        /** PortfolioAnalysisOut */
+        PortfolioAnalysisOut: {
+            /** Analyzed At */
+            analyzed_at: string | null;
+            /** Analyzed By */
+            analyzed_by: string | null;
+            /** Error */
+            error: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["PortfolioKind"];
+            result: components["schemas"]["PortfolioResult"] | null;
+            status: components["schemas"]["AnalysisStatus"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * PortfolioKind
+         * @enum {string}
+         */
+        PortfolioKind: "github" | "website";
+        /**
+         * PortfolioResult
+         * @description Stored on `PortfolioAnalysis.result` and returned by the API.
+         */
+        PortfolioResult: {
+            /** Headline */
+            headline?: string | null;
+            /** Languages */
+            languages?: {
+                [key: string]: number;
+            };
+            /** Projects */
+            projects?: components["schemas"]["Project"][];
+            /** Skills */
+            skills?: components["schemas"]["PortfolioSkill"][];
+            /** Stats */
+            stats?: {
+                [key: string]: number;
+            };
+            /** Summary */
+            summary?: string | null;
+        };
+        /** PortfolioSkill */
+        PortfolioSkill: {
+            /** Category */
+            category?: ("language" | "framework" | "database" | "cloud" | "devops" | "tool" | "practice" | "soft" | "other") | null;
+            /** Evidence */
+            evidence?: string | null;
+            /** Name */
+            name: string;
+        };
         /** ProfileOut */
         ProfileOut: {
             /** Bio */
@@ -1309,6 +1480,19 @@ export interface components {
             target_roles?: string[];
             /** Years Experience */
             years_experience?: number | null;
+        };
+        /** Project */
+        Project: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+            /** Stars */
+            stars?: number | null;
+            /** Technologies */
+            technologies?: string[];
+            /** Url */
+            url?: string | null;
         };
         /** Readiness */
         Readiness: {
@@ -2780,6 +2964,8 @@ export interface operations {
                 country?: string[] | null;
                 state?: string[] | null;
                 city?: string[] | null;
+                /** @description Metro areas: Delhi NCR, Mumbai Metropolitan Region, San Francisco Bay Area */
+                metro?: string[] | null;
                 /** @description india = Remote - India; worldwide = no country limit */
                 remote?: ("india" | "worldwide") | null;
                 /** @description Quick India / International toggle */
@@ -2789,7 +2975,7 @@ export interface operations {
                 skills?: string[] | null;
                 company?: string[] | null;
                 posted_within_days?: number | null;
-                sort?: "relevance" | "newest";
+                sort?: "relevance" | "newest" | "hiring";
                 cursor?: string | null;
                 limit?: number;
             };
@@ -3023,6 +3209,247 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_analyses_api_v1_portfolio_analyses_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioAnalysisOut"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    analyze_api_v1_portfolio_analyses_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyzeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioAnalysisOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_analysis_api_v1_portfolio_analyses__analysis_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_api_v1_portfolio_analyses__analysis_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioAnalysisOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    combined_skills_api_v1_portfolio_skills_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CombinedSkillOut"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

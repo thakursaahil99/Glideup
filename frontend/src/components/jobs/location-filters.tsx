@@ -11,6 +11,7 @@ type Facets = Record<string, Record<string, number>>;
 const regionNames =
   typeof Intl.DisplayNames === "function" ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
 const number = new Intl.NumberFormat("en");
+const METRO_PREFIX = "metro:";
 
 export function countryName(code: string): string {
   try {
@@ -36,10 +37,11 @@ function currentScope(filters: JobFilters): Scope {
   return "all";
 }
 
-const NO_PLACE: Pick<JobFilters, "countries" | "states" | "cities" | "region"> = {
+const NO_PLACE: Pick<JobFilters, "countries" | "states" | "cities" | "metros" | "region"> = {
   countries: [],
   states: [],
   cities: [],
+  metros: [],
   region: null,
 };
 
@@ -56,6 +58,9 @@ export function LocationFilters({
   const country = filters.countries[0] ?? "";
   const state = filters.states[0] ?? "";
   const city = filters.cities[0] ?? "";
+  const metro = filters.metros[0] ?? "";
+  // One select holds both: metros as "metro:<name>", cities as plain names.
+  const cityValue = metro ? `${METRO_PREFIX}${metro}` : city;
 
   function setScope(next: Scope) {
     const base = { ...filters, ...NO_PLACE, location: "" };
@@ -75,7 +80,23 @@ export function LocationFilters({
   const stateOptions = facetOptions(facets?.states, state || undefined);
   const cityOptions = facetOptions(facets?.cities, city || undefined);
   const showStates = Boolean(country) && stateOptions.length > 0;
-  const showCities = Boolean(country) && cityOptions.length > 0;
+  // A metro spans states (Delhi NCR covers Delhi, Haryana and UP), so offer it at country level.
+  const metroOptions = state
+    ? []
+    : facetOptions(facets?.metros, metro || undefined).filter(([name, n]) => n > 0 || name === metro);
+  const showCities = Boolean(country) && (cityOptions.length > 0 || metroOptions.length > 0);
+
+  const cityItems = cityOptions.map(([name, count]) => (
+    <option key={name} value={name}>
+      {name} ({number.format(count)})
+    </option>
+  ));
+
+  function setCity(value: string) {
+    if (value.startsWith(METRO_PREFIX))
+      onChange({ ...filters, states: [], cities: [], metros: [value.slice(METRO_PREFIX.length)] });
+    else onChange({ ...filters, cities: value ? [value] : [], metros: [] });
+  }
 
   const remoteOptions: { value: RemoteFilter | null; label: string }[] = [
     { value: null, label: "Any" },
@@ -130,6 +151,7 @@ export function LocationFilters({
               countries: code ? [code] : [],
               states: [],
               cities: [],
+              metros: [],
               region: code ? null : filters.region,
             });
           }}
@@ -150,7 +172,12 @@ export function LocationFilters({
             id="state"
             value={state}
             onChange={(e) =>
-              onChange({ ...filters, states: e.target.value ? [e.target.value] : [], cities: [] })
+              onChange({
+                ...filters,
+                states: e.target.value ? [e.target.value] : [],
+                cities: [],
+                metros: [],
+              })
             }
           >
             <option value="">Any state</option>
@@ -170,15 +197,20 @@ export function LocationFilters({
           </Label>
           <NativeSelect
             id="city"
-            value={city}
-            onChange={(e) => onChange({ ...filters, cities: e.target.value ? [e.target.value] : [] })}
+            value={cityValue}
+            onChange={(e) => setCity(e.target.value)}
           >
             <option value="">Any city</option>
-            {cityOptions.map(([name, count]) => (
-              <option key={name} value={name}>
-                {name} ({number.format(count)})
-              </option>
-            ))}
+            {metroOptions.length > 0 && (
+              <optgroup label="Metro areas">
+                {metroOptions.map(([name, count]) => (
+                  <option key={name} value={`${METRO_PREFIX}${name}`}>
+                    {name} ({number.format(count)})
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {metroOptions.length > 0 ? <optgroup label="Cities">{cityItems}</optgroup> : cityItems}
           </NativeSelect>
         </div>
       )}

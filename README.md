@@ -9,9 +9,10 @@ GlideUp is an AI-powered platform that matches your resume to real jobs, shows y
 runs job-specific mock interviews and coding tests in many languages and frameworks, and tracks
 your applications — from job search to offer.
 
-> **Status:** Phase 3 of 10. Real jobs from 58 company boards (Greenhouse, Lever, Ashby; plus
-> Adzuna with a free key), deduplicated and searchable with filters. Before that: resume parsing
-> with a local LLM (Phase 2) and the foundation (Phase 1). See the
+> **Status:** Phase 3 of 10. Real jobs from 78 company boards (Greenhouse, Lever, Ashby,
+> SmartRecruiters) and the Arbeitnow job board, plus Adzuna with a free key; deduplicated,
+> searchable by country, state, city or metro area, with companies hiring the most highlighted.
+> Before that: resume parsing with a local LLM (Phase 2) and the foundation (Phase 1). See the
 > [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
 
 ## Architecture
@@ -125,8 +126,8 @@ cd backend && uv run python -m app.llm.evals.run --route ollama:qwen2.5:3b
 
 ### Jobs
 
-Jobs come only from official public APIs: company job boards on Greenhouse, Lever and Ashby,
-plus Adzuna with a free key. Nothing is scraped, and every job links to the company's own apply
+Jobs come only from official public APIs: company job boards on Greenhouse, Lever, Ashby and
+SmartRecruiters, the Arbeitnow job board, plus Adzuna with a free key. Nothing is scraped, and every job links to the company's own apply
 page. Sources, schedules, rate limits and the company list are managed in **Admin → Jobs &
 Sources**.
 

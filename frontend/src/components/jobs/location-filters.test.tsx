@@ -17,6 +17,34 @@ function renderFilters(filters: JobFilters = EMPTY_FILTERS) {
 }
 
 describe("LocationFilters", () => {
+  it("offers metro areas above cities and selects one in place of a city", () => {
+    const onChange = vi.fn();
+    const filters = { ...EMPTY_FILTERS, countries: ["IN"], cities: ["Noida"] };
+    const { rerender } = render(
+      <LocationFilters
+        filters={filters}
+        facets={{ ...facets, metros: { "Delhi NCR": 191, "Mumbai Metropolitan Region": 0 } }}
+        onChange={onChange}
+      />,
+    );
+    const city = screen.getByLabelText(/City/) as HTMLSelectElement;
+    const labels = Array.from(city.options, (o) => o.textContent);
+    expect(labels.slice(0, 2)).toEqual(["Any city", "Delhi NCR (191)"]); // empty metros are hidden
+    fireEvent.change(city, { target: { value: "metro:Delhi NCR" } });
+    expect(onChange).toHaveBeenLastCalledWith({ ...filters, cities: [], metros: ["Delhi NCR"] });
+
+    rerender(
+      <LocationFilters
+        filters={{ ...filters, cities: [], metros: ["Delhi NCR"] }}
+        facets={{ ...facets, metros: { "Delhi NCR": 191 } }}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByLabelText(/City/)).toHaveValue("metro:Delhi NCR");
+    fireEvent.change(screen.getByLabelText(/City/), { target: { value: "Bengaluru" } });
+    expect(onChange).toHaveBeenLastCalledWith({ ...filters, cities: ["Bengaluru"], metros: [] });
+  });
+
   it("lists countries by count with readable names", () => {
     renderFilters();
     const options = Array.from(

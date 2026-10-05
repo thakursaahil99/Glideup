@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, BookmarkCheck, Building2, MapPin, Sparkles } from "lucide-react";
+import { Bookmark, BookmarkCheck, Building2, Flame, MapPin, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -29,6 +29,24 @@ export function workModeLabel(mode: Job["work_mode"]) {
 
 export function levelLabel(level: Job["experience_level"]) {
   return EXPERIENCE_LEVELS.find((l) => l.value === level)?.label ?? null;
+}
+
+/** "Hiring actively · 42 open roles", or null when the company isn't hiring at scale. */
+export function hiringLabel(job: Pick<Job, "hiring_actively" | "company_open_roles" | "company_new_roles_7d">) {
+  if (!job.hiring_actively) return null;
+  const roles = `${job.company_open_roles} open role${job.company_open_roles === 1 ? "" : "s"}`;
+  const fresh = job.company_new_roles_7d > 0 ? `, ${job.company_new_roles_7d} new this week` : "";
+  return `Hiring actively · ${roles}${fresh}`;
+}
+
+export function HiringBadge({ job }: { job: Parameters<typeof hiringLabel>[0] }) {
+  const label = hiringLabel(job);
+  if (!label) return null;
+  return (
+    <Badge variant="sunrise">
+      <Flame className="size-3" aria-hidden /> {label}
+    </Badge>
+  );
 }
 
 export function SaveButton({
@@ -97,6 +115,7 @@ export function JobCard({ job }: { job: Job }) {
             <Sparkles className="size-3" /> Featured
           </Badge>
         )}
+        <HiringBadge job={job} />
         {mode && <Badge variant="default">{mode}</Badge>}
         {level && <Badge variant="outline">{level}</Badge>}
         {job.salary && <Badge variant="success">{job.salary}</Badge>}

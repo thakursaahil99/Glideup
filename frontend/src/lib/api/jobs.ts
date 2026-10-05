@@ -14,6 +14,7 @@ import type { ExperienceLevel, JobDetail, JobSearchResponse, WorkMode } from "@/
 /** Filters live in the URL, so a search can be bookmarked and shared. */
 export type RemoteFilter = "india" | "worldwide";
 export type Region = "india" | "international";
+export type JobSort = "relevance" | "newest" | "hiring";
 
 export type JobFilters = {
   q: string;
@@ -21,6 +22,8 @@ export type JobFilters = {
   countries: string[];
   states: string[];
   cities: string[];
+  /** Metro areas such as "Delhi NCR"; the API expands them to their member cities. */
+  metros: string[];
   remote: RemoteFilter | null;
   region: Region | null;
   modes: WorkMode[];
@@ -28,7 +31,7 @@ export type JobFilters = {
   skills: string[];
   companies: string[];
   days: number | null;
-  sort: "relevance" | "newest";
+  sort: JobSort;
 };
 
 export const EMPTY_FILTERS: JobFilters = {
@@ -37,6 +40,7 @@ export const EMPTY_FILTERS: JobFilters = {
   countries: [],
   states: [],
   cities: [],
+  metros: [],
   remote: null,
   region: null,
   modes: [],
@@ -59,6 +63,7 @@ export function filtersFromParams(params: URLSearchParams): JobFilters {
     countries: params.getAll("country").filter((c) => /^[A-Z]{2}$/.test(c)),
     states: params.getAll("state"),
     cities: params.getAll("city"),
+    metros: params.getAll("metro"),
     remote: oneOf(params.get("remote"), ["india", "worldwide"] as const),
     region: oneOf(params.get("region"), ["india", "international"] as const),
     modes: params.getAll("mode") as WorkMode[],
@@ -66,7 +71,7 @@ export function filtersFromParams(params: URLSearchParams): JobFilters {
     skills: params.getAll("skill"),
     companies: params.getAll("company"),
     days: Number.isFinite(days) && days > 0 ? days : null,
-    sort: params.get("sort") === "newest" ? "newest" : "relevance",
+    sort: oneOf(params.get("sort"), ["newest", "hiring"] as const) ?? "relevance",
   };
 }
 
@@ -77,6 +82,7 @@ export function filtersToParams(filters: JobFilters): URLSearchParams {
   filters.countries.forEach((c) => params.append("country", c));
   filters.states.forEach((s) => params.append("state", s));
   filters.cities.forEach((c) => params.append("city", c));
+  filters.metros.forEach((m) => params.append("metro", m));
   if (filters.remote) params.set("remote", filters.remote);
   if (filters.region) params.set("region", filters.region);
   filters.modes.forEach((m) => params.append("mode", m));
@@ -94,6 +100,7 @@ export function activeFilterCount(filters: JobFilters): number {
     filters.countries.length +
     filters.states.length +
     filters.cities.length +
+    filters.metros.length +
     Number(Boolean(filters.remote)) +
     Number(Boolean(filters.region)) +
     filters.modes.length +
@@ -124,6 +131,7 @@ export function useJobSearch(filters: JobFilters) {
               country: filters.countries.length ? filters.countries : undefined,
               state: filters.states.length ? filters.states : undefined,
               city: filters.cities.length ? filters.cities : undefined,
+              metro: filters.metros.length ? filters.metros : undefined,
               remote: filters.remote ?? undefined,
               region: filters.region ?? undefined,
               work_mode: filters.modes.length ? filters.modes : undefined,

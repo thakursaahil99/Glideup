@@ -89,3 +89,29 @@ are parsed into **places**: country (ISO 3166-1), state/region and city. A job c
   `|c:IN|s:Karnataka|ci:Bengaluru|` index column.
 - **Adzuna**: all 19 countries its API serves can be enabled per country from the admin console;
   config is validated server-side (unknown countries, empty search terms, out-of-range limits).
+
+## Addendum: more free sources, metro areas and hiring signal (2026-10-01)
+
+Users asked for more jobs per Indian city (Delhi showed only a handful). Coverage is limited by
+which sources we may use, not by search.
+
+- **Sources added**: **SmartRecruiters** public postings API (Swiggy, Freshworks, Canva, Grab, Wise
+  and others). The list call carries a release date per posting, so details are only fetched for
+  new or changed postings (`FetchContext.known`, `Posting.details_omitted`). **Arbeitnow**
+  public job-board API (no key, attribution shown, paginated, `max_pages` admin-configurable).
+  The seed list grew from 58 to 78 companies, with more India-heavy employers.
+- **Rejected**: Indeed and Naukri (terms forbid scraping, no free public API); Remotive (terms
+  forbid redisplay behind a signup wall, and only a few dozen jobs). Adzuna stays the main route
+  to broad city coverage; it needs the operator's own free key.
+- **Metro areas** (`METROS` in the gazetteer): Delhi NCR (Delhi, New Delhi, Noida, Greater Noida,
+  Gurugram, Ghaziabad, Faridabad), Mumbai Metropolitan Region and San Francisco Bay Area. The
+  `metro` query parameter expands to member cities; facet counts are exact (a job listed in two
+  NCR cities counts once), at one extra query per relevant metro. A free-text location of
+  "NCR" resolves to the metro.
+- **Hiring signal**: after each ingestion run, every active job stores its company's open roles
+  and roles opened in the last 7 days (`company_open_roles`, `company_new_roles_7d`), and changed
+  jobs are re-indexed. Denormalised so "Most hiring" is a plain Meilisearch sort (featured first,
+  then open roles, then recency) instead of a join at query time. A company is **hiring actively**
+  at 25+ open roles or 10+ new this week. The UI shows a badge, a "Most hiring" sort and the
+  companies with the most openings for the current search.
+- **Result on real data**: 10,541 → 14,598 jobs; India 821 → 1,333; Delhi NCR 108 → 191.

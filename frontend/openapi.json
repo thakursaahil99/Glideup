@@ -5,7 +5,8 @@
         "enum": [
           "greenhouse",
           "lever",
-          "ashby"
+          "ashby",
+          "smartrecruiters"
         ],
         "title": "ATS",
         "type": "string"
@@ -255,6 +256,32 @@
         "title": "AdminUserDetail",
         "type": "object"
       },
+      "AnalysisStatus": {
+        "enum": [
+          "pending",
+          "analyzing",
+          "done",
+          "failed"
+        ],
+        "title": "AnalysisStatus",
+        "type": "string"
+      },
+      "AnalyzeRequest": {
+        "properties": {
+          "url": {
+            "description": "GitHub profile or portfolio site",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "AnalyzeRequest",
+        "type": "object"
+      },
       "AuditLogOut": {
         "properties": {
           "action": {
@@ -407,6 +434,39 @@
           "file"
         ],
         "title": "Body_upload_resume_api_v1_resumes_post",
+        "type": "object"
+      },
+      "CombinedSkillOut": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "sources"
+        ],
+        "title": "CombinedSkillOut",
         "type": "object"
       },
       "CompanyCreate": {
@@ -907,6 +967,14 @@
             "title": "Company Name",
             "type": "string"
           },
+          "company_new_roles_7d": {
+            "title": "Company New Roles 7D",
+            "type": "integer"
+          },
+          "company_open_roles": {
+            "title": "Company Open Roles",
+            "type": "integer"
+          },
           "countries": {
             "items": {
               "type": "string"
@@ -943,6 +1011,10 @@
             "format": "date-time",
             "title": "First Seen At",
             "type": "string"
+          },
+          "hiring_actively": {
+            "title": "Hiring Actively",
+            "type": "boolean"
           },
           "id": {
             "format": "uuid",
@@ -1050,6 +1122,9 @@
           "first_seen_at",
           "salary",
           "is_featured",
+          "company_open_roles",
+          "company_new_roles_7d",
+          "hiring_actively",
           "is_saved",
           "source",
           "attribution"
@@ -1084,6 +1159,14 @@
           "company_name": {
             "title": "Company Name",
             "type": "string"
+          },
+          "company_new_roles_7d": {
+            "title": "Company New Roles 7D",
+            "type": "integer"
+          },
+          "company_open_roles": {
+            "title": "Company Open Roles",
+            "type": "integer"
           },
           "countries": {
             "items": {
@@ -1136,6 +1219,10 @@
             "format": "date-time",
             "title": "First Seen At",
             "type": "string"
+          },
+          "hiring_actively": {
+            "title": "Hiring Actively",
+            "type": "boolean"
           },
           "id": {
             "format": "uuid",
@@ -1252,6 +1339,9 @@
           "first_seen_at",
           "salary",
           "is_featured",
+          "company_open_roles",
+          "company_new_roles_7d",
+          "hiring_actively",
           "is_saved",
           "source",
           "attribution",
@@ -1888,6 +1978,205 @@
         "title": "ParsedSkill",
         "type": "object"
       },
+      "PortfolioAnalysisOut": {
+        "properties": {
+          "analyzed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyzed At"
+          },
+          "analyzed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyzed By"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PortfolioKind"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PortfolioResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/AnalysisStatus"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "url",
+          "status",
+          "error",
+          "result",
+          "analyzed_by",
+          "analyzed_at",
+          "updated_at"
+        ],
+        "title": "PortfolioAnalysisOut",
+        "type": "object"
+      },
+      "PortfolioKind": {
+        "enum": [
+          "github",
+          "website"
+        ],
+        "title": "PortfolioKind",
+        "type": "string"
+      },
+      "PortfolioResult": {
+        "description": "Stored on `PortfolioAnalysis.result` and returned by the API.",
+        "properties": {
+          "headline": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Headline"
+          },
+          "languages": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Languages",
+            "type": "object"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/Project"
+            },
+            "maxItems": 20,
+            "title": "Projects",
+            "type": "array"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/components/schemas/PortfolioSkill"
+            },
+            "maxItems": 100,
+            "title": "Skills",
+            "type": "array"
+          },
+          "stats": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Stats",
+            "type": "object"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "title": "PortfolioResult",
+        "type": "object"
+      },
+      "PortfolioSkill": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "language",
+                  "framework",
+                  "database",
+                  "cloud",
+                  "devops",
+                  "tool",
+                  "practice",
+                  "soft",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "PortfolioSkill",
+        "type": "object"
+      },
       "ProfileOut": {
         "properties": {
           "bio": {
@@ -2129,6 +2418,66 @@
           }
         },
         "title": "ProfileUpdate",
+        "type": "object"
+      },
+      "Project": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "stars": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stars"
+          },
+          "technologies": {
+            "items": {
+              "maxLength": 100,
+              "type": "string"
+            },
+            "maxItems": 15,
+            "title": "Technologies",
+            "type": "array"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "Project",
         "type": "object"
       },
       "Readiness": {
@@ -4779,6 +5128,28 @@
             }
           },
           {
+            "description": "Metro areas: Delhi NCR, Mumbai Metropolitan Region, San Francisco Bay Area",
+            "in": "query",
+            "name": "metro",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 5,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Metro areas: Delhi NCR, Mumbai Metropolitan Region, San Francisco Bay Area",
+              "title": "Metro"
+            }
+          },
+          {
             "description": "india = Remote - India; worldwide = no country limit",
             "in": "query",
             "name": "remote",
@@ -4926,7 +5297,8 @@
               "default": "relevance",
               "enum": [
                 "relevance",
-                "newest"
+                "newest",
+                "hiring"
               ],
               "title": "Sort",
               "type": "string"
@@ -5260,6 +5632,321 @@
         "summary": "Save Job",
         "tags": [
           "jobs"
+        ]
+      }
+    },
+    "/api/v1/portfolio/analyses": {
+      "get": {
+        "operationId": "list_analyses_api_v1_portfolio_analyses_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortfolioAnalysisOut"
+                  },
+                  "title": "Response List Analyses Api V1 Portfolio Analyses Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Analyses",
+        "tags": [
+          "portfolio"
+        ]
+      },
+      "post": {
+        "description": "Analyze a GitHub profile or portfolio site in the background; poll GET /analyses.\n\nAnalyzing a new link of the same kind replaces the previous analysis.",
+        "operationId": "analyze_api_v1_portfolio_analyses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioAnalysisOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Analyze",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/analyses/{analysis_id}": {
+      "delete": {
+        "operationId": "delete_analysis_api_v1_portfolio_analyses__analysis_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Analysis",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/analyses/{analysis_id}/retry": {
+      "post": {
+        "operationId": "retry_api_v1_portfolio_analyses__analysis_id__retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioAnalysisOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Retry",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/skills": {
+      "get": {
+        "description": "All of the user's skills: active resume plus finished portfolio analyses.",
+        "operationId": "combined_skills_api_v1_portfolio_skills_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CombinedSkillOut"
+                  },
+                  "title": "Response Combined Skills Api V1 Portfolio Skills Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Combined Skills",
+        "tags": [
+          "portfolio"
         ]
       }
     },
