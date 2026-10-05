@@ -56,7 +56,7 @@ class SearchPage:
     next_cursor: str | None
 
 
-async def _saved_ids(session: AsyncSession, user: User, ids: list[uuid.UUID]) -> set[uuid.UUID]:
+async def saved_ids(session: AsyncSession, user: User, ids: list[uuid.UUID]) -> set[uuid.UUID]:
     if not ids:
         return set()
     rows = await session.scalars(
@@ -74,7 +74,7 @@ async def search_jobs(session: AsyncSession, user: User, query: SearchQuery) -> 
     has_more = len(hits.ids) == query.limit and end < min(hits.total, MAX_RESULTS)
     return SearchPage(
         jobs=jobs,
-        saved_ids=await _saved_ids(session, user, [j.id for j in jobs]),
+        saved_ids=await saved_ids(session, user, [j.id for j in jobs]),
         hits=hits,
         next_cursor=encode_cursor(end) if has_more else None,
     )

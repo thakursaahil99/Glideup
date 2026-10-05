@@ -196,6 +196,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/matching/embeddings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Embedding Status
+         * @description Coverage of job embeddings used for match scores and recommendations.
+         */
+        get: operations["embedding_status_api_v1_admin_matching_embeddings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/matching/embeddings/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Embeddings
+         * @description Embed pending jobs now (in the background). Safe to repeat: one run at a time.
+         */
+        post: operations["run_embeddings_api_v1_admin_matching_embeddings_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/overview": {
         parameters: {
             query?: never;
@@ -449,6 +489,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/{job_id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Job Match
+         * @description Your score for this job, the skills behind it, and any AI skill-gap analysis.
+         */
+        get: operations["job_match_api_v1_jobs__job_id__match_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_id}/match/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze Match
+         * @description Start an AI skill-gap analysis (runs in the background; poll the match endpoint).
+         *     Reuses a fresh or running analysis instead of starting another.
+         */
+        post: operations["analyze_match_api_v1_jobs__job_id__match_analysis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/{job_id}/save": {
         parameters: {
             query?: never;
@@ -462,6 +543,27 @@ export interface paths {
         post?: never;
         /** Unsave Job */
         delete: operations["unsave_job_api_v1_jobs__job_id__save_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/matches/recommended": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recommended
+         * @description Jobs ranked by how well they fit you, nudged by your preferred locations and
+         *     remote preference.
+         */
+        get: operations["recommended_api_v1_matches_recommended_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -844,6 +946,24 @@ export interface components {
             suspended_reason: string | null;
             user: components["schemas"]["UserSummary"];
         };
+        /** AnalysisOut */
+        AnalysisOut: {
+            /** Analyzed At */
+            analyzed_at: string | null;
+            /** Analyzed By */
+            analyzed_by: string | null;
+            /** Error */
+            error: string | null;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            result: components["schemas"]["SkillGapAnalysis"] | null;
+            /** Stale */
+            stale: boolean;
+            status: components["schemas"]["MatchAnalysisStatus"];
+        };
         /**
          * AnalysisStatus
          * @enum {string}
@@ -994,6 +1114,20 @@ export interface components {
             /** Year */
             year?: string | null;
         };
+        /**
+         * EmbeddingStatus
+         * @description How many listed jobs have vectors for matching, from the current model.
+         */
+        EmbeddingStatus: {
+            /** Embedded */
+            embedded: number;
+            /** Listed */
+            listed: number;
+            /** Model */
+            model: string | null;
+            /** Pending */
+            pending: number;
+        };
         /** ErrorBody */
         ErrorBody: {
             /** Code */
@@ -1106,6 +1240,7 @@ export interface components {
             is_saved: boolean;
             /** Location */
             location: string | null;
+            match?: components["schemas"]["MatchSummary"] | null;
             /** Posted At */
             posted_at: string | null;
             /** Remote Scope */
@@ -1172,6 +1307,7 @@ export interface components {
             last_seen_at: string;
             /** Location */
             location: string | null;
+            match?: components["schemas"]["MatchSummary"] | null;
             /** Posted At */
             posted_at: string | null;
             /** Remote Scope */
@@ -1263,6 +1399,12 @@ export interface components {
             /** Schedule Minutes */
             schedule_minutes?: number | null;
         };
+        /** LevelFit */
+        LevelFit: {
+            job_level: components["schemas"]["ExperienceLevel"];
+            /** Your Years */
+            your_years: number | null;
+        };
         /** Liveness */
         Liveness: {
             /**
@@ -1271,6 +1413,54 @@ export interface components {
              * @constant
              */
             status: "ok";
+        };
+        /**
+         * MatchAnalysisStatus
+         * @enum {string}
+         */
+        MatchAnalysisStatus: "pending" | "analyzing" | "done" | "failed";
+        /** MatchDetail */
+        MatchDetail: {
+            /** Analyses Per Day */
+            analyses_per_day: number;
+            analysis: components["schemas"]["AnalysisOut"] | null;
+            /** Available */
+            available: boolean;
+            /** Embedding Pending */
+            embedding_pending: boolean;
+            level: components["schemas"]["LevelFit"];
+            /** Matched */
+            matched: components["schemas"]["MatchedSkill"][];
+            /** Missing */
+            missing: string[];
+            parts: components["schemas"]["ScoreParts"] | null;
+            practice: components["schemas"]["PracticeStack"];
+            summary: components["schemas"]["MatchSummary"] | null;
+            /** Transferable */
+            transferable: components["schemas"]["TransferableSkill"][];
+        };
+        /**
+         * MatchSummary
+         * @description How well the signed-in user fits a job. Absent when we know nothing about them yet.
+         */
+        MatchSummary: {
+            /** Label */
+            label: string;
+            /** Matched Skills */
+            matched_skills: number;
+            /** Partial */
+            partial: boolean;
+            /** Score */
+            score: number;
+            /** Total Skills */
+            total_skills: number;
+        };
+        /** MatchedSkill */
+        MatchedSkill: {
+            /** Name */
+            name: string;
+            /** Sources */
+            sources: string[];
         };
         /** MeResponse */
         MeResponse: {
@@ -1297,6 +1487,21 @@ export interface components {
             /** Roles */
             roles: string[];
             status: components["schemas"]["UserStatus"];
+        };
+        /** MissingSkill */
+        MissingSkill: {
+            /**
+             * Importance
+             * @default required
+             * @enum {string}
+             */
+            importance: "required" | "preferred";
+            /** Reason */
+            reason?: string | null;
+            /** Skill */
+            skill: string;
+            /** Suggestion */
+            suggestion?: string | null;
         };
         /** Page[AdminJobOut] */
         Page_AdminJobOut_: {
@@ -1425,6 +1630,16 @@ export interface components {
             /** Name */
             name: string;
         };
+        /**
+         * PracticeStack
+         * @description What 'Take a skill test' pre-selects for this job.
+         */
+        PracticeStack: {
+            /** Frameworks */
+            frameworks: string[];
+            /** Languages */
+            languages: string[];
+        };
         /** ProfileOut */
         ProfileOut: {
             /** Bio */
@@ -1505,6 +1720,25 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "degraded";
+        };
+        /** RecommendationsResponse */
+        RecommendationsResponse: {
+            /** Available */
+            available: boolean;
+            /** Embedding Pending */
+            embedding_pending: boolean;
+            /** Items */
+            items: components["schemas"]["RecommendedJob"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Total */
+            total: number;
+        };
+        /** RecommendedJob */
+        RecommendedJob: {
+            job: components["schemas"]["JobCard"];
+            /** Reasons */
+            reasons: string[];
         };
         /** RefreshRequest */
         RefreshRequest: {
@@ -1641,6 +1875,27 @@ export interface components {
              */
             saved_at: string;
         };
+        /**
+         * ScoreParts
+         * @description Each signal as a percentage, or null when it couldn't be judged.
+         */
+        ScoreParts: {
+            /**
+             * Level
+             * @description Your years vs the level the job implies
+             */
+            level: number | null;
+            /**
+             * Semantic
+             * @description Resume vs job description similarity
+             */
+            semantic: number | null;
+            /**
+             * Skills
+             * @description Share of the job's skills you have
+             */
+            skills: number | null;
+        };
         /** SetRoleRequest */
         SetRoleRequest: {
             role: components["schemas"]["Role"];
@@ -1650,6 +1905,17 @@ export interface components {
             /** Reason */
             reason?: string | null;
             status: components["schemas"]["UserStatus"];
+        };
+        /** SkillGapAnalysis */
+        SkillGapAnalysis: {
+            /** Missing */
+            missing?: components["schemas"]["MissingSkill"][];
+            /** Strengths */
+            strengths?: string[];
+            /** Summary */
+            summary: string;
+            /** Weak */
+            weak?: components["schemas"]["WeakSkill"][];
         };
         /** TokenResponse */
         TokenResponse: {
@@ -1673,6 +1939,13 @@ export interface components {
              */
             token_type: string;
             user: components["schemas"]["MeResponse"];
+        };
+        /** TransferableSkill */
+        TransferableSkill: {
+            /** Skill */
+            skill: string;
+            /** Via */
+            via: string;
         };
         /**
          * UserStatus
@@ -1715,6 +1988,15 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WeakSkill */
+        WeakSkill: {
+            /** Reason */
+            reason?: string | null;
+            /** Skill */
+            skill: string;
+            /** Suggestion */
+            suggestion?: string | null;
         };
         /**
          * WorkMode
@@ -2405,6 +2687,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    embedding_status_api_v1_admin_matching_embeddings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbeddingStatus"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    run_embeddings_api_v1_admin_matching_embeddings_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbeddingStatus"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3119,6 +3477,122 @@ export interface operations {
             };
         };
     };
+    job_match_api_v1_jobs__job_id__match_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_match_api_v1_jobs__job_id__match_analysis_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     save_job_api_v1_jobs__job_id__save_put: {
         parameters: {
             query?: never;
@@ -3183,6 +3657,60 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recommended_api_v1_matches_recommended_get: {
+        parameters: {
+            query?: {
+                /** @description Only jobs in these countries (ISO 3166-1 alpha-2) */
+                country?: string[] | null;
+                /** @description Only remote jobs */
+                remote?: boolean;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecommendationsResponse"];
+                };
             };
             /** @description Unauthorized */
             401: {

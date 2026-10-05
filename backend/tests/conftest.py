@@ -50,7 +50,11 @@ def settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
         task_execution="inline",
         storage_backend="local",
         local_storage_path=str(tmp_path_factory.mktemp("storage")),
-        llm_routes={"resume_parse": ["mock:mock-1"], "embedding": ["mock:mock-1"]},
+        llm_routes={
+            "resume_parse": ["mock:mock-1"],
+            "skill_gap": ["mock:mock-1"],
+            "embedding": ["mock:mock-1"],
+        },
         llm_allow_mock_fallback=True,
         search_backend="database",
         inline_scheduler_minutes=0,

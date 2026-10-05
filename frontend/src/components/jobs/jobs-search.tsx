@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Flame, Loader2, Search, SlidersHorizontal } from "lucide-react";
+import { Bookmark, Flame, Loader2, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -97,11 +97,18 @@ export function JobsSearch() {
         title="Jobs"
         description="Real openings from companies' own job boards, refreshed every few hours."
         actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/jobs/saved">
-              <Bookmark /> Saved jobs
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="sunrise" size="sm">
+              <Link href="/jobs/recommended">
+                <Sparkles /> Recommended for you
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/jobs/saved">
+                <Bookmark /> Saved jobs
+              </Link>
+            </Button>
+          </>
         }
       />
 

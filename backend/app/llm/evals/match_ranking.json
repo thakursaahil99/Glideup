@@ -1,0 +1,74 @@
+[
+  {
+    "id": "backend-senior",
+    "candidate": {
+      "years": 7,
+      "skills": ["Python", "FastAPI", "Django", "PostgreSQL", "Redis", "Celery", "Docker", "Kubernetes", "AWS", "Git"],
+      "resume": "Senior Backend Engineer. Backend engineer with 7 years of experience building high-traffic APIs and data platforms.\nSkills: Python, FastAPI, Django, PostgreSQL, Redis, Celery, Docker, Kubernetes, AWS, Git\nSenior Backend Engineer at Example Corp. Designed REST APIs serving 2M requests/day with FastAPI and PostgreSQL. Cut p95 latency by 40% with Redis caching.\nBackend Engineer at Sample Systems. Built Django services and Celery pipelines; set up CI/CD with GitHub Actions."
+    },
+    "jobs": [
+      {"id": "py-backend-senior", "grade": 3, "title": "Senior Backend Engineer (Python)", "level": "senior",
+       "skills": ["Python", "Django", "PostgreSQL", "Redis", "AWS", "Docker"],
+       "description": "You will design and scale the APIs behind our payments platform. Our stack is Python and Django on PostgreSQL, with Redis for caching and queues, deployed with Docker on AWS. 5+ years building backend services in production."},
+      {"id": "go-platform", "grade": 2, "title": "Platform Engineer", "level": "senior",
+       "skills": ["Go", "Kubernetes", "Terraform", "AWS", "PostgreSQL"],
+       "description": "Build the internal platform our product teams deploy on: Kubernetes clusters, Terraform modules and Go services that automate provisioning on AWS. Experience operating PostgreSQL at scale is a plus."},
+      {"id": "data-engineer", "grade": 2, "title": "Data Engineer", "level": "mid",
+       "skills": ["Python", "SQL", "Kafka", "AWS"],
+       "description": "Own batch and streaming pipelines that feed analytics and ML. Python, SQL, Kafka and AWS. You care about data quality, testing and observability."},
+      {"id": "react-frontend", "grade": 1, "title": "Frontend Engineer", "level": "mid",
+       "skills": ["React", "TypeScript", "Next.js", "CSS"],
+       "description": "Craft fast, accessible interfaces in React and TypeScript with Next.js. Work closely with design on our component library."},
+      {"id": "account-exec", "grade": 0, "title": "Enterprise Account Executive", "level": "senior",
+       "skills": [],
+       "description": "Own a territory of enterprise accounts, run the full sales cycle from prospecting to close and exceed quarterly quota. 5+ years of B2B SaaS sales."}
+    ]
+  },
+  {
+    "id": "frontend-mid",
+    "candidate": {
+      "years": 4,
+      "skills": ["JavaScript", "TypeScript", "React", "Next.js", "Redux", "Tailwind CSS", "Jest", "Playwright", "Figma"],
+      "resume": "Frontend Developer. 4 years building accessible web apps.\nSkills: JavaScript, TypeScript, React, Next.js, Redux, Tailwind CSS, Jest, Playwright, Figma\nFrontend Developer at Pixel Labs. Led migration from CRA to Next.js; improved Lighthouse performance from 62 to 95.\nJunior Developer at Webcraft. Built a React component library with Storybook and Jest tests."
+    },
+    "jobs": [
+      {"id": "react-mid", "grade": 3, "title": "Frontend Engineer", "level": "mid",
+       "skills": ["React", "TypeScript", "Next.js", "Jest"],
+       "description": "Build product features in React and TypeScript on Next.js. Write tests with Jest and Testing Library, care about performance and accessibility. 3+ years of frontend experience."},
+      {"id": "vue-mid", "grade": 2, "title": "Frontend Developer (Vue)", "level": "mid",
+       "skills": ["Vue.js", "TypeScript", "CSS"],
+       "description": "Develop our customer dashboard in Vue 3 and TypeScript. Strong CSS and an eye for detail. Experience with another modern framework is fine."},
+      {"id": "fullstack-node", "grade": 2, "title": "Full-Stack Engineer", "level": "mid",
+       "skills": ["React", "Node.js", "PostgreSQL", "TypeScript"],
+       "description": "Ship end-to-end features: React on the front, Node.js and PostgreSQL on the back, all in TypeScript."},
+      {"id": "staff-frontend", "grade": 1, "title": "Staff Frontend Architect", "level": "staff",
+       "skills": ["React", "TypeScript"],
+       "description": "Set the technical direction for frontend across 12 teams. 10+ years of experience, including leading large-scale migrations and mentoring senior engineers."},
+      {"id": "java-backend", "grade": 0, "title": "Java Backend Developer", "level": "mid",
+       "skills": ["Java", "Spring Boot", "MySQL", "Kafka"],
+       "description": "Build microservices in Java with Spring Boot, MySQL and Kafka for our banking core."}
+    ]
+  },
+  {
+    "id": "fresher-ml",
+    "candidate": {
+      "years": 0.5,
+      "skills": ["Python", "Pandas", "NumPy", "scikit-learn", "PyTorch", "SQL", "Git"],
+      "resume": "Machine Learning graduate. B.Tech in Computer Science, 2025. Internship building churn-prediction models.\nSkills: Python, Pandas, NumPy, scikit-learn, PyTorch, SQL, Git\nML Intern at Insight Analytics. Built a churn model with scikit-learn (AUC 0.86); automated feature pipelines in Pandas.\nFinal-year project: image classification with PyTorch."
+    },
+    "jobs": [
+      {"id": "ml-entry", "grade": 3, "title": "Junior Machine Learning Engineer", "level": "entry",
+       "skills": ["Python", "PyTorch", "scikit-learn", "SQL"],
+       "description": "Join our applied ML team as a junior engineer. Train and evaluate models in Python with PyTorch and scikit-learn, write SQL to build datasets. Fresh graduates with strong projects welcome."},
+      {"id": "data-analyst", "grade": 2, "title": "Data Analyst", "level": "entry",
+       "skills": ["SQL", "Python", "Pandas"],
+       "description": "Answer business questions with data: SQL, Python and Pandas, dashboards for stakeholders. 0-2 years of experience."},
+      {"id": "ml-senior", "grade": 1, "title": "Senior ML Engineer", "level": "senior",
+       "skills": ["Python", "PyTorch", "Kubernetes", "AWS"],
+       "description": "Lead the design of our recommendation models and serve them at scale on Kubernetes and AWS. 6+ years of ML engineering experience."},
+      {"id": "ios-dev", "grade": 0, "title": "iOS Developer", "level": "mid",
+       "skills": ["Swift"],
+       "description": "Build our iOS app in Swift and SwiftUI. 3+ years shipping apps to the App Store."}
+    ]
+  }
+]

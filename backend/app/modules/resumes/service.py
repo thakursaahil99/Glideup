@@ -19,6 +19,7 @@ from app.llm import prompts
 from app.llm.factory import get_gateway
 from app.llm.routing import Task
 from app.llm.types import AllProvidersFailedError, CallContext
+from app.modules.matching.embeddings import embedding_key, resume_query_text
 from app.modules.profiles import links
 from app.modules.resumes import heuristics  # noqa: F401  (registers the mock parser)
 from app.modules.resumes.grounding import ground
@@ -301,7 +302,8 @@ async def embed_resume_job(resume_id: str) -> None:
         parsed = ParsedResume.model_validate(resume.parsed)
         try:
             result = await get_gateway().embed(
-                [embedding_text(parsed)], ctx=CallContext(user_id=resume.user_id)
+                [resume_query_text(embedding_text(parsed))],
+                ctx=CallContext(user_id=resume.user_id),
             )
         except AllProvidersFailedError as exc:
             logger.warning("resume_embed_failed", resume_id=resume_id, error=str(exc))
@@ -313,7 +315,7 @@ async def embed_resume_job(resume_id: str) -> None:
             )
             return
         resume.embedding = vector
-        resume.embedding_model = f"{result.provider}:{result.model}"
+        resume.embedding_model = embedding_key(result.provider, result.model)
         await session.commit()
 
 

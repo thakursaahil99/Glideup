@@ -13,6 +13,7 @@ from app.core.config import Settings
 class Task:
     RESUME_PARSE = "resume_parse"
     PORTFOLIO_PARSE = "portfolio_parse"
+    SKILL_GAP = "skill_gap"
     EMBEDDING = "embedding"
 
 
@@ -24,6 +25,12 @@ DEFAULT_ROUTES: dict[str, list[str]] = {
     ],
     # Same shape of work as resume parsing (structured extraction), so the same chain.
     Task.PORTFOLIO_PARSE: [
+        "ollama:qwen2.5:3b",
+        "github:openai/gpt-4.1-mini",
+        "openrouter:meta-llama/llama-3.3-70b-instruct:free",
+    ],
+    # Reasoning over two documents; small local model first, hosted ones as fallback.
+    Task.SKILL_GAP: [
         "ollama:qwen2.5:3b",
         "github:openai/gpt-4.1-mini",
         "openrouter:meta-llama/llama-3.3-70b-instruct:free",

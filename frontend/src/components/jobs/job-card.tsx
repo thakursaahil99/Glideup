@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { errorMessage } from "@/lib/api/client";
 import { remoteLabel } from "@/components/jobs/location-filters";
+import { MatchBadge } from "@/components/matching/match-badge";
 import { useToggleSave } from "@/lib/api/jobs";
 import { EXPERIENCE_LEVELS, type JobCard as Job, WORK_MODES } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -110,6 +111,7 @@ export function JobCard({ job }: { job: Job }) {
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        {job.match && <MatchBadge match={job.match} />}
         {job.is_featured && (
           <Badge variant="sunrise">
             <Sparkles className="size-3" /> Featured

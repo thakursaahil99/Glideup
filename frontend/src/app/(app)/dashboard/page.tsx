@@ -2,6 +2,7 @@ import { Circle, Flame, Gauge, Target } from "lucide-react";
 import type { Metadata } from "next";
 
 import { ResumeCard } from "@/components/dashboard/resume-card";
+import { TopMatches } from "@/components/dashboard/top-matches";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/primitives";
@@ -30,6 +31,7 @@ export default async function DashboardPage() {
       />
 
       <ResumeCard />
+      <TopMatches />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {EMPTY_STATS.map(({ label, icon: Icon, hint }) => (

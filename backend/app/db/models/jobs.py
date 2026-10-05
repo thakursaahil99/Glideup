@@ -18,11 +18,13 @@ from sqlalchemy import (
     Uuid,
     false,
     func,
+    text,
     true,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.models.resume import EmbeddingType
 
 
 def _enum(cls: type[enum.Enum], name: str) -> Enum:
@@ -193,6 +195,12 @@ class Job(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     company_open_roles: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     company_new_roles_7d: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
+    # Semantic matching (Phase 4). Deferred: 768 floats per row are only loaded when asked
+    # for. `embedded_hash` is the content_hash that was embedded, so edits re-embed.
+    embedding: Mapped[list[float] | None] = deferred(mapped_column(EmbeddingType))
+    embedding_model: Mapped[str | None] = mapped_column(String(200))
+    embedded_hash: Mapped[str | None] = mapped_column(String(64))
+
     source: Mapped[JobSource] = relationship(lazy="joined")
 
     __table_args__ = (
@@ -202,6 +210,14 @@ class Job(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Index("ix_jobs_listing", "is_active", "posted_at"),
         Index("ix_jobs_company_id", "company_id"),
         Index("ix_jobs_duplicate_of_id", "duplicate_of_id"),
+        # Approximate nearest neighbours for recommendations (cosine distance).
+        Index(
+            "ix_jobs_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+            postgresql_where=text("embedding IS NOT NULL"),
+        ),
     )
 
     @property

@@ -111,6 +111,8 @@ class Settings(BaseSettings):
     # Append the mock provider as the last resort. Local/test only: it returns heuristic
     # output, which must never silently replace a real model in production.
     llm_allow_mock_fallback: bool = False
+    # AI skill-gap analyses a user may start per 24 hours (each is one LLM call).
+    match_analysis_daily_limit: int = Field(default=30, ge=0)
     mock_llm_delay_ms: int = 0
     mock_llm_error_rate: float = Field(default=0.0, ge=0.0, le=1.0)
     circuit_breaker_failure_threshold: int = 3

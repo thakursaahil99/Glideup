@@ -13,6 +13,7 @@ from app.db.models.jobs import (
     WorkMode,
 )
 from app.db.models.llm import LLMUsage
+from app.db.models.matching import JobMatch, MatchAnalysisStatus
 from app.db.models.portfolio import AnalysisStatus, PortfolioAnalysis, PortfolioKind
 from app.db.models.profile import Profile, RemotePreference
 from app.db.models.resume import EMBEDDING_DIMENSIONS, Resume, ResumeSkill, ResumeStatus
@@ -27,8 +28,10 @@ __all__ = [
     "ExperienceLevel",
     "IngestionRun",
     "Job",
+    "JobMatch",
     "JobSource",
     "LLMUsage",
+    "MatchAnalysisStatus",
     "PortfolioAnalysis",
     "PortfolioKind",
     "Profile",

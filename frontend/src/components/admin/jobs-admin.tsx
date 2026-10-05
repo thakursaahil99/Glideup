@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Search,
   Settings2,
+  Sparkles,
   Star,
   Trash2,
   Upload,
@@ -38,7 +39,7 @@ import {
 import { Badge, Input, Label, NativeSelect, Skeleton } from "@/components/ui/primitives";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, ApiError, errorMessage, unwrap } from "@/lib/api/client";
-import type { Company, CompanyImportResult, IngestionRun, JobSource } from "@/lib/api/types";
+import type { Company, CompanyImportResult, EmbeddingStatus, IngestionRun, JobSource } from "@/lib/api/types";
 import { useDebouncedValue } from "@/lib/hooks";
 import { cn, formatDateTime } from "@/lib/utils";
 
@@ -925,6 +926,68 @@ function JobsTab() {
   );
 }
 
+// ------------------------------------------------------------------ matching
+
+const number = new Intl.NumberFormat("en");
+
+/** Coverage of the vectors behind match scores; new jobs are embedded after each run. */
+export function EmbeddingCard() {
+  const client = useQueryClient();
+  const key = ["admin", "jobs-admin", "embeddings"];
+  const status = useQuery({
+    queryKey: key,
+    queryFn: () => unwrap(api.GET("/api/v1/admin/matching/embeddings")),
+    refetchInterval: (query) => ((query.state.data?.pending ?? 0) > 0 ? 10_000 : false),
+  });
+  const run = useMutation({
+    mutationFn: () => unwrap(api.POST("/api/v1/admin/matching/embeddings/run")),
+    onSuccess: (data: EmbeddingStatus) => {
+      client.setQueryData(key, data);
+      toast.success("Embedding started in the background");
+    },
+    onError,
+  });
+  const data = status.data;
+  const share = data && data.listed ? Math.round((data.embedded / data.listed) * 100) : 0;
+  return (
+    <Card className="mb-4 flex flex-wrap items-center gap-4 p-4">
+      <Sparkles className="size-5 text-sunrise" aria-hidden />
+      <div className="min-w-48 flex-1">
+        <p className="text-sm font-medium">Match embeddings</p>
+        {data ? (
+          <>
+            <p className="text-xs text-muted-foreground">
+              {number.format(data.embedded)} of {number.format(data.listed)} listed jobs ({share}%)
+              {data.pending > 0 && ` · ${number.format(data.pending)} pending`} ·{" "}
+              {data.model ?? "no embedding model configured"}
+            </p>
+            <div
+              className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted"
+              role="progressbar"
+              aria-label="Jobs embedded"
+              aria-valuenow={share}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="h-full rounded-full bg-primary" style={{ width: `${share}%` }} />
+            </div>
+          </>
+        ) : (
+          <Skeleton className="mt-1 h-4 w-64" />
+        )}
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => run.mutate()}
+        disabled={run.isPending || !data || data.pending === 0}
+      >
+        <Play /> Embed pending now
+      </Button>
+    </Card>
+  );
+}
+
 // ------------------------------------------------------------------ page
 
 export function JobsAdmin() {
@@ -950,6 +1013,7 @@ export function JobsAdmin() {
           </Button>
         }
       />
+      <EmbeddingCard />
       <div
         role="tablist"
         aria-label="Jobs admin sections"

@@ -1,0 +1,8 @@
+Job: {{ title }} at {{ company }}{% if level %} ({{ level }} level){% endif %}
+
+Skills detected in the posting: {{ job_skills | join(", ") if job_skills else "none detected" }}
+Our skill comparison found the candidate lacks: {{ missing | join(", ") if missing else "nothing from that list" }}
+
+{{ fence(job_text, "job") }}
+
+{{ fence(candidate, "candidate") }}

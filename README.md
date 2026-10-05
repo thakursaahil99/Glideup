@@ -9,11 +9,12 @@ GlideUp is an AI-powered platform that matches your resume to real jobs, shows y
 runs job-specific mock interviews and coding tests in many languages and frameworks, and tracks
 your applications — from job search to offer.
 
-> **Status:** Phase 3 of 10. Real jobs from 78 company boards (Greenhouse, Lever, Ashby,
-> SmartRecruiters) and the Arbeitnow job board, plus Adzuna with a free key; deduplicated,
-> searchable by country, state, city or metro area, with companies hiring the most highlighted.
-> Before that: resume parsing with a local LLM (Phase 2) and the foundation (Phase 1). See the
-> [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
+> **Status:** Phase 4 of 10. Every job shows your match score and the skills you're
+> missing, with an on-demand AI coach that explains each gap, and a "Recommended for you"
+> feed. Jobs come from 78 company boards (Greenhouse, Lever, Ashby, SmartRecruiters) and the
+> Arbeitnow job board, plus Adzuna with a free key; deduplicated and searchable by country,
+> state, city or metro area. Before that: resume parsing with a local LLM (Phase 2) and the
+> foundation (Phase 1). See the [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
 
 ## Architecture
 
@@ -122,13 +123,14 @@ Measure any model or prompt change with the golden-set evals:
 
 ```bash
 cd backend && uv run python -m app.llm.evals.run --route ollama:qwen2.5:3b
+cd backend && uv run python -m app.llm.evals.match --route ollama:nomic-embed-text   # match scoring
 ```
 
 ### Jobs
 
 Jobs come only from official public APIs: company job boards on Greenhouse, Lever, Ashby and
-SmartRecruiters, the Arbeitnow job board, plus Adzuna with a free key. Nothing is scraped, and every job links to the company's own apply
-page. Sources, schedules, rate limits and the company list are managed in **Admin → Jobs &
+SmartRecruiters, the Arbeitnow job board, plus Adzuna with a free key. Nothing is scraped,
+and every job links to the company's own apply page. Sources, schedules, rate limits and the company list are managed in **Admin → Jobs &
 Sources**.
 
 ```bash
@@ -136,6 +138,20 @@ cd backend
 uv run python -m app.scripts.seed        # sources + the verified company list (Compose runs this)
 # then click "Run now" in Admin → Jobs & Sources, or wait for the schedule (every 6 hours)
 ```
+
+### Matching
+
+Each job's match score blends three things: how closely your resume reads like the job
+(embeddings in pgvector), how many of its skills you have (from your resume and GitHub), and
+whether your years fit its level. The job page shows the breakdown, your matched, related
+and missing skills, and an **AI skill-gap coach** that explains each gap with a concrete way
+to close it. **Recommended for you** ranks the nearest jobs by that score, nudged by your
+preferred locations and remote preference. How it works and how it was calibrated:
+[ADR 0009](docs/adr/0009-matching-and-skill-gap.md).
+
+New jobs are embedded automatically after each ingestion run (`nomic-embed-text` via Ollama:
+`ollama pull nomic-embed-text`). The first backfill of ~15k jobs takes about an hour on a
+laptop CPU; progress and a "run now" button are in **Admin → Jobs & Sources**.
 
 ### Running without Docker
 

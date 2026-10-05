@@ -9,6 +9,16 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.db.models import ATS, ExperienceLevel, RunStatus, WorkMode
 
 
+class MatchSummary(BaseModel):
+    """How well the signed-in user fits a job. Absent when we know nothing about them yet."""
+
+    score: int = Field(ge=0, le=100)
+    label: str  # "Strong match" | "Good match" | "Fair match" | "Low match"
+    partial: bool  # scored from skills only (embeddings not ready yet)
+    matched_skills: int
+    total_skills: int
+
+
 class JobCard(BaseModel):
     id: uuid.UUID
     title: str
@@ -33,6 +43,7 @@ class JobCard(BaseModel):
     is_saved: bool
     source: str
     attribution: str | None
+    match: MatchSummary | None = None
 
 
 class JobDetail(JobCard):
@@ -163,3 +174,12 @@ class JobFlagsUpdate(BaseModel):
 
 class ReindexResult(BaseModel):
     indexed: int
+
+
+class EmbeddingStatus(BaseModel):
+    """How many listed jobs have vectors for matching, from the current model."""
+
+    model: str | None  # e.g. "ollama:nomic-embed-text#t1"
+    listed: int
+    embedded: int
+    pending: int

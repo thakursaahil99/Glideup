@@ -4,6 +4,7 @@ import uuid
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from sqlalchemy import func, select
 
 from app.api.deps import RequestMetaDep, SessionDep, require_permission
 from app.api.v1.job_schemas import (
@@ -12,6 +13,7 @@ from app.api.v1.job_schemas import (
     CompanyImportResult,
     CompanyOut,
     CompanyUpdate,
+    EmbeddingStatus,
     IngestionRunOut,
     JobFlagsUpdate,
     JobSourceOut,
@@ -27,6 +29,9 @@ from app.jobsources.registry import get_plugin
 from app.modules.audit import service as audit
 from app.modules.jobs import catalog, service, tasks
 from app.modules.jobs.ingestion import rebuild_search_index, run_ingestion, sync_search
+from app.modules.jobs.search import listed
+from app.modules.matching import embeddings
+from app.modules.matching import tasks as matching_tasks
 from app.workers.runtime import dispatch
 
 router = APIRouter(
@@ -298,3 +303,36 @@ async def reindex(session: SessionDep, actor: JobsAdmin, meta: RequestMetaDep) -
     )
     await session.commit()
     return ReindexResult(indexed=await rebuild_search_index())
+
+
+# ------------------------------------------------------------------ matching
+
+
+@router.get("/matching/embeddings", response_model=EmbeddingStatus)
+async def embedding_status(session: SessionDep, _: JobsAdmin) -> EmbeddingStatus:
+    """Coverage of job embeddings used for match scores and recommendations."""
+    total = await session.scalar(select(func.count()).select_from(Job).where(listed())) or 0
+    pending = await embeddings.count_pending(session)
+    return EmbeddingStatus(
+        model=embeddings.current_key(),
+        listed=total,
+        embedded=max(0, total - pending),
+        pending=pending,
+    )
+
+
+@router.post(
+    "/matching/embeddings/run",
+    response_model=EmbeddingStatus,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def run_embeddings(
+    session: SessionDep, actor: JobsAdmin, meta: RequestMetaDep
+) -> EmbeddingStatus:
+    """Embed pending jobs now (in the background). Safe to repeat: one run at a time."""
+    await audit.record(
+        session, actor=actor, action="matching.embed_requested", target_type="matching", meta=meta
+    )
+    await session.commit()
+    dispatch(matching_tasks.embed_jobs, embeddings.embed_jobs_job)
+    return await embedding_status(session, actor)

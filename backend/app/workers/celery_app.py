@@ -28,6 +28,8 @@ celery_app.conf.update(
     beat_schedule={
         # Cheap check; each source has its own admin-editable schedule (default 6 hours).
         "ingest-due-job-sources": {"task": "jobs.ingest_due", "schedule": 300.0},
+        # Embeds new/changed jobs; ingestion also triggers it, this catches up after outages.
+        "embed-pending-jobs": {"task": "matching.embed_jobs", "schedule": 900.0},
     },
 )
 celery_app.conf.include = [
@@ -35,6 +37,7 @@ celery_app.conf.include = [
     "app.modules.resumes.tasks",
     "app.modules.portfolio.tasks",
     "app.modules.jobs.tasks",
+    "app.modules.matching.tasks",
 ]
 
 

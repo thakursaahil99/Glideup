@@ -145,6 +145,32 @@ flowchart LR
 
 Details and measurements: [ADR 0008](adr/0008-job-ingestion-and-search.md).
 
+## Matching & skill gap (Phase 4)
+
+```mermaid
+flowchart LR
+    ingest[Ingestion run] --> embedq[Embed pending jobs<br/>also every 15 min]
+    embedq --> pgv[(jobs.embedding<br/>pgvector + HNSW)]
+    resume[Parsed resume] --> rvec[(resumes.embedding)]
+    skills[Resume + GitHub skills] --> score
+    subgraph score[Score on request]
+      direction TB
+      sem[semantic: cosine, calibrated] --> mix[weighted 0.6 / 0.4]
+      sk[skills: matched + related / total] --> mix
+      mix --> lvl[x level fit 0.7-1.0]
+    end
+    pgv --> score
+    rvec --> score
+    score --> cards[Job cards: % match]
+    pgv -- 400 nearest --> rec[Recommendations<br/>re-rank + preference nudges]
+    score --> rec
+    user[Analyze my gaps] --> llm[LLM skill_gap@v1<br/>background] --> ground[Ground in posting<br/>and profile] --> jm[(job_matches)]
+```
+
+Embeddings carry a model + text-recipe key, so vectors from different models are never
+compared. Scores are computed per request rather than stored. Calibration and eval:
+[ADR 0009](adr/0009-matching-and-skill-gap.md).
+
 ## Data model (Phase 1)
 
 ```mermaid

@@ -1,22 +1,14 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Building2,
-  CalendarDays,
-  Code2,
-  ExternalLink,
-  MapPin,
-  MessagesSquare,
-  Target,
-} from "lucide-react";
+import { ArrowLeft, Building2, CalendarDays, ExternalLink, MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { HiringBadge, levelLabel, postedAgo, SaveButton, workModeLabel } from "@/components/jobs/job-card";
 import { remoteLabel } from "@/components/jobs/location-filters";
+import { MatchCard, PrepareCard, SkillGapCoach } from "@/components/matching/match-panel";
 import { ErrorState } from "@/components/states";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, Skeleton } from "@/components/ui/primitives";
 import { useJob } from "@/lib/api/jobs";
 
@@ -83,6 +75,8 @@ export function JobDetailView({ jobId }: { jobId: string }) {
             {job.attribution && <p className="mt-3 text-xs text-muted-foreground">{job.attribution}</p>}
           </header>
 
+          <SkillGapCoach jobId={job.id} />
+
           <section aria-label="Job description" className="mt-6 rounded-xl border bg-card p-5 sm:p-6">
             {/* Sanitised on the server with an allow-list (nh3): formatting only, no scripts. */}
             <div className="job-description" dangerouslySetInnerHTML={{ __html: job.description_html }} />
@@ -90,7 +84,8 @@ export function JobDetailView({ jobId }: { jobId: string }) {
         </article>
 
         <aside className="space-y-4">
-          {job.skills.length > 0 && (
+          <MatchCard jobId={job.id} />
+          {job.skills.length > 0 && !job.match && (
             <Card>
               <CardHeader>
                 <CardTitle>Skills mentioned</CardTitle>
@@ -104,23 +99,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
               </CardContent>
             </Card>
           )}
-          <Card>
-            <CardHeader>
-              <CardTitle>Prepare for this job</CardTitle>
-              <CardDescription>Your match score and skill gaps arrive in the next update.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" disabled title="Coming in phase 4">
-                <Target /> See my match & skill gaps
-              </Button>
-              <Button variant="outline" className="w-full justify-start" disabled title="Coming in phase 5">
-                <MessagesSquare /> Practice interview for this job
-              </Button>
-              <Button variant="outline" className="w-full justify-start" disabled title="Coming in phase 6">
-                <Code2 /> Take a skill test
-              </Button>
-            </CardContent>
-          </Card>
+          <PrepareCard jobId={job.id} />
         </aside>
       </div>
     </div>

@@ -22,6 +22,7 @@ from app.jobsources.http import SourceHttpClient
 from app.jobsources.normalize import NormalizedJob, normalize, posting_hash
 from app.jobsources.registry import get_plugin
 from app.modules.jobs.search import get_search, listed
+from app.workers.runtime import dispatch
 
 logger = structlog.stdlib.get_logger(__name__)
 
@@ -320,7 +321,16 @@ async def ingest_source(
 
     touched |= await refresh_company_hiring()
     await sync_search(touched)
+    if run_id is not None:
+        _queue_embeddings()
     return run_id
+
+
+def _queue_embeddings() -> None:
+    """New and changed jobs need vectors for matching; the backfill only touches those."""
+    from app.modules.matching import embeddings, tasks
+
+    dispatch(tasks.embed_jobs, embeddings.embed_jobs_job)
 
 
 HIRING_WINDOW = timedelta(days=7)

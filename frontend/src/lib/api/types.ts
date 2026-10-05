@@ -64,3 +64,11 @@ export const EXPERIENCE_LEVELS: { value: ExperienceLevel; label: string }[] = [
   { value: "staff", label: "Staff / Principal" },
   { value: "manager", label: "Manager / Director" },
 ];
+
+export type MatchSummary = Schemas["MatchSummary"];
+export type MatchDetail = Schemas["MatchDetail"];
+export type MatchAnalysis = Schemas["AnalysisOut"];
+export type SkillGapAnalysis = Schemas["SkillGapAnalysis"];
+export type RecommendedJob = Schemas["RecommendedJob"];
+export type RecommendationsResponse = Schemas["RecommendationsResponse"];
+export type EmbeddingStatus = Schemas["EmbeddingStatus"];

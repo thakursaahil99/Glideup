@@ -79,7 +79,9 @@ async def analyze(
     status_code=status.HTTP_202_ACCEPTED,
     responses={409: {"model": ErrorResponse}},
 )
-async def retry(analysis_id: uuid.UUID, session: SessionDep, user: CurrentUser) -> PortfolioAnalysisOut:
+async def retry(
+    analysis_id: uuid.UUID, session: SessionDep, user: CurrentUser
+) -> PortfolioAnalysisOut:
     analysis = await service.get_owned(session, user, analysis_id)
     analysis = await service.request_analysis(session, user, analysis.url)
     await session.commit()

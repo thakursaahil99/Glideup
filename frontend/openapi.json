@@ -256,6 +256,77 @@
         "title": "AdminUserDetail",
         "type": "object"
       },
+      "AnalysisOut": {
+        "properties": {
+          "analyzed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyzed At"
+          },
+          "analyzed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyzed By"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SkillGapAnalysis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MatchAnalysisStatus"
+          }
+        },
+        "required": [
+          "status",
+          "stale",
+          "result",
+          "error",
+          "requested_at",
+          "analyzed_at",
+          "analyzed_by"
+        ],
+        "title": "AnalysisOut",
+        "type": "object"
+      },
       "AnalysisStatus": {
         "enum": [
           "pending",
@@ -710,6 +781,42 @@
         "title": "Education",
         "type": "object"
       },
+      "EmbeddingStatus": {
+        "description": "How many listed jobs have vectors for matching, from the current model.",
+        "properties": {
+          "embedded": {
+            "title": "Embedded",
+            "type": "integer"
+          },
+          "listed": {
+            "title": "Listed",
+            "type": "integer"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "model",
+          "listed",
+          "embedded",
+          "pending"
+        ],
+        "title": "EmbeddingStatus",
+        "type": "object"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -1040,6 +1147,16 @@
             ],
             "title": "Location"
           },
+          "match": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MatchSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "posted_at": {
             "anyOf": [
               {
@@ -1256,6 +1373,16 @@
               }
             ],
             "title": "Location"
+          },
+          "match": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MatchSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "posted_at": {
             "anyOf": [
@@ -1619,6 +1746,30 @@
         "title": "JobSourceUpdate",
         "type": "object"
       },
+      "LevelFit": {
+        "properties": {
+          "job_level": {
+            "$ref": "#/components/schemas/ExperienceLevel"
+          },
+          "your_years": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Years"
+          }
+        },
+        "required": [
+          "job_level",
+          "your_years"
+        ],
+        "title": "LevelFit",
+        "type": "object"
+      },
       "Liveness": {
         "properties": {
           "status": {
@@ -1629,6 +1780,161 @@
           }
         },
         "title": "Liveness",
+        "type": "object"
+      },
+      "MatchAnalysisStatus": {
+        "enum": [
+          "pending",
+          "analyzing",
+          "done",
+          "failed"
+        ],
+        "title": "MatchAnalysisStatus",
+        "type": "string"
+      },
+      "MatchDetail": {
+        "properties": {
+          "analyses_per_day": {
+            "title": "Analyses Per Day",
+            "type": "integer"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "embedding_pending": {
+            "title": "Embedding Pending",
+            "type": "boolean"
+          },
+          "level": {
+            "$ref": "#/components/schemas/LevelFit"
+          },
+          "matched": {
+            "items": {
+              "$ref": "#/components/schemas/MatchedSkill"
+            },
+            "title": "Matched",
+            "type": "array"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "parts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScoreParts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "practice": {
+            "$ref": "#/components/schemas/PracticeStack"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MatchSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transferable": {
+            "items": {
+              "$ref": "#/components/schemas/TransferableSkill"
+            },
+            "title": "Transferable",
+            "type": "array"
+          }
+        },
+        "required": [
+          "available",
+          "summary",
+          "parts",
+          "matched",
+          "transferable",
+          "missing",
+          "level",
+          "practice",
+          "embedding_pending",
+          "analysis",
+          "analyses_per_day"
+        ],
+        "title": "MatchDetail",
+        "type": "object"
+      },
+      "MatchSummary": {
+        "description": "How well the signed-in user fits a job. Absent when we know nothing about them yet.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "matched_skills": {
+            "title": "Matched Skills",
+            "type": "integer"
+          },
+          "partial": {
+            "title": "Partial",
+            "type": "boolean"
+          },
+          "score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "integer"
+          },
+          "total_skills": {
+            "title": "Total Skills",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "score",
+          "label",
+          "partial",
+          "matched_skills",
+          "total_skills"
+        ],
+        "title": "MatchSummary",
+        "type": "object"
+      },
+      "MatchedSkill": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "sources"
+        ],
+        "title": "MatchedSkill",
         "type": "object"
       },
       "MeResponse": {
@@ -1711,6 +2017,54 @@
           "permissions"
         ],
         "title": "MeResponse",
+        "type": "object"
+      },
+      "MissingSkill": {
+        "properties": {
+          "importance": {
+            "default": "required",
+            "enum": [
+              "required",
+              "preferred"
+            ],
+            "title": "Importance",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "skill": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Skill",
+            "type": "string"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion"
+          }
+        },
+        "required": [
+          "skill"
+        ],
+        "title": "MissingSkill",
         "type": "object"
       },
       "Page_AdminJobOut_": {
@@ -2177,6 +2531,31 @@
         "title": "PortfolioSkill",
         "type": "object"
       },
+      "PracticeStack": {
+        "description": "What 'Take a skill test' pre-selects for this job.",
+        "properties": {
+          "frameworks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Frameworks",
+            "type": "array"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "languages",
+          "frameworks"
+        ],
+        "title": "PracticeStack",
+        "type": "object"
+      },
       "ProfileOut": {
         "properties": {
           "bio": {
@@ -2503,6 +2882,69 @@
           "checks"
         ],
         "title": "Readiness",
+        "type": "object"
+      },
+      "RecommendationsResponse": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "embedding_pending": {
+            "title": "Embedding Pending",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendedJob"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "available",
+          "items",
+          "next_cursor",
+          "total",
+          "embedding_pending"
+        ],
+        "title": "RecommendationsResponse",
+        "type": "object"
+      },
+      "RecommendedJob": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/JobCard"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job",
+          "reasons"
+        ],
+        "title": "RecommendedJob",
         "type": "object"
       },
       "RefreshRequest": {
@@ -2905,6 +3347,54 @@
         "title": "SavedJobOut",
         "type": "object"
       },
+      "ScoreParts": {
+        "description": "Each signal as a percentage, or null when it couldn't be judged.",
+        "properties": {
+          "level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Your years vs the level the job implies",
+            "title": "Level"
+          },
+          "semantic": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Resume vs job description similarity",
+            "title": "Semantic"
+          },
+          "skills": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of the job's skills you have",
+            "title": "Skills"
+          }
+        },
+        "required": [
+          "semantic",
+          "skills",
+          "level"
+        ],
+        "title": "ScoreParts",
+        "type": "object"
+      },
       "SetRoleRequest": {
         "properties": {
           "role": {
@@ -2939,6 +3429,46 @@
           "status"
         ],
         "title": "SetStatusRequest",
+        "type": "object"
+      },
+      "SkillGapAnalysis": {
+        "properties": {
+          "missing": {
+            "items": {
+              "$ref": "#/components/schemas/MissingSkill"
+            },
+            "maxItems": 10,
+            "title": "Missing",
+            "type": "array"
+          },
+          "strengths": {
+            "items": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Strengths",
+            "type": "array"
+          },
+          "summary": {
+            "maxLength": 600,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "weak": {
+            "items": {
+              "$ref": "#/components/schemas/WeakSkill"
+            },
+            "maxItems": 8,
+            "title": "Weak",
+            "type": "array"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "SkillGapAnalysis",
         "type": "object"
       },
       "TokenResponse": {
@@ -2978,6 +3508,24 @@
           "user"
         ],
         "title": "TokenResponse",
+        "type": "object"
+      },
+      "TransferableSkill": {
+        "properties": {
+          "skill": {
+            "title": "Skill",
+            "type": "string"
+          },
+          "via": {
+            "title": "Via",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill",
+          "via"
+        ],
+        "title": "TransferableSkill",
         "type": "object"
       },
       "UserStatus": {
@@ -3100,6 +3648,45 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WeakSkill": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "skill": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Skill",
+            "type": "string"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion"
+          }
+        },
+        "required": [
+          "skill"
+        ],
+        "title": "WeakSkill",
         "type": "object"
       },
       "WorkMode": {
@@ -4231,6 +4818,100 @@
           }
         ],
         "summary": "Mark Not Duplicate",
+        "tags": [
+          "admin: jobs"
+        ]
+      }
+    },
+    "/api/v1/admin/matching/embeddings": {
+      "get": {
+        "description": "Coverage of job embeddings used for match scores and recommendations.",
+        "operationId": "embedding_status_api_v1_admin_matching_embeddings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Embedding Status",
+        "tags": [
+          "admin: jobs"
+        ]
+      }
+    },
+    "/api/v1/admin/matching/embeddings/run": {
+      "post": {
+        "description": "Embed pending jobs now (in the background). Safe to repeat: one run at a time.",
+        "operationId": "run_embeddings_api_v1_admin_matching_embeddings_run_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Run Embeddings",
         "tags": [
           "admin: jobs"
         ]
@@ -5515,6 +6196,164 @@
         ]
       }
     },
+    "/api/v1/jobs/{job_id}/match": {
+      "get": {
+        "description": "Your score for this job, the skills behind it, and any AI skill-gap analysis.",
+        "operationId": "job_match_api_v1_jobs__job_id__match_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Job Match",
+        "tags": [
+          "matches"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_id}/match/analysis": {
+      "post": {
+        "description": "Start an AI skill-gap analysis (runs in the background; poll the match endpoint).\nReuses a fresh or running analysis instead of starting another.",
+        "operationId": "analyze_match_api_v1_jobs__job_id__match_analysis_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Analyze Match",
+        "tags": [
+          "matches"
+        ]
+      }
+    },
     "/api/v1/jobs/{job_id}/save": {
       "delete": {
         "operationId": "unsave_job_api_v1_jobs__job_id__save_delete",
@@ -5632,6 +6471,129 @@
         "summary": "Save Job",
         "tags": [
           "jobs"
+        ]
+      }
+    },
+    "/api/v1/matches/recommended": {
+      "get": {
+        "description": "Jobs ranked by how well they fit you, nudged by your preferred locations and\nremote preference.",
+        "operationId": "recommended_api_v1_matches_recommended_get",
+        "parameters": [
+          {
+            "description": "Only jobs in these countries (ISO 3166-1 alpha-2)",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "pattern": "^[A-Z]{2}$",
+                    "type": "string"
+                  },
+                  "maxItems": 10,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only jobs in these countries (ISO 3166-1 alpha-2)",
+              "title": "Country"
+            }
+          },
+          {
+            "description": "Only remote jobs",
+            "in": "query",
+            "name": "remote",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Only remote jobs",
+              "title": "Remote",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Recommended",
+        "tags": [
+          "matches"
         ]
       }
     },

@@ -6,12 +6,15 @@ from pydantic import StringConstraints
 
 from app.api.deps import CurrentUser, SessionDep
 from app.api.v1.job_schemas import JobCard, JobDetail, JobSearchResponse, SavedJobOut
+from app.api.v1.match_schemas import summary_of
 from app.core.errors import AppError, ErrorResponse
 from app.db.models import ExperienceLevel, Job, WorkMode
 from app.jobsources.geo_data import METROS
 from app.modules.jobs import service
 from app.modules.jobs.ingestion import salary_text
 from app.modules.jobs.search import Region, RemoteFilter, SearchQuery, Sort
+from app.modules.matching.scoring import MatchResult
+from app.modules.matching.service import scores_for_user
 
 # A company is "hiring actively" with this many open roles, or this many new in 7 days.
 HIRING_OPEN_ROLES = 25
@@ -34,7 +37,7 @@ router = APIRouter(
 )
 
 
-def to_card(job: Job, *, saved: bool) -> JobCard:
+def to_card(job: Job, *, saved: bool, match: MatchResult | None = None) -> JobCard:
     return JobCard(
         id=job.id,
         title=job.title,
@@ -60,6 +63,7 @@ def to_card(job: Job, *, saved: bool) -> JobCard:
         is_saved=saved,
         source=job.source.key,
         attribution=service.attribution_for(job),
+        match=summary_of(match) if match else None,
     )
 
 
@@ -117,8 +121,11 @@ async def search_jobs(
         limit=limit,
     )
     page = await service.search_jobs(session, user, query)
+    matches = await scores_for_user(session, user.id, page.jobs)
     return JobSearchResponse(
-        items=[to_card(j, saved=j.id in page.saved_ids) for j in page.jobs],
+        items=[
+            to_card(j, saved=j.id in page.saved_ids, match=matches.get(j.id)) for j in page.jobs
+        ],
         next_cursor=page.next_cursor,
         total=page.hits.total,
         facets=page.hits.facets,
@@ -129,16 +136,23 @@ async def search_jobs(
 
 @router.get("/saved", response_model=list[SavedJobOut])
 async def saved_jobs(session: SessionDep, user: CurrentUser) -> list[SavedJobOut]:
+    saved = await service.list_saved(session, user)
+    matches = await scores_for_user(session, user.id, [s.job for s in saved])
     return [
-        SavedJobOut(saved_at=s.created_at, job=to_card(s.job, saved=True))
-        for s in await service.list_saved(session, user)
+        SavedJobOut(
+            saved_at=s.created_at, job=to_card(s.job, saved=True, match=matches.get(s.job_id))
+        )
+        for s in saved
     ]
 
 
 @router.get("/{job_id}", response_model=JobDetail)
 async def get_job(job_id: uuid.UUID, session: SessionDep, user: CurrentUser) -> JobDetail:
     job = await service.get_job(session, job_id)
-    card = to_card(job, saved=await service.is_saved(session, user, job.id))
+    matches = await scores_for_user(session, user.id, [job])
+    card = to_card(
+        job, saved=await service.is_saved(session, user, job.id), match=matches.get(job.id)
+    )
     return JobDetail(
         **card.model_dump(),
         department=job.department,
