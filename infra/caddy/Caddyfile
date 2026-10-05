@@ -1,0 +1,26 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Live interviews: the browser opens a WebSocket straight to the API.
+	handle /ws/* {
+		reverse_proxy api:8000
+	}
+
+	# Prometheus scrapes the API inside the Docker network; never expose metrics publicly.
+	handle /metrics {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

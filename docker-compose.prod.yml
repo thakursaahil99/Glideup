@@ -1,0 +1,113 @@
+# Production overlay for a single VM (e.g. Oracle Cloud Always Free, ARM).
+#   ./deploy/deploy.sh      (on the VM; reads .env, created from .env.production.example)
+# Differences from local: only Caddy (80/443, automatic HTTPS) is published; data services are
+# private to the Docker network; Ollama runs in a container; real SMTP; production settings.
+
+x-prod-backend: &prod-backend
+  environment:
+    ENVIRONMENT: production
+    LOG_JSON: "true"
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    REDIS_URL: redis://redis:6379/0
+    MEILI_URL: http://meilisearch:7700
+    S3_ENDPOINT_URL: http://minio:9000
+    TASK_EXECUTION: celery
+    STORAGE_BACKEND: s3
+    SMTP_HOST: ${SMTP_HOST:-}
+    SMTP_PORT: ${SMTP_PORT:-587}
+    OLLAMA_BASE_URL: http://ollama:11434
+    PISTON_URL: http://piston:2000
+    API_PUBLIC_URL: https://${DOMAIN}
+    WEB_URL: https://${DOMAIN}
+    CORS_ORIGINS: https://${DOMAIN}
+    AUTH_DEV_LOGIN_ENABLED: "false"
+    LLM_ALLOW_MOCK_FALLBACK: "false"
+
+services:
+  postgres:
+    ports: !reset []
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    deploy: { resources: { limits: { memory: 3g } } }
+  redis:
+    ports: !reset []
+  meilisearch:
+    ports: !reset []
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY}
+      MEILI_ENV: production
+  minio:
+    ports: !reset []
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+  minio-init:
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+  mailpit:
+    profiles: [dev-mail]
+    ports: !reset []
+
+  migrate: *prod-backend
+  api:
+    <<: *prod-backend
+    ports: !reset []
+    deploy: { resources: { limits: { memory: 1g } } }
+  worker:
+    <<: *prod-backend
+    deploy: { resources: { limits: { memory: 1536m } } }
+  beat: *prod-backend
+
+  web:
+    ports: !reset []
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      AUTH_URL: https://${DOMAIN}
+      AUTH_TRUST_HOST: "true"
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes: [ollama-models:/root/.ollama]
+    environment:
+      OLLAMA_KEEP_ALIVE: 24h
+      OLLAMA_NUM_PARALLEL: "2"
+    deploy: { resources: { limits: { memory: 6g } } }
+    restart: unless-stopped
+
+  # Pulls the embedding model and the local fallback chat model once (idempotent).
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on: [ollama]
+    environment: { OLLAMA_HOST: "http://ollama:11434" }
+    entrypoint: ["/bin/sh", "-c", "sleep 5 && ollama pull nomic-embed-text && ollama pull qwen2.5:3b"]
+    restart: "no"
+
+  piston:
+    ports: !reset []
+
+  caddy:
+    image: caddy:2.9-alpine
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [web, api]
+    deploy: { resources: { limits: { memory: 256m } } }
+    restart: unless-stopped
+
+  prometheus:
+    ports: !reset []
+  grafana:
+    ports: !override ["127.0.0.1:${GRAFANA_PORT:-3001}:3000"]
+
+volumes:
+  ollama-models:
+  caddy-data:
+  caddy-config:
