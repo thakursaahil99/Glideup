@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { useFlag } from "@/lib/api/platform";
 import { speak, speechInputSupported, speechOutputSupported, stopSpeaking, useDictation } from "@/lib/speech";
 
 import { ErrorState } from "@/components/states";
@@ -129,16 +130,17 @@ function Room({ detail }: { detail: InterviewDetail }) {
   const [panel, setPanel] = useState("");
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [readAloud, setReadAloud] = useState(false);
+  const voice = useFlag("voice_mode");
   const dictation = useDictation((text) => setDraft((d) => (d ? `${d} ${text}` : text)));
   const lastSpoken = useRef<string | null>(null);
   const lastMessage = state.messages.at(-1);
   // Voice mode: read each new interviewer message aloud.
   useEffect(() => {
-    if (!readAloud || !lastMessage || lastMessage.role !== "interviewer") return;
+    if (!voice || !readAloud || !lastMessage || lastMessage.role !== "interviewer") return;
     if (lastSpoken.current === lastMessage.id) return;
     lastSpoken.current = lastMessage.id;
     speak(lastMessage.content);
-  }, [readAloud, lastMessage]);
+  }, [voice, readAloud, lastMessage]);
   useEffect(() => () => stopSpeaking(), []);
   const kind = interview.current_kind;
   const showPanel = interview.status === "in_progress" && (kind === "coding" || kind === "design");
@@ -241,7 +243,7 @@ function Room({ detail }: { detail: InterviewDetail }) {
                   maxLength={6000}
                 />
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {speechInputSupported() && (
+                  {voice && speechInputSupported() && (
                     <Button
                       type="button"
                       variant={dictation.listening ? "sunrise" : "ghost"}
@@ -252,7 +254,7 @@ function Room({ detail }: { detail: InterviewDetail }) {
                       {dictation.listening ? <MicOff /> : <Mic />} {dictation.listening ? "Stop" : "Speak"}
                     </Button>
                   )}
-                  {speechOutputSupported() && (
+                  {voice && speechOutputSupported() && (
                     <Button
                       type="button"
                       variant="ghost"

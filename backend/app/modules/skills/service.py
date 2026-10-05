@@ -128,6 +128,9 @@ async def list_frameworks(
 
 
 async def start_attempt(session: AsyncSession, user: User, framework_key: str) -> FrameworkAttempt:
+    from app.modules.platform.service import require_flag
+
+    await require_flag(session, "framework_tests", user.id)
     framework = await session.get(Framework, framework_key)
     if framework is None or not framework.enabled:
         raise NotFoundError("Framework not found")

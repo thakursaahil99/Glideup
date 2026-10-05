@@ -136,6 +136,7 @@ class Settings(BaseSettings):
     smtp_password: SecretStr | None = None
     smtp_starttls: bool = False
     web_url: str = "http://localhost:3000"  # links in emails
+    grafana_url: str | None = "http://localhost:3001"  # linked from System Health
     mock_llm_delay_ms: int = 0
     mock_llm_error_rate: float = Field(default=0.0, ge=0.0, le=1.0)
     circuit_breaker_failure_threshold: int = 3

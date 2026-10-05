@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { Logo } from "@/components/brand/logo";
+import { AnnouncementBanner } from "@/components/layout/announcement-banner";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { type MenuUser, UserMenu } from "@/components/layout/user-menu";
@@ -118,6 +119,7 @@ export function AppShell({
           </div>
         </header>
 
+        <AnnouncementBanner />
         <main id="main" className="flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8">
           {children}
         </main>

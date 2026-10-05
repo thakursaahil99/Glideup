@@ -81,7 +81,14 @@ class Route:
 
 
 def routes_for(task: str, settings: Settings) -> list[Route]:
-    specs = settings.llm_routes.get(task) or DEFAULT_ROUTES.get(task, [])
+    """Admin overrides (AI / LLM Settings) first, then environment, then code defaults."""
+    from app.llm import runtime
+
+    specs = (
+        runtime.route_overrides().get(task)
+        or settings.llm_routes.get(task)
+        or DEFAULT_ROUTES.get(task, [])
+    )
     routes = [Route.parse(spec) for spec in specs]
     if settings.llm_allow_mock_fallback and all(r.provider != "mock" for r in routes):
         routes.append(Route("mock", MOCK_MODEL))

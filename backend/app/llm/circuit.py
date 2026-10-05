@@ -67,6 +67,9 @@ class CircuitRegistry:
         self._cooldown = cooldown_seconds
         self._breakers: dict[str, CircuitBreaker] = {}
 
+    def items(self) -> list[tuple[str, "CircuitBreaker"]]:
+        return list(self._breakers.items())
+
     def get(self, provider: str) -> CircuitBreaker:
         if provider not in self._breakers:
             self._breakers[provider] = CircuitBreaker(self._threshold, self._cooldown)

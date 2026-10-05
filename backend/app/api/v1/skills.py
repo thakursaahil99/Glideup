@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.api.deps import CurrentUser, RequestMetaDep, SessionDep, require_permission
 from app.core.errors import ErrorResponse, NotFoundError
+from app.core.ratelimit import rate_limit
 from app.core.rbac import Permission
 from app.db.models import AttemptStatus, Framework, FrameworkAttempt, User
 from app.modules.audit import service as audit
@@ -153,6 +154,7 @@ async def save_answers(
     "/framework-attempts/{attempt_id}/submit",
     response_model=AttemptOut,
     status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(rate_limit("llm"))],
 )
 async def submit(attempt_id: uuid.UUID, session: SessionDep, user: CurrentUser) -> AttemptOut:
     """Grade in the background (poll until `graded`). Safe to repeat."""

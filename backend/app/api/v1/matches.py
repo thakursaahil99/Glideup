@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from pydantic import StringConstraints
 
 from app.api.deps import CurrentUser, SessionDep
@@ -23,6 +23,7 @@ from app.api.v1.match_schemas import (
 )
 from app.core.config import get_settings
 from app.core.errors import ErrorResponse
+from app.core.ratelimit import rate_limit
 from app.db.models import Job, JobMatch
 from app.modules.jobs import service as jobs
 from app.modules.matching import service
@@ -95,6 +96,7 @@ async def job_match(job_id: uuid.UUID, session: SessionDep, user: CurrentUser) -
     response_model=MatchDetail,
     status_code=status.HTTP_202_ACCEPTED,
     responses={409: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
+    dependencies=[Depends(rate_limit("llm"))],
 )
 async def analyze_match(job_id: uuid.UUID, session: SessionDep, user: CurrentUser) -> MatchDetail:
     """Start an AI skill-gap analysis (runs in the background; poll the match endpoint).

@@ -9,11 +9,11 @@ GlideUp is an AI-powered platform that matches your resume to real jobs, shows y
 runs job-specific mock interviews and coding tests in many languages and frameworks, and tracks
 your applications — from job search to offer.
 
-> **Status:** Phase 8 of 10. The full journey works end to end: resume → matched jobs →
+> **Status:** Phase 9 of 10. The full journey works end to end: resume → matched jobs →
 > skill gaps → mock interviews and tests → feedback → tracked applications with reminders,
-> all on one dashboard (score trend, skill radar, streak, next step), with voice mode and an
-> installable app. Phases 1-7 built the foundation, resume parsing, job board, matching,
-> interviews, coding and framework tests. See the [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
+> all on one dashboard. Phase 9 made it production-ready: per-user rate limits, LLM response
+> cache and token budgets, model routing editable by admins, feature flags, announcements,
+> live system health with job retry, Prometheus/Grafana, and security headers. See the [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
 
 ## Architecture
 

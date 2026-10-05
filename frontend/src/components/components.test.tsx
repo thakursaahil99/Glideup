@@ -40,13 +40,14 @@ describe("AppShell (admin)", () => {
 
   it("marks unreleased sections as coming soon instead of linking to them", () => {
     render(
-      <AppShell variant="admin" user={supportUser}>
+      <AppShell variant="admin" user={{ ...supportUser, permissions: [...supportUser.permissions, "content:manage"] }}>
         <p>content</p>
       </AppShell>,
     );
     const nav = screen.getByRole("navigation", { name: "Admin" });
-    expect(within(nav).queryByRole("link", { name: /System Health/ })).not.toBeInTheDocument();
-    expect(within(nav).getByTitle("Coming in phase 9")).toHaveTextContent("System Health");
+    expect(within(nav).getByRole("link", { name: /System Health/ })).toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: /Site Content/ })).not.toBeInTheDocument();
+    expect(within(nav).getByTitle("Coming in phase 10")).toHaveTextContent("Site Content");
   });
 });
 

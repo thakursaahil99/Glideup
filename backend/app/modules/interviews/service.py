@@ -128,6 +128,10 @@ async def create(
         job = await session.get(Job, job_id)
         if job is None or job.is_hidden:
             raise NotFoundError("Job not found")
+    if type_.key == "job_specific":
+        from app.modules.platform.service import require_flag
+
+        await require_flag(session, "job_specific_interviews", user.id)
     if type_.key == "job_specific" and job is None:
         raise AppError("Pick a job for a job-specific interview.", code="job_required")
 

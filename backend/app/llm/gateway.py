@@ -13,6 +13,7 @@ import json
 import re
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
+from datetime import UTC, datetime
 from functools import partial
 from typing import Protocol, TypeVar
 
@@ -20,7 +21,9 @@ import structlog
 from pydantic import BaseModel, ValidationError
 
 from app.core.config import Settings
+from app.core.metrics import LLM_CALLS, LLM_LATENCY, LLM_TOKENS
 from app.db.models import LLMUsage
+from app.llm import cache, runtime
 from app.llm.circuit import CircuitRegistry
 from app.llm.pricing import estimate_cost
 from app.llm.providers.base import LLMProvider
@@ -28,6 +31,7 @@ from app.llm.routing import Route, routes_for
 from app.llm.types import (
     AllProvidersFailedError,
     Attempt,
+    BudgetExceededError,
     CallContext,
     CompletionRequest,
     CompletionResult,
@@ -133,6 +137,7 @@ class LLMGateway:
         *,
         result: CompletionResult | EmbeddingResult | None = None,
         error: str | None = None,
+        cached: bool = False,
     ) -> None:
         prompt_tokens = result.prompt_tokens if result else 0
         completion_tokens = result.completion_tokens if isinstance(result, CompletionResult) else 0
@@ -152,11 +157,54 @@ class LLMGateway:
             prompt_version=ctx.prompt_version,
             user_id=ctx.user_id,
             request_id=ctx.request_id,
+            cached=cached,
         )
+        outcome = "cached" if cached else ("error" if error else "success")
+        LLM_CALLS.labels(task, route.provider, outcome).inc()
+        if not cached:
+            LLM_LATENCY.labels(task, route.provider).observe(time.perf_counter() - started)
+            LLM_TOKENS.labels(task, route.provider, "prompt").inc(prompt_tokens)
+            LLM_TOKENS.labels(task, route.provider, "completion").inc(completion_tokens)
         try:
             await self.recorder.record(usage)
         except Exception:  # usage logging must never break the user's request
             logger.exception("llm_usage_record_failed")
+
+    async def _prepare(self, task: str, ctx: CallContext) -> None:
+        """Refresh admin settings and enforce the per-user daily token budget."""
+        await runtime.ensure_fresh()
+        budget = int(runtime.get("llm.user_daily_token_budget") or 0)
+        if budget <= 0 or ctx.user_id is None:
+            return
+        if await self._tokens_today(ctx.user_id) >= budget:
+            raise BudgetExceededError(task)
+
+    _token_cache: dict[str, tuple[float, int]] = {}  # noqa: RUF012 - per-process memo
+
+    async def _tokens_today(self, user_id: object) -> int:
+        key = str(user_id)
+        now = time.monotonic()
+        cached = self._token_cache.get(key)
+        if cached and now - cached[0] < 60:
+            return cached[1]
+        from sqlalchemy import func, select
+
+        from app.db.session import session_factory
+
+        start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        async with session_factory()() as session:
+            used = await session.scalar(
+                select(
+                    func.coalesce(func.sum(LLMUsage.prompt_tokens + LLMUsage.completion_tokens), 0)
+                ).where(
+                    LLMUsage.user_id == user_id,
+                    LLMUsage.created_at >= start,
+                    LLMUsage.cached.is_(False),
+                )
+            )
+        total = int(used or 0)
+        self._token_cache[key] = (now, total)
+        return total
 
     # ------------------------------------------------------------------ public API
 
@@ -171,6 +219,7 @@ class LLMGateway:
         ctx: CallContext | None = None,
     ) -> CompletionResult:
         ctx = ctx or CallContext()
+        await self._prepare(task, ctx)
         request = CompletionRequest(task, messages, json_output, temperature, max_tokens)
         for route, provider in self._usable_routes(task, ctx):
             result = await self._call(
@@ -199,6 +248,19 @@ class LLMGateway:
         still invalid, the next route is tried (a model that can't follow the schema is
         treated like a failing one)."""
         ctx = ctx or CallContext()
+        await self._prepare(task, ctx)
+        use_cache = cache.eligible(task, temperature)
+        key = cache.cache_key(task, messages, temperature, schema.__name__) if use_cache else ""
+        if use_cache and (hit := await cache.lookup(task, key)):
+            try:
+                parsed = schema.model_validate(extract_json(hit["text"]))
+            except (json.JSONDecodeError, ValidationError):
+                parsed = None  # a stale entry for an older schema: ignore it
+            if parsed is not None:
+                from_cache = CompletionResult(hit["text"], hit["provider"], hit["model"])
+                await self._record(task, "complete", Route(hit["provider"], hit["model"]), ctx,
+                                   time.perf_counter(), result=from_cache, cached=True)  # fmt: skip
+                return parsed, from_cache
         for route, provider in self._usable_routes(task, ctx):
             conversation = list(messages)
             for repair in range(max_repairs + 1):
@@ -213,7 +275,10 @@ class LLMGateway:
                 if result is None:
                     break  # provider failed -> next route
                 try:
-                    return schema.model_validate(extract_json(result.text)), result
+                    validated = schema.model_validate(extract_json(result.text))
+                    if use_cache:
+                        await cache.store(key, result.text, result.provider, result.model)
+                    return validated, result
                 except (json.JSONDecodeError, ValidationError) as exc:
                     problem = str(exc)[:800]
                     logger.info(
@@ -252,6 +317,7 @@ class LLMGateway:
         its first delta; a failure after that raises StreamInterruptedError with the
         partial text (the user has already seen it)."""
         ctx = ctx or CallContext()
+        await self._prepare(task, ctx)
         request = CompletionRequest(task, messages, False, temperature, max_tokens)
         for route, provider in self._usable_routes(task, ctx):
             breaker = self.circuits.get(route.provider)
@@ -295,6 +361,7 @@ class LLMGateway:
         self, texts: list[str], *, task: str = "embedding", ctx: CallContext | None = None
     ) -> EmbeddingResult:
         ctx = ctx or CallContext()
+        await runtime.ensure_fresh()
         for route, provider in self._usable_routes(task, ctx):
             result = await self._call(
                 task,

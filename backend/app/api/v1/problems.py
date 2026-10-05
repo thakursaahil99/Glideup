@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Header, Query, status
+from fastapi import APIRouter, Depends, Header, Query, status
 
 from app.api.deps import CurrentUser, SessionDep
 from app.api.v1.coding_schemas import (
@@ -18,6 +18,7 @@ from app.api.v1.coding_schemas import (
     SubmissionOut,
 )
 from app.core.errors import ErrorResponse
+from app.core.ratelimit import rate_limit
 from app.db.models import Difficulty
 from app.modules.coding import service
 
@@ -81,6 +82,7 @@ async def get_problem(slug: str, session: SessionDep, _: CurrentUser) -> Problem
     "/problems/{slug}/run",
     response_model=RunResultOut,
     responses={400: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
+    dependencies=[Depends(rate_limit("code"))],
 )
 async def run_examples(
     slug: str, body: CodeIn, session: SessionDep, user: CurrentUser
@@ -103,6 +105,7 @@ async def run_examples(
     response_model=SubmissionOut,
     status_code=status.HTTP_202_ACCEPTED,
     responses={400: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
+    dependencies=[Depends(rate_limit("code"))],
 )
 async def submit(
     slug: str,

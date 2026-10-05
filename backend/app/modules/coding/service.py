@@ -1,9 +1,7 @@
 """Coding practice: problems, running and submitting code, and question-bank admin."""
 
 import json
-import time
 import uuid
-from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -16,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.errors import AppError, ConflictError, NotFoundError
+from app.core.metrics import SUBMISSIONS
 from app.db.models import (
     Difficulty,
     Language,
@@ -35,7 +34,6 @@ from app.workers.runtime import dispatch
 logger = structlog.get_logger(__name__)
 
 SEED_FILE = Path(__file__).with_name("seed_problems.json")
-RUNS_PER_MINUTE = 20  # "Run" (visible tests only); submissions have their own limit
 
 
 class RateLimitedError(AppError):
@@ -160,25 +158,10 @@ async def get_problem(
     return question
 
 
-_recent_runs: dict[uuid.UUID, deque[float]] = defaultdict(deque)
-
-
-def _check_run_rate(user: User) -> None:
-    """In-process sliding window (Phase 9 moves rate limits to Redis)."""
-    now = time.monotonic()
-    window = _recent_runs[user.id]
-    while window and now - window[0] > 60:
-        window.popleft()
-    if len(window) >= RUNS_PER_MINUTE:
-        raise RateLimitedError("You're running code very quickly. Wait a few seconds.")
-    window.append(now)
-
-
 async def run_examples(
     session: AsyncSession, user: User, question: Question, language_key: str, code: str
 ) -> Grade:
     """Run against the visible tests only (fast feedback; nothing is stored)."""
-    _check_run_rate(user)
     language = await get_language(session, language_key)
     visible = [t for t in question.tests if not t.hidden]
     return await grade(language, code, visible)
@@ -253,6 +236,7 @@ async def grade_submission_job(submission_id: str) -> None:
         submission.compile_output = result.compile_output
         submission.max_time_ms = result.max_time_ms
         submission.finished_at = datetime.now(UTC)
+        SUBMISSIONS.labels(submission.language_key, result.verdict.value).inc()
         if result.verdict == Verdict.ACCEPTED:
             from app.modules.skills import service as skills
 

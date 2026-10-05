@@ -5,7 +5,7 @@ Schedules are added per module in later phases (e.g. job ingestion every 6 hours
 """
 
 from celery import Celery
-from celery.signals import setup_logging
+from celery.signals import setup_logging, task_failure, task_success
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging
@@ -51,3 +51,17 @@ celery_app.conf.include = [
 @setup_logging.connect
 def _configure_celery_logging(**_: object) -> None:
     configure_logging(settings.log_level, json=settings.log_json)
+
+
+@task_success.connect
+def _count_success(sender: object = None, **_: object) -> None:
+    from app.core.metrics import BACKGROUND_JOBS
+
+    BACKGROUND_JOBS.labels(getattr(sender, "name", "unknown"), "success").inc()
+
+
+@task_failure.connect
+def _count_failure(sender: object = None, **_: object) -> None:
+    from app.core.metrics import BACKGROUND_JOBS
+
+    BACKGROUND_JOBS.labels(getattr(sender, "name", "unknown"), "failure").inc()

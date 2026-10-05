@@ -562,6 +562,145 @@
         "title": "AnalyzeRequest",
         "type": "object"
       },
+      "AnnouncementIn": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "audience": {
+            "default": "all",
+            "enum": [
+              "all",
+              "admins"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "body": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Body",
+            "type": "string"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "level": {
+            "default": "info",
+            "enum": [
+              "info",
+              "warning"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "AnnouncementIn",
+        "type": "object"
+      },
+      "AnnouncementOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "audience": {
+            "title": "Audience",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "level",
+          "audience",
+          "starts_at",
+          "ends_at",
+          "active",
+          "created_at"
+        ],
+        "title": "AnnouncementOut",
+        "type": "object"
+      },
       "AnswersIn": {
         "properties": {
           "answers": {
@@ -1296,6 +1435,53 @@
         "title": "CaseResultOut",
         "type": "object"
       },
+      "CheckOut": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "extra": {
+            "additionalProperties": true,
+            "title": "Extra",
+            "type": "object"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "degraded",
+              "down",
+              "off"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "detail",
+          "latency_ms",
+          "extra"
+        ],
+        "title": "CheckOut",
+        "type": "object"
+      },
       "CodeIn": {
         "properties": {
           "code": {
@@ -1920,6 +2106,142 @@
         "title": "ExperienceLevel",
         "type": "string"
       },
+      "FailedJobOut": {
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "label",
+          "error",
+          "at"
+        ],
+        "title": "FailedJobOut",
+        "type": "object"
+      },
+      "FlagOut": {
+        "properties": {
+          "allow_user_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allow User Ids",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "rollout_percent": {
+            "title": "Rollout Percent",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "description",
+          "enabled",
+          "rollout_percent",
+          "allow_user_ids",
+          "updated_at"
+        ],
+        "title": "FlagOut",
+        "type": "object"
+      },
+      "FlagUpdate": {
+        "properties": {
+          "allow_user_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow User Ids"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "rollout_percent": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rollout Percent"
+          }
+        },
+        "title": "FlagUpdate",
+        "type": "object"
+      },
       "FrameworkAdmin": {
         "properties": {
           "composition": {
@@ -2282,6 +2604,42 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthOut": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "failed_jobs": {
+            "items": {
+              "$ref": "#/components/schemas/FailedJobOut"
+            },
+            "title": "Failed Jobs",
+            "type": "array"
+          },
+          "grafana_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grafana Url"
+          }
+        },
+        "required": [
+          "checks",
+          "failed_jobs",
+          "grafana_url"
+        ],
+        "title": "HealthOut",
         "type": "object"
       },
       "IngestionRunOut": {
@@ -3686,6 +4044,62 @@
           }
         },
         "title": "JobSourceUpdate",
+        "type": "object"
+      },
+      "LLMSettingsOut": {
+        "properties": {
+          "effective_routes": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Effective Routes",
+            "type": "object"
+          },
+          "providers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Providers",
+            "type": "array"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "title": "Settings",
+            "type": "object"
+          },
+          "tasks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "settings",
+          "effective_routes",
+          "providers",
+          "tasks"
+        ],
+        "title": "LLMSettingsOut",
+        "type": "object"
+      },
+      "LLMSettingsUpdate": {
+        "properties": {
+          "values": {
+            "additionalProperties": true,
+            "maxProperties": 10,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "title": "LLMSettingsUpdate",
         "type": "object"
       },
       "LanguageAdmin": {
@@ -7608,6 +8022,171 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/announcements": {
+      "get": {
+        "operationId": "admin_announcements_api_v1_admin_announcements_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnnouncementOut"
+                  },
+                  "title": "Response Admin Announcements Api V1 Admin Announcements Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Announcements",
+        "tags": [
+          "platform",
+          "admin: platform"
+        ]
+      },
+      "post": {
+        "operationId": "create_announcement_api_v1_admin_announcements_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Announcement",
+        "tags": [
+          "platform",
+          "admin: platform"
+        ]
+      }
+    },
+    "/api/v1/admin/announcements/{announcement_id}": {
+      "patch": {
+        "operationId": "update_announcement_api_v1_admin_announcements__announcement_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "announcement_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Announcement Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Announcement",
+        "tags": [
+          "platform",
+          "admin: platform"
+        ]
+      }
+    },
     "/api/v1/admin/audit-logs": {
       "get": {
         "operationId": "list_audit_logs_api_v1_admin_audit_logs_get",
@@ -8148,6 +8727,115 @@
         "summary": "Update Company",
         "tags": [
           "admin: jobs"
+        ]
+      }
+    },
+    "/api/v1/admin/flags": {
+      "get": {
+        "operationId": "list_flags_api_v1_admin_flags_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FlagOut"
+                  },
+                  "title": "Response List Flags Api V1 Admin Flags Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Flags",
+        "tags": [
+          "platform",
+          "admin: platform"
+        ]
+      }
+    },
+    "/api/v1/admin/flags/{key}": {
+      "patch": {
+        "operationId": "update_flag_api_v1_admin_flags__key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlagUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Flag",
+        "tags": [
+          "platform",
+          "admin: platform"
         ]
       }
     },
@@ -9222,6 +9910,176 @@
         "summary": "Update Language",
         "tags": [
           "admin: question bank"
+        ]
+      }
+    },
+    "/api/v1/admin/llm/settings": {
+      "get": {
+        "operationId": "llm_settings_api_v1_admin_llm_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LLMSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Llm Settings",
+        "tags": [
+          "platform",
+          "admin: platform"
+        ]
+      },
+      "put": {
+        "description": "Routing per task (fallback order), cache on/off and TTL, per-user daily token budget.\nTakes effect on every worker within 30 seconds.",
+        "operationId": "update_llm_settings_api_v1_admin_llm_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LLMSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LLMSettingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Llm Settings",
+        "tags": [
+          "platform",
+          "admin: platform"
+        ]
+      }
+    },
+    "/api/v1/admin/llm/usage": {
+      "get": {
+        "description": "Calls, errors, cache hits, tokens, cost and latency per provider, model and task.",
+        "operationId": "llm_usage_api_v1_admin_llm_usage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Llm Usage Api V1 Admin Llm Usage Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Llm Usage",
+        "tags": [
+          "platform",
+          "admin: platform"
         ]
       }
     },
@@ -10906,6 +11764,124 @@
         ]
       }
     },
+    "/api/v1/admin/system/health": {
+      "get": {
+        "operationId": "system_health_api_v1_admin_system_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "System Health",
+        "tags": [
+          "platform",
+          "admin: platform"
+        ]
+      }
+    },
+    "/api/v1/admin/system/jobs/{kind}/{item_id}/retry": {
+      "post": {
+        "operationId": "retry_failed_job_api_v1_admin_system_jobs__kind___item_id__retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Retry Failed Job Api V1 Admin System Jobs  Kind   Item Id  Retry Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Retry Failed Job",
+        "tags": [
+          "platform",
+          "admin: platform"
+        ]
+      }
+    },
     "/api/v1/admin/users": {
       "get": {
         "operationId": "list_users_api_v1_admin_users_get",
@@ -11257,6 +12233,46 @@
         "summary": "Set Status",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/v1/announcements": {
+      "get": {
+        "operationId": "announcements_api_v1_announcements_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnnouncementOut"
+                  },
+                  "title": "Response Announcements Api V1 Announcements Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Announcements",
+        "tags": [
+          "platform"
         ]
       }
     },
@@ -13534,6 +14550,47 @@
         "summary": "Recommended",
         "tags": [
           "matches"
+        ]
+      }
+    },
+    "/api/v1/me/flags": {
+      "get": {
+        "description": "Which optional features are on for me (the UI hides what's off).",
+        "operationId": "my_flags_api_v1_me_flags_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response My Flags Api V1 Me Flags Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Flags",
+        "tags": [
+          "platform"
         ]
       }
     },

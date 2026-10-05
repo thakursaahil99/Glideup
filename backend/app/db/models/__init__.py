@@ -34,6 +34,7 @@ from app.db.models.jobs import (
 )
 from app.db.models.llm import LLMUsage
 from app.db.models.matching import JobMatch, MatchAnalysisStatus
+from app.db.models.platform import Announcement, FeatureFlag, SiteSetting
 from app.db.models.portfolio import AnalysisStatus, PortfolioAnalysis, PortfolioKind
 from app.db.models.profile import Profile, RemotePreference
 from app.db.models.prompts import PromptTemplate, PromptTemplateVersion
@@ -60,6 +61,7 @@ __all__ = [
     "ATS",
     "EMBEDDING_DIMENSIONS",
     "AnalysisStatus",
+    "Announcement",
     "Application",
     "ApplicationEvent",
     "ApplicationStatus",
@@ -68,6 +70,7 @@ __all__ = [
     "Company",
     "Difficulty",
     "ExperienceLevel",
+    "FeatureFlag",
     "Framework",
     "FrameworkAttempt",
     "GenerationStatus",
@@ -104,6 +107,7 @@ __all__ = [
     "Role",
     "RunStatus",
     "SavedJob",
+    "SiteSetting",
     "SkillScore",
     "Submission",
     "TestCase",

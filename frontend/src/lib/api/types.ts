@@ -144,3 +144,10 @@ export const APPLICATION_COLUMNS: { status: ApplicationStatus; label: string }[]
   { status: "rejected", label: "Rejected" },
   { status: "withdrawn", label: "Withdrawn" },
 ];
+
+export type FeatureFlag = Schemas["FlagOut"];
+export type LLMSettings = Schemas["LLMSettingsOut"];
+export type HealthReport = Schemas["HealthOut"];
+export type HealthCheck = Schemas["CheckOut"];
+export type FailedJob = Schemas["FailedJobOut"];
+export type Announcement = Schemas["AnnouncementOut"];

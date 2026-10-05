@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { FrameworkTests } from "@/components/tests/framework-tests";
+import { useFlag } from "@/lib/api/platform";
 import { EmptyState, ErrorState } from "@/components/states";
 import { Card } from "@/components/ui/card";
 import { Badge, Skeleton } from "@/components/ui/primitives";
@@ -17,6 +18,7 @@ export const DIFFICULTY_VARIANT = { easy: "success", medium: "default", hard: "s
 
 export function ProblemsList({ language }: { language?: string | null }) {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
+  const frameworks = useFlag("framework_tests");
   const problems = useProblems(difficulty);
   const solved = problems.data?.filter((p) => p.solved).length ?? 0;
   const suffix = language ? `?lang=${encodeURIComponent(language)}` : "";
@@ -27,7 +29,7 @@ export function ProblemsList({ language }: { language?: string | null }) {
         title="Tests"
         description="Framework tests and coding problems. Your code runs in a sandbox against hidden tests; scores become verified skills on your profile."
       />
-      <FrameworkTests />
+      {frameworks && <FrameworkTests />}
       <h2 className="mb-3 text-lg font-semibold">Coding problems</h2>
       <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Difficulty">
         {[{ value: null, label: "All" }, ...DIFFICULTIES].map((d) => (

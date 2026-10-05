@@ -16,16 +16,19 @@ from reportlab.pdfgen import canvas
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import storage
+from app.core import ratelimit, storage
+from app.core import redis as redis_client
 from app.core.config import Settings, get_settings, override_settings
 from app.core.rbac import Role
 from app.db.base import Base
 from app.db.models import User
 from app.db.session import dispose_engine, get_engine, init_engine, session_factory
+from app.llm import runtime
 from app.llm.factory import set_gateway
 from app.main import create_app
 from app.modules.auth.service import _grant, ensure_roles
 from app.modules.jobs.search import set_search
+from app.modules.platform.service import invalidate_flags
 from app.workers.runtime import drain_inline_jobs
 
 ROOT_ADMIN_EMAIL = "root@glideup.dev"
@@ -86,6 +89,10 @@ async def _database(settings: Settings) -> AsyncIterator[None]:
 async def _clean_tables(_database: None) -> AsyncIterator[None]:
     set_gateway(None)  # fresh providers and circuit breakers per test
     set_search(None)
+    ratelimit.reset_local()
+    invalidate_flags()
+    runtime.apply({})
+    redis_client.reset()
     storage._build.cache_clear()
     yield
     await drain_inline_jobs()

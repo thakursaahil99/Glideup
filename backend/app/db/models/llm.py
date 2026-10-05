@@ -12,6 +12,7 @@ from sqlalchemy import (
     String,
     Text,
     Uuid,
+    false,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -29,6 +30,8 @@ class LLMUsage(UUIDPrimaryKeyMixin, Base):
     model: Mapped[str] = mapped_column(String(200), nullable=False)
     operation: Mapped[str] = mapped_column(String(20), nullable=False)  # complete | embed
     success: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    # Answered from the response cache (no provider call, no cost).
+    cached: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     error: Mapped[str | None] = mapped_column(Text)
     prompt_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

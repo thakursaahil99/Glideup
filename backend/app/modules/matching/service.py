@@ -411,6 +411,9 @@ async def match_view(session: AsyncSession, user_id: uuid.UUID, job: Job) -> Mat
 
 async def request_analysis(session: AsyncSession, user_id: uuid.UUID, job: Job) -> JobMatch:
     """Start (or reuse) an AI skill-gap analysis. Idempotent while one is fresh or running."""
+    from app.modules.platform.service import require_flag
+
+    await require_flag(session, "ai_skill_gap", user_id)
     candidate = await load_candidate(session, user_id)
     if candidate is None:
         raise NoProfileDataError(

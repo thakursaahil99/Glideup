@@ -88,3 +88,10 @@ class StreamInterruptedError(LLMError):
         self.task = task
         self.partial = partial
         self.reason = reason
+
+
+class BudgetExceededError(AllProvidersFailedError):
+    """The user's daily AI token budget is used up (AI / LLM Settings)."""
+
+    def __init__(self, task: str):
+        super().__init__(task, [Attempt("budget", "-", "daily token budget reached")])

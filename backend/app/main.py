@@ -12,7 +12,11 @@ from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
-from app.core.middleware import REQUEST_ID_HEADER, RequestContextMiddleware
+from app.core.middleware import (
+    REQUEST_ID_HEADER,
+    RequestContextMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.db.session import dispose_engine, init_engine
 from app.workers.scheduler import inline_scheduler
 
@@ -29,13 +33,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             yield
         await dispose_engine()
 
+    prod = settings.environment == "production"
     app = FastAPI(
         title=settings.app_name,
         version="0.1.0",
         description="Find jobs. Practice interviews. Get hired.",
         lifespan=lifespan,
-        openapi_url=f"{settings.api_v1_prefix}/openapi.json",
-        docs_url="/docs",
+        openapi_url=None if prod else f"{settings.api_v1_prefix}/openapi.json",
+        docs_url=None if prod else "/docs",
         redoc_url=None,
     )
 
@@ -49,6 +54,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     # Added last so it runs first (outermost): every log line and error carries the request id.
     app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        max_body=2 * 1024 * 1024,
+        max_upload=6 * 1024 * 1024,  # resumes are capped at 5 MB by the upload validator
+        hsts=settings.environment == "production",
+    )
 
     register_exception_handlers(app)
     app.include_router(health.router)

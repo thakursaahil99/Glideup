@@ -18,6 +18,7 @@ from app.api.v1.interview_schemas import (
     PromptVersionOut,
 )
 from app.core.errors import AppError, ErrorResponse, NotFoundError
+from app.core.ratelimit import rate_limit
 from app.core.rbac import Permission
 from app.db.models import PromptTemplate, PromptTemplateVersion, User
 from app.llm import prompt_store
@@ -201,6 +202,7 @@ async def activate_version(
     "/{name}/test",
     response_model=PromptTestResult,
     responses={400: {"model": ErrorResponse}, 503: {"model": ErrorResponse}},
+    dependencies=[Depends(rate_limit("llm"))],
 )
 async def test_prompt(
     name: str, body: PromptTest, session: SessionDep, actor: PromptsAdmin

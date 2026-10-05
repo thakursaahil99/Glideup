@@ -36,6 +36,7 @@ class Permission(StrEnum):
     LLM_MANAGE = "llm:manage"
     FLAGS_MANAGE = "flags:manage"
     SYSTEM_READ = "system:read"
+    SYSTEM_MANAGE = "system:manage"  # retry failed background jobs
 
 
 ROLE_DESCRIPTIONS: dict[Role, str] = {
@@ -64,6 +65,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
             Permission.REPORTS_READ,
             Permission.REPORTS_MANAGE,
             Permission.SYSTEM_READ,
+            Permission.SYSTEM_MANAGE,
         }
     ),
     Role.CONTENT_EDITOR: frozenset(

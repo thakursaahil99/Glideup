@@ -70,6 +70,9 @@ def slugify(title: str) -> str:
 async def request(
     session: AsyncSession, actor: User, topic: str, difficulty: Any
 ) -> QuestionGeneration:
+    from app.modules.platform.service import require_flag
+
+    await require_flag(session, "ai_question_generation", actor.id)
     item = QuestionGeneration(topic=topic, difficulty=difficulty, requested_by_id=actor.id)
     session.add(item)
     await session.commit()

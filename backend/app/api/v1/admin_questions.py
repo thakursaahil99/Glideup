@@ -21,6 +21,7 @@ from app.api.v1.coding_schemas import (
     TestCaseIn,
 )
 from app.core.errors import AppError, ConflictError, ErrorResponse, NotFoundError
+from app.core.ratelimit import rate_limit
 from app.core.rbac import Permission
 from app.db.models import (
     Framework,
@@ -325,7 +326,10 @@ async def set_status(
 
 
 @router.post(
-    "/question-generation", response_model=list[GenerationOut], status_code=status.HTTP_202_ACCEPTED
+    "/question-generation",
+    response_model=list[GenerationOut],
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(rate_limit("llm"))],
 )
 async def request_generation(
     body: GenerationRequest, session: SessionDep, actor: QuestionsAdmin, meta: RequestMetaDep

@@ -5,7 +5,7 @@ import uuid
 from typing import Annotated, Any, Literal
 
 import structlog
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 
@@ -22,6 +22,7 @@ from app.api.v1.interview_schemas import (
 )
 from app.core.config import get_settings
 from app.core.errors import AppError, ConflictError, ErrorResponse, UnauthorizedError
+from app.core.ratelimit import enforce, rate_limit
 from app.db.models import (
     Interview,
     InterviewMessage,
@@ -100,6 +101,7 @@ async def interview_types(session: SessionDep, _: CurrentUser) -> list[Interview
     response_model=InterviewDetail,
     status_code=status.HTTP_201_CREATED,
     responses={400: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
+    dependencies=[Depends(rate_limit("llm"))],
 )
 async def create_interview(
     body: InterviewCreate, session: SessionDep, user: CurrentUser
@@ -254,6 +256,8 @@ async def interview_socket(
                 )
                 continue
             try:
+                if event.type in ("answer", "hint", "skip"):  # each one costs a model call
+                    await enforce("interview", str(user.id))
                 if event.type == "ping":
                     await send({"type": "pong"})
                 elif event.type == "start":

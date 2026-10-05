@@ -1,13 +1,14 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, File, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Response, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from app.api.deps import CurrentUser, SessionDep
 from app.api.v1.profile_schemas import ResumeOut, ResumeSummary
 from app.core.config import get_settings
 from app.core.errors import ErrorResponse, NotFoundError
+from app.core.ratelimit import rate_limit
 from app.core.storage import ObjectNotFoundError, resume_storage
 from app.db.models import Resume
 from app.modules.resumes import service, tasks
@@ -58,6 +59,7 @@ def to_out(resume: Resume) -> ResumeOut:
     response_model=ResumeOut,
     status_code=status.HTTP_202_ACCEPTED,
     responses={413: {"model": ErrorResponse}, 422: {"model": ErrorResponse}},
+    dependencies=[Depends(rate_limit("upload"))],
 )
 async def upload_resume(
     session: SessionDep,

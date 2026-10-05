@@ -73,15 +73,14 @@ export const ADMIN_NAV: NavItem[] = [
     icon: FileText,
     permission: "prompts:manage",
   },
-  { label: "AI / LLM Settings", href: "/admin/llm", icon: Bot, permission: "llm:manage", phase: 9 },
-  { label: "Feature Flags", href: "/admin/flags", icon: Flag, permission: "flags:manage", phase: 9 },
+  { label: "AI / LLM Settings", href: "/admin/llm", icon: Bot, permission: "llm:manage" },
+  { label: "Feature Flags", href: "/admin/flags", icon: Flag, permission: "flags:manage" },
   { label: "Site Content", href: "/admin/content", icon: Settings2, permission: "content:manage", phase: 10 },
   {
     label: "Announcements",
     href: "/admin/announcements",
     icon: Megaphone,
     permission: "announcements:manage",
-    phase: 9,
   },
   {
     label: "User Reports",
@@ -89,7 +88,7 @@ export const ADMIN_NAV: NavItem[] = [
     icon: MessageSquareWarning,
     permission: "reports:read",
   },
-  { label: "System Health", href: "/admin/health", icon: HeartPulse, permission: "system:read", phase: 9 },
+  { label: "System Health", href: "/admin/health", icon: HeartPulse, permission: "system:read" },
   { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText, permission: "audit:read" },
 ];
 
