@@ -49,7 +49,10 @@ async def _check_redis(url: str) -> None:
 async def readiness(settings: SettingsDep) -> JSONResponse:
     """Dependencies the API cannot serve without are reachable."""
     checks: dict[str, str] = {}
-    for name, probe in (("database", _check_db()), ("redis", _check_redis(settings.redis_url))):
+    probes = {"database": _check_db()}
+    if settings.redis_url:  # optional on single-instance hosting
+        probes["redis"] = _check_redis(settings.redis_url)
+    for name, probe in probes.items():
         try:
             await asyncio.wait_for(probe, CHECK_TIMEOUT_SECONDS)
             checks[name] = "ok"

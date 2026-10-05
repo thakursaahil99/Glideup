@@ -1,0 +1,84 @@
+# Render Blueprint for the GlideUp API (free plan). Frontend runs on Vercel; database on Neon.
+# Render dashboard -> New -> Blueprint -> pick this repo. Fill the "sync: false" values when asked.
+services:
+  - type: web
+    name: glideup-api
+    runtime: docker
+    plan: free
+    region: singapore
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Migrations and idempotent seed data on every start, then the API on $PORT.
+    dockerCommand: ./start.sh
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_JSON
+        value: "true"
+      # Neon connection string (the direct one, not "-pooler"); postgres://...?sslmode=require is fine.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_POOL_SIZE
+        value: "5"
+      # No Celery/MinIO/Meilisearch on the free plan: jobs run in-process, files and search in Postgres.
+      - key: TASK_EXECUTION
+        value: inline
+      - key: STORAGE_BACKEND
+        value: database
+      - key: SEARCH_BACKEND
+        value: database
+      - key: INLINE_SCHEDULER_MINUTES
+        value: "30"
+      # Optional: replace with an Upstash Redis URL (rediss://...) in the dashboard.
+      # Empty = rate limits and the LLM cache live in-process (fine for one instance).
+      - key: REDIS_URL
+        value: ""
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AUTH_DEV_LOGIN_ENABLED
+        value: "false"
+      - key: LLM_ALLOW_MOCK_FALLBACK
+        value: "false"
+      # https://<your-vercel-app>.vercel.app (browser origin for CORS and the interview WebSocket)
+      - key: CORS_ORIGINS
+        sync: false
+      - key: WEB_URL
+        sync: false
+      # https://glideup-api.onrender.com (this service's public URL; WebSockets connect here)
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: GITHUB_MODELS_TOKEN
+        sync: false
+      # Everything on GitHub Models (no Ollama on Render), embeddings included.
+      - key: LLM_ROUTES
+        value: '{"resume_parse": ["github:openai/gpt-4.1-mini", "github:openai/gpt-4.1-nano"], "portfolio_parse": ["github:openai/gpt-4.1-mini", "github:openai/gpt-4.1-nano"], "skill_gap": ["github:openai/gpt-4.1-mini", "github:openai/gpt-4.1-nano"], "interview_plan": ["github:openai/gpt-4.1-mini", "github:openai/gpt-4.1-nano"], "interviewer": ["github:openai/gpt-4.1-mini", "github:openai/gpt-4.1-nano"], "interview_hint": ["github:openai/gpt-4.1-mini", "github:openai/gpt-4.1-nano"], "interview_report": ["github:openai/gpt-4.1-mini", "github:openai/gpt-4.1-nano"], "question_generate": ["github:openai/gpt-4.1-mini"], "framework_grade": ["github:openai/gpt-4.1-mini", "github:openai/gpt-4.1-nano"], "embedding": ["github:openai/text-embedding-3-small"]}'
+      - key: LLM_TIMEOUT_SECONDS
+        value: "60"
+      # Provisional match-score calibration for text-embedding-3-small (re-run app.llm.evals.match).
+      - key: MATCH_SEMANTIC_FLOOR
+        value: "0.25"
+      - key: MATCH_SEMANTIC_CEILING
+        value: "0.60"
+      - key: ADZUNA_APP_ID
+        sync: false
+      - key: ADZUNA_APP_KEY
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_STARTTLS
+        value: "true"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: METRICS_ENABLED
+        value: "false"

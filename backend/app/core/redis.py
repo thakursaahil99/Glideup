@@ -23,8 +23,8 @@ _down_until = 0.0
 def get_redis() -> Redis | None:
     """The client, or None while Redis is considered down."""
     global _client
-    if time.monotonic() < _down_until:
-        return None
+    if not get_settings().redis_url or time.monotonic() < _down_until:
+        return None  # no Redis configured (single-instance hosting), or cooling off
     if _client is None:
         _client = Redis.from_url(
             get_settings().redis_url,

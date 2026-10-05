@@ -24,6 +24,7 @@ RUN groupadd --system --gid 10001 glideup \
 COPY --from=deps /opt/venv /opt/venv
 COPY --chown=glideup:glideup alembic.ini ./
 COPY --chown=glideup:glideup app ./app
+COPY --chown=glideup:glideup --chmod=755 start.sh ./
 USER glideup
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=5 \

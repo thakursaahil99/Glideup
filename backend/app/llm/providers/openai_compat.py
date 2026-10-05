@@ -19,8 +19,11 @@ class OpenAICompatibleProvider:
         timeout: float,
         extra_headers: dict[str, str] | None = None,
         client: httpx.AsyncClient | None = None,
+        embedding_dimensions: int | None = None,
     ):
         self.name = name
+        # OpenAI text-embedding-3 models can shorten vectors to fit the pgvector column.
+        self.embedding_dimensions = embedding_dimensions
         self._base_url = base_url.rstrip("/")
         self._headers = {"Authorization": f"Bearer {api_key}", **(extra_headers or {})}
         self._client = client or httpx.AsyncClient(timeout=timeout)
@@ -125,7 +128,10 @@ class OpenAICompatibleProvider:
 
     async def embed(self, texts: list[str], model: str) -> EmbeddingResult:
         started = time.perf_counter()
-        data = await self._post("/embeddings", {"model": model, "input": texts})
+        body: dict[str, object] = {"model": model, "input": texts}
+        if self.embedding_dimensions and "text-embedding-3" in model:
+            body["dimensions"] = self.embedding_dimensions
+        data = await self._post("/embeddings", body)
         try:
             rows = sorted(data["data"], key=lambda r: r["index"])
             vectors = [[float(x) for x in row["embedding"]] for row in rows]

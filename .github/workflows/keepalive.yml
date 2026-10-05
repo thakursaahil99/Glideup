@@ -1,0 +1,17 @@
+# Render's free plan sleeps after 15 idle minutes; the first request then takes ~50 s.
+# Pinging /healthz every 10 minutes keeps the API awake (one service fits the 750 free hours).
+# Set the repository variable API_URL (Settings -> Variables), e.g. https://glideup-api.onrender.com
+name: keepalive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    if: ${{ vars.API_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - run: curl -fsS --retry 3 --retry-delay 20 --max-time 90 "${{ vars.API_URL }}/healthz"

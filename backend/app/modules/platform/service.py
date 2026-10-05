@@ -288,6 +288,8 @@ async def system_health(session: AsyncSession) -> list[Check]:
         return Check("PostgreSQL", "ok")
 
     async def redis() -> Check:
+        if not settings.redis_url:
+            return Check("Redis", "off", "not configured; rate limits and caches are per-process")
         client = get_redis()
         if client is None:
             return Check("Redis", "down", "unavailable (cooling off); rate limits are per-process")

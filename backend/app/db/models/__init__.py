@@ -46,6 +46,7 @@ from app.db.models.skills import (
     SkillScore,
     UserBadge,
 )
+from app.db.models.storage import StoredObject
 from app.db.models.tracker import (
     Application,
     ApplicationEvent,
@@ -109,6 +110,7 @@ __all__ = [
     "SavedJob",
     "SiteSetting",
     "SkillScore",
+    "StoredObject",
     "Submission",
     "TestCase",
     "User",

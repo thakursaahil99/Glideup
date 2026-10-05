@@ -23,6 +23,7 @@ import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
+from app.core.config import get_settings
 from app.db.models import ExperienceLevel
 from app.modules.resumes.skills import canonicalize
 
@@ -120,7 +121,12 @@ def cosine(a: Sequence[float], b: Sequence[float]) -> float:
 
 
 def semantic_score(similarity: float) -> float:
-    scaled = (similarity - SEMANTIC_FLOOR) / (SEMANTIC_CEILING - SEMANTIC_FLOOR)
+    settings = get_settings()
+    floor = settings.match_semantic_floor
+    if floor is None:
+        floor = SEMANTIC_FLOOR
+    ceiling = settings.match_semantic_ceiling or SEMANTIC_CEILING
+    scaled = (similarity - floor) / (ceiling - floor)
     return min(1.0, max(0.0, scaled))
 
 

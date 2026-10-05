@@ -51,6 +51,7 @@ def build_providers(settings: Settings) -> dict[str, LLMProvider]:
             settings.github_models_base_url,
             settings.github_models_token.get_secret_value(),
             timeout,
+            embedding_dimensions=EMBEDDING_DIMENSIONS,
         )
     if settings.openrouter_api_key:
         providers["openrouter"] = OpenAICompatibleProvider(
@@ -59,6 +60,7 @@ def build_providers(settings: Settings) -> dict[str, LLMProvider]:
             settings.openrouter_api_key.get_secret_value(),
             timeout,
             extra_headers={"X-Title": "GlideUp"},
+            embedding_dimensions=EMBEDDING_DIMENSIONS,
         )
     return providers
 

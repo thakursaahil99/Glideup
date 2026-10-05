@@ -315,3 +315,35 @@ async def test_security_headers_and_body_limit(client: AsyncClient, login: Login
         headers={**headers, "content-type": "application/json"},
     )
     assert huge.status_code == 413
+
+
+# --- hosting: Neon URLs, database storage, embedding calibration ---
+
+
+def test_hosted_database_urls_are_normalised() -> None:
+    settings = Settings(
+        _env_file=None,
+        database_url="postgres://u:p@ep-x.neon.tech/db?sslmode=require&channel_binding=require",
+    )
+    assert settings.database_url == "postgresql+asyncpg://u:p@ep-x.neon.tech/db?ssl=require"
+
+
+async def test_database_storage_round_trip(session: AsyncSession) -> None:
+    from app.core.storage import DatabaseStorage, ObjectNotFoundError
+
+    store = DatabaseStorage("resumes")
+    await store.put("u/1.pdf", b"%PDF-1", "application/pdf")
+    await store.put("u/1.pdf", b"%PDF-2", "application/pdf")  # overwrite
+    assert await store.get("u/1.pdf") == b"%PDF-2"
+    await store.delete("u/1.pdf")
+    with pytest.raises(ObjectNotFoundError):
+        await store.get("u/1.pdf")
+
+
+def test_semantic_calibration_override(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.modules.matching import scoring
+
+    assert scoring.semantic_score(0.78) == 1.0
+    settings = Settings(_env_file=None, match_semantic_floor=0.2, match_semantic_ceiling=0.6)
+    monkeypatch.setattr(scoring, "get_settings", lambda: settings)
+    assert scoring.semantic_score(0.4) == pytest.approx(0.5)

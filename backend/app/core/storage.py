@@ -2,6 +2,7 @@
 
 - `S3Storage`: MinIO locally, any S3-compatible store in the cloud.
 - `LocalStorage`: a folder on disk, for development without Docker and for tests.
+- `DatabaseStorage`: bytes in Postgres, for hosts with neither (e.g. Render free + Neon).
 Moving to Azure Blob Storage means adding one more implementation, not touching callers.
 """
 
@@ -106,9 +107,56 @@ class S3Storage:
         )
 
 
+class DatabaseStorage:
+    """Small files only (resumes are capped at a few MB), in the `stored_objects` table."""
+
+    def __init__(self, bucket: str):
+        self.bucket = bucket
+
+    async def put(self, key: str, data: bytes, content_type: str) -> None:
+        from app.db.models import StoredObject
+        from app.db.session import session_factory
+
+        async with session_factory()() as session:
+            row = await session.get(StoredObject, (self.bucket, validate_key(key)))
+            if row is None:
+                session.add(
+                    StoredObject(bucket=self.bucket, key=key, content_type=content_type, data=data)
+                )
+            else:
+                row.content_type, row.data = content_type, data
+            await session.commit()
+
+    async def get(self, key: str) -> bytes:
+        from app.db.models import StoredObject
+        from app.db.session import session_factory
+
+        async with session_factory()() as session:
+            row = await session.get(StoredObject, (self.bucket, validate_key(key)))
+            if row is None:
+                raise ObjectNotFoundError(key)
+            return row.data
+
+    async def delete(self, key: str) -> None:
+        from sqlalchemy import delete
+
+        from app.db.models import StoredObject
+        from app.db.session import session_factory
+
+        async with session_factory()() as session:
+            await session.execute(
+                delete(StoredObject).where(
+                    StoredObject.bucket == self.bucket, StoredObject.key == validate_key(key)
+                )
+            )
+            await session.commit()
+
+
 @lru_cache(maxsize=4)
 def _build(backend: str, bucket: str) -> ObjectStorage:
     settings = get_settings()
+    if backend == "database":
+        return DatabaseStorage(bucket)
     if backend == "local":
         return LocalStorage(Path(settings.local_storage_path) / bucket)
     return S3Storage(settings, bucket)

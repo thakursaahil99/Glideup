@@ -4,6 +4,7 @@ Every value here has a matching, documented entry in the repo-root `.env.example
 Nothing environment-specific (URLs, secrets, hostnames) may be hardcoded elsewhere.
 """
 
+import re
 from functools import lru_cache
 from typing import Annotated, Literal
 
@@ -39,6 +40,9 @@ class Settings(BaseSettings):
     # --- Database / cache ---
     database_url: str = "postgresql+asyncpg://glideup:glideup@localhost:5432/glideup"
     database_pool_size: int = 10
+    # Match-score calibration override for a different embedding model (see matching/scoring.py).
+    match_semantic_floor: float | None = None
+    match_semantic_ceiling: float | None = None
     database_echo: bool = False
     redis_url: str = "redis://localhost:6379/0"
     celery_broker_url: str | None = None
@@ -68,7 +72,7 @@ class Settings(BaseSettings):
     task_execution: Literal["celery", "inline"] = "celery"
 
     # --- File storage ---
-    storage_backend: Literal["s3", "local"] = "s3"
+    storage_backend: Literal["s3", "local", "database"] = "s3"
     local_storage_path: str = "./var/storage"
     s3_endpoint_url: str | None = None  # None = AWS; set for MinIO / other S3-compatible stores
     s3_region: str = "us-east-1"
@@ -151,6 +155,25 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _asyncpg_url(cls, value: object) -> object:
+        """Accept the URLs hosts hand out (Neon, Render: postgres://...?sslmode=require)."""
+        if not isinstance(value, str) or value.startswith("sqlite"):
+            return value
+        url = re.sub(r"^postgres(ql)?://", "postgresql+asyncpg://", value)
+        if "?" in url:
+            base, query = url.split("?", 1)
+            params = []
+            for part in query.split("&"):
+                name, _, val = part.partition("=")
+                if name == "sslmode":
+                    params.append(f"ssl={val}")
+                elif name != "channel_binding":  # asyncpg does not understand it
+                    params.append(part)
+            url = base + ("?" + "&".join(params) if params else "")
+        return url
 
     @field_validator("admin_emails")
     @classmethod
