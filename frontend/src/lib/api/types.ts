@@ -72,3 +72,26 @@ export type SkillGapAnalysis = Schemas["SkillGapAnalysis"];
 export type RecommendedJob = Schemas["RecommendedJob"];
 export type RecommendationsResponse = Schemas["RecommendationsResponse"];
 export type EmbeddingStatus = Schemas["EmbeddingStatus"];
+
+export type InterviewType = Schemas["InterviewTypeOut"];
+export type InterviewState = Schemas["InterviewState"];
+export type InterviewDetail = Schemas["InterviewDetail"];
+export type InterviewMessage = Schemas["InterviewMessageOut"];
+export type InterviewSummary = Schemas["InterviewSummary"];
+export type InterviewReport = Schemas["ReportOut"];
+export type ReportResult = Schemas["ReportResult"];
+export type Difficulty = InterviewType["difficulty"];
+export type InterviewTypeAdmin = Schemas["InterviewTypeAdmin"];
+export type InterviewTypeUpdate = Schemas["InterviewTypeUpdate"];
+export type RubricCriterion = Schemas["RubricCriterion"];
+export type AdminInterview = Schemas["AdminInterviewOut"];
+export type PromptSummary = Schemas["PromptSummary"];
+export type PromptDetail = Schemas["PromptDetail"];
+export type PromptVersion = Schemas["PromptVersionOut"];
+export type PromptTestResult = Schemas["PromptTestResult"];
+
+export const DIFFICULTIES: { value: Difficulty; label: string }[] = [
+  { value: "easy", label: "Easy" },
+  { value: "medium", label: "Medium" },
+  { value: "hard", label: "Hard" },
+];

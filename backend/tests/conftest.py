@@ -53,6 +53,10 @@ def settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
         llm_routes={
             "resume_parse": ["mock:mock-1"],
             "skill_gap": ["mock:mock-1"],
+            "interview_plan": ["mock:mock-1"],
+            "interviewer": ["mock:mock-1"],
+            "interview_hint": ["mock:mock-1"],
+            "interview_report": ["mock:mock-1"],
             "embedding": ["mock:mock-1"],
         },
         llm_allow_mock_fallback=True,

@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_json: bool = True
     api_v1_prefix: str = "/api/v1"
+    # Where browsers reach this API directly (only the interview WebSocket does; everything
+    # else goes through the web app's BFF).
+    api_public_url: str = "http://localhost:8000"
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:3000"]
     )
@@ -113,6 +116,8 @@ class Settings(BaseSettings):
     llm_allow_mock_fallback: bool = False
     # AI skill-gap analyses a user may start per 24 hours (each is one LLM call).
     match_analysis_daily_limit: int = Field(default=30, ge=0)
+    # Mock interviews a user may start per 24 hours.
+    interviews_daily_limit: int = Field(default=10, ge=0)
     mock_llm_delay_ms: int = 0
     mock_llm_error_rate: float = Field(default=0.0, ge=0.0, le=1.0)
     circuit_breaker_failure_threshold: int = 3

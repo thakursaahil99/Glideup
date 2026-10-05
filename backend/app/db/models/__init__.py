@@ -1,6 +1,15 @@
 """Import every model here so Alembic and `Base.metadata` see the full schema."""
 
 from app.db.models.audit import AuditLog
+from app.db.models.interview import (
+    Difficulty,
+    Interview,
+    InterviewMessage,
+    InterviewReport,
+    InterviewStatus,
+    InterviewType,
+    ReportStatus,
+)
 from app.db.models.jobs import (
     ATS,
     Company,
@@ -16,6 +25,7 @@ from app.db.models.llm import LLMUsage
 from app.db.models.matching import JobMatch, MatchAnalysisStatus
 from app.db.models.portfolio import AnalysisStatus, PortfolioAnalysis, PortfolioKind
 from app.db.models.profile import Profile, RemotePreference
+from app.db.models.prompts import PromptTemplate, PromptTemplateVersion
 from app.db.models.resume import EMBEDDING_DIMENSIONS, Resume, ResumeSkill, ResumeStatus
 from app.db.models.user import RefreshToken, Role, User, UserRole, UserStatus
 
@@ -25,8 +35,14 @@ __all__ = [
     "AnalysisStatus",
     "AuditLog",
     "Company",
+    "Difficulty",
     "ExperienceLevel",
     "IngestionRun",
+    "Interview",
+    "InterviewMessage",
+    "InterviewReport",
+    "InterviewStatus",
+    "InterviewType",
     "Job",
     "JobMatch",
     "JobSource",
@@ -35,8 +51,11 @@ __all__ = [
     "PortfolioAnalysis",
     "PortfolioKind",
     "Profile",
+    "PromptTemplate",
+    "PromptTemplateVersion",
     "RefreshToken",
     "RemotePreference",
+    "ReportStatus",
     "Resume",
     "ResumeSkill",
     "ResumeStatus",

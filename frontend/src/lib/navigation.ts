@@ -35,7 +35,7 @@ export const APP_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Profile", href: "/profile", icon: UserRound },
   { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness },
-  { label: "Interviews", href: "/interviews", icon: MessagesSquare, phase: 5 },
+  { label: "Interviews", href: "/interviews", icon: MessagesSquare },
   { label: "Tests", href: "/tests", icon: Code2, phase: 6 },
   { label: "Tracker", href: "/tracker", icon: KanbanSquare, phase: 8 },
 ];
@@ -68,14 +68,12 @@ export const ADMIN_NAV: NavItem[] = [
     href: "/admin/interviews",
     icon: MessagesSquare,
     permission: "interviews:manage",
-    phase: 5,
   },
   {
     label: "Prompt Templates",
     href: "/admin/prompts",
     icon: FileText,
     permission: "prompts:manage",
-    phase: 5,
   },
   { label: "AI / LLM Settings", href: "/admin/llm", icon: Bot, permission: "llm:manage", phase: 9 },
   { label: "Feature Flags", href: "/admin/flags", icon: Flag, permission: "flags:manage", phase: 9 },

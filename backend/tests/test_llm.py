@@ -3,6 +3,7 @@
 import asyncio
 import json
 import math
+from collections.abc import AsyncIterator
 from decimal import Decimal
 
 import httpx
@@ -60,6 +61,13 @@ class FakeProvider:
         if step == "fail":
             raise LLMError(f"{self.name} down")
         return EmbeddingResult([[1.0, 0.0]] * len(texts), self.name, model)
+
+    async def stream(
+        self, request: CompletionRequest, model: str
+    ) -> AsyncIterator[str | CompletionResult]:
+        result = await self.complete(request, model)
+        yield result.text
+        yield result
 
 
 class MemoryRecorder:

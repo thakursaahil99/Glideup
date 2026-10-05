@@ -9,12 +9,12 @@ GlideUp is an AI-powered platform that matches your resume to real jobs, shows y
 runs job-specific mock interviews and coding tests in many languages and frameworks, and tracks
 your applications — from job search to offer.
 
-> **Status:** Phase 4 of 10. Every job shows your match score and the skills you're
-> missing, with an on-demand AI coach that explains each gap, and a "Recommended for you"
-> feed. Jobs come from 78 company boards (Greenhouse, Lever, Ashby, SmartRecruiters) and the
-> Arbeitnow job board, plus Adzuna with a free key; deduplicated and searchable by country,
-> state, city or metro area. Before that: resume parsing with a local LLM (Phase 2) and the
-> foundation (Phase 1). See the [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
+> **Status:** Phase 5 of 10. AI mock interviews (DSA, system design, behavioral and
+> job-specific) stream live over WebSocket and end with a scored feedback report; admins edit
+> interview settings, rubrics and every prompt (versioned, with rollback and a test
+> playground). Before that: match scores and an AI skill-gap coach on real jobs (Phase 4), the
+> job board (Phase 3), resume parsing (Phase 2) and the foundation (Phase 1). See the
+> [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
 
 ## Architecture
 
@@ -152,6 +152,19 @@ preferred locations and remote preference. How it works and how it was calibrate
 New jobs are embedded automatically after each ingestion run (`nomic-embed-text` via Ollama:
 `ollama pull nomic-embed-text`). The first backfill of ~15k jobs takes about an hour on a
 laptop CPU; progress and a "run now" button are in **Admin → Jobs & Sources**.
+
+### Mock interviews
+
+Pick a type (or click **Practice interview for this job** on a job page), press Start, and
+answer in the chat; coding and design rounds add a code / notes panel. The interviewer streams
+its follow-ups, gives hints on request and keeps time. When you finish, a report scores you
+against the rubric with quotes from your answers. Interview types and rubrics are edited in
+**Admin → Interviews**, and every LLM prompt in **Admin → Prompt Templates**. Design:
+[ADR 0010](docs/adr/0010-mock-interviews.md).
+
+The browser connects to the API's WebSocket directly, so set `API_PUBLIC_URL` to where
+browsers reach the API (default `http://localhost:8000`) and include the web origin in
+`CORS_ORIGINS`.
 
 ### Running without Docker
 

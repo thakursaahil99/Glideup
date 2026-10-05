@@ -15,7 +15,7 @@ from app.core.errors import AppError, ConflictError, NotFoundError
 from app.core.storage import ObjectNotFoundError, resume_storage
 from app.db.models import EMBEDDING_DIMENSIONS, Profile, Resume, ResumeSkill, ResumeStatus, User
 from app.db.session import session_factory
-from app.llm import prompts
+from app.llm import prompt_store
 from app.llm.factory import get_gateway
 from app.llm.routing import Task
 from app.llm.types import AllProvidersFailedError, CallContext
@@ -264,7 +264,7 @@ async def parse_resume_job(resume_id: str) -> None:
             return
         resume.raw_text = text
 
-        messages, version = prompts.render(
+        messages, version = await prompt_store.render(
             "resume_parse", resume_text=text, today=date.today().isoformat()
         )
         ctx = CallContext(user_id=resume.user_id, prompt_version=version)

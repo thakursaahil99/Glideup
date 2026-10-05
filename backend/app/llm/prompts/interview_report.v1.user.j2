@@ -1,0 +1,18 @@
+Hints the candidate asked for: {{ hints_used }}.
+
+{% for q in questions %}
+Question {{ q.index }}: {{ q.prompt }}
+Strong answers cover: {{ q.expected_points | join("; ") }}
+{% if q.turns %}
+{% for turn in q.turns %}
+{% if turn.role == "interviewer" %}Interviewer: {{ turn.content }}
+{% else %}Candidate:
+{{ fence(turn.content, "answer") }}
+{% endif %}
+{% endfor %}
+{% else %}
+(not answered)
+{% endif %}
+
+{% endfor %}
+Write the report.

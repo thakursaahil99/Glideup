@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from typing import Protocol
 
 from app.llm.types import CompletionRequest, CompletionResult, EmbeddingResult
@@ -13,3 +14,9 @@ class LLMProvider(Protocol):
     async def complete(self, request: CompletionRequest, model: str) -> CompletionResult: ...
 
     async def embed(self, texts: list[str], model: str) -> EmbeddingResult: ...
+
+    def stream(
+        self, request: CompletionRequest, model: str
+    ) -> AsyncIterator[str | CompletionResult]:
+        """Yield text deltas as they arrive, then one final CompletionResult (usage)."""
+        ...

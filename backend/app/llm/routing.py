@@ -14,8 +14,18 @@ class Task:
     RESUME_PARSE = "resume_parse"
     PORTFOLIO_PARSE = "portfolio_parse"
     SKILL_GAP = "skill_gap"
+    INTERVIEW_PLAN = "interview_plan"
+    INTERVIEWER = "interviewer"
+    INTERVIEW_HINT = "interview_hint"
+    INTERVIEW_REPORT = "interview_report"
     EMBEDDING = "embedding"
 
+
+_HOSTED_FIRST = [
+    "github:openai/gpt-4.1-mini",
+    "ollama:qwen2.5:3b",
+    "openrouter:meta-llama/llama-3.3-70b-instruct:free",
+]
 
 DEFAULT_ROUTES: dict[str, list[str]] = {
     Task.RESUME_PARSE: [
@@ -35,6 +45,12 @@ DEFAULT_ROUTES: dict[str, list[str]] = {
         "github:openai/gpt-4.1-mini",
         "openrouter:meta-llama/llama-3.3-70b-instruct:free",
     ],
+    # Interviews and reports benefit most from a stronger model, so a hosted one goes first
+    # when configured (unconfigured providers are skipped; on a laptop that means Ollama).
+    Task.INTERVIEW_PLAN: _HOSTED_FIRST,
+    Task.INTERVIEWER: _HOSTED_FIRST,
+    Task.INTERVIEW_HINT: _HOSTED_FIRST,
+    Task.INTERVIEW_REPORT: _HOSTED_FIRST,
     # Embeddings must come from ONE model: vectors from different models live in different
     # spaces and cannot be compared. So there is deliberately no cross-model fallback here.
     Task.EMBEDDING: ["ollama:nomic-embed-text"],

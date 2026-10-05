@@ -77,3 +77,14 @@ class AllProvidersFailedError(LLMError):
 
 class InvalidOutputError(LLMError):
     """The model answered, but not with output matching the requested schema."""
+
+
+class StreamInterruptedError(LLMError):
+    """A streamed answer broke off after text was already sent to the user. Falling back
+    to another model mid-answer would repeat or contradict it, so the caller decides."""
+
+    def __init__(self, task: str, partial: str, reason: str):
+        super().__init__(f"Stream for task '{task}' interrupted: {reason}")
+        self.task = task
+        self.partial = partial
+        self.reason = reason

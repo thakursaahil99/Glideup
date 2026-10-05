@@ -13,7 +13,7 @@ from app.core.errors import AppError, ConflictError, NotFoundError
 from app.core.safe_fetch import FetchError, UnsafeUrlError, fetch_page, vet_url
 from app.db.models import AnalysisStatus, PortfolioAnalysis, PortfolioKind, Profile, User
 from app.db.session import session_factory
-from app.llm import prompts
+from app.llm import prompt_store
 from app.llm.factory import get_gateway
 from app.llm.routing import Task
 from app.llm.types import AllProvidersFailedError, CallContext
@@ -149,7 +149,7 @@ async def _analyze_website(
             "We couldn't read enough text on this site. Sites built entirely with JavaScript "
             "can't be read yet. Try your GitHub link, or upload your resume."
         )
-    messages, version = prompts.render("portfolio_parse", url=page.url, site_text=text)
+    messages, version = await prompt_store.render("portfolio_parse", url=page.url, site_text=text)
     parsed, result = await get_gateway().complete_json(
         Task.PORTFOLIO_PARSE,
         messages,

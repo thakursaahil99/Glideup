@@ -171,6 +171,31 @@ Embeddings carry a model + text-recipe key, so vectors from different models are
 compared. Scores are computed per request rather than stored. Calibration and eval:
 [ADR 0009](adr/0009-matching-and-skill-gap.md).
 
+## Mock interviews (Phase 5)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant W as Web (BFF)
+    participant A as API
+    participant G as LLM gateway
+    B->>W: POST /api/backend/interviews/{id}/ticket
+    W->>A: + access token (server-side)
+    A-->>B: single-use ticket (60 s) + ws URL
+    B->>A: WebSocket /ws/interviews/{id}?ticket=... (Origin checked, ticket burned)
+    A-->>B: state (interview + transcript)
+    B->>A: answer
+    A->>A: save answer (lock per interview)
+    A->>G: stream(interviewer@vN)
+    G-->>A: tokens (fallback only before the first)
+    A-->>B: stream_start, deltas, stream_end
+    A->>A: follow-up or move on (token hidden, budget enforced)
+    A-->>B: ended, then report job, then GET /interviews/{id}/report
+```
+
+Details: [ADR 0010](adr/0010-mock-interviews.md).
+
 ## Data model (Phase 1)
 
 ```mermaid

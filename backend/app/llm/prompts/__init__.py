@@ -18,6 +18,10 @@ ACTIVE_VERSIONS: dict[str, str] = {
     "resume_parse": "v2",
     "portfolio_parse": "v1",
     "skill_gap": "v1",
+    "interview_plan": "v1",
+    "interviewer": "v1",
+    "interview_hint": "v1",
+    "interview_report": "v1",
 }
 _ROLES: tuple[Role, ...] = ("system", "user")
 

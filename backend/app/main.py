@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from app.api.v1 import health
+from app.api.v1 import health, interviews
 from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.errors import register_exception_handlers
@@ -53,6 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     register_exception_handlers(app)
     app.include_router(health.router)
     app.include_router(api_router, prefix=settings.api_v1_prefix)
+    app.include_router(interviews.ws_router)  # WebSockets live under /ws
 
     if settings.metrics_enabled:
         Instrumentator(excluded_handlers=["/healthz", "/readyz", "/metrics"]).instrument(

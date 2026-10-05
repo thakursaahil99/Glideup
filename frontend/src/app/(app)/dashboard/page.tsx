@@ -1,6 +1,7 @@
-import { Circle, Flame, Gauge, Target } from "lucide-react";
+import { Circle, Flame, Target } from "lucide-react";
 import type { Metadata } from "next";
 
+import { InterviewScoreCard } from "@/components/dashboard/interview-score-card";
 import { ResumeCard } from "@/components/dashboard/resume-card";
 import { TopMatches } from "@/components/dashboard/top-matches";
 import { PageHeader } from "@/components/page-header";
@@ -15,7 +16,6 @@ const PHASE_FOR_STEP = [2, 3, 4, 8, 5];
 
 const EMPTY_STATS = [
   { label: "Applications", icon: Target, hint: "Track your first application" },
-  { label: "Average interview score", icon: Gauge, hint: "Finish a mock interview to see it" },
   { label: "Practice streak", icon: Flame, hint: "Practice two days in a row" },
 ];
 
@@ -46,6 +46,7 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         ))}
+        <InterviewScoreCard />
       </div>
 
       <Card className="mt-6">

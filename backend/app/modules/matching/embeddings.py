@@ -113,6 +113,9 @@ async def _embed_batch(session: AsyncSession, key: str, limit: int) -> int | str
             .limit(limit)
         )
     ).all()
+    # End the read transaction before the slow model call: holding it open for seconds
+    # blocks schema changes (and everything that queues behind them).
+    await session.commit()
     if not rows:
         return 0
     texts = [

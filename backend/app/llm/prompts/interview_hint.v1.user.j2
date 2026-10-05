@@ -1,0 +1,9 @@
+What the candidate has said on this question so far:
+
+{% for turn in turns if turn.role == "candidate" %}
+{{ fence(turn.content, "answer") }}
+{% else %}
+(nothing yet)
+{% endfor %}
+
+Give the hint.

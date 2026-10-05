@@ -1,0 +1,10 @@
+The conversation on this question so far:
+
+{% for turn in turns %}
+{% if turn.role == "interviewer" %}Interviewer: {{ turn.content }}
+{% else %}Candidate:
+{{ fence(turn.content, "answer") }}
+{% endif %}
+
+{% endfor %}
+Reply as the interviewer, with only your own words (no "Interviewer:" label).

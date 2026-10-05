@@ -12,7 +12,7 @@ import asyncio
 import json
 import re
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from functools import partial
 from typing import Protocol, TypeVar
 
@@ -34,12 +34,16 @@ from app.llm.types import (
     EmbeddingResult,
     LLMError,
     Message,
+    StreamInterruptedError,
 )
 
 logger = structlog.stdlib.get_logger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 R = TypeVar("R", CompletionResult, EmbeddingResult)
+
+# Once text is flowing, a gap this long between chunks counts as a failure.
+STREAM_IDLE_TIMEOUT_S = 60.0
 
 
 class UsageRecorder(Protocol):
@@ -212,7 +216,13 @@ class LLMGateway:
                     return schema.model_validate(extract_json(result.text)), result
                 except (json.JSONDecodeError, ValidationError) as exc:
                     problem = str(exc)[:800]
-                    logger.info("llm_invalid_output", task=task, route=str(route), repair=repair)
+                    logger.info(
+                        "llm_invalid_output",
+                        task=task,
+                        route=str(route),
+                        repair=repair,
+                        problem=problem[:300],
+                    )
                     if repair == max_repairs:
                         ctx.attempts.append(
                             Attempt(route.provider, route.model, f"invalid output: {problem[:200]}")
@@ -227,6 +237,58 @@ class LLMGateway:
                             "Reply again with ONLY the corrected JSON object.",
                         ),
                     ]
+        raise AllProvidersFailedError(task, ctx.attempts)
+
+    async def stream(
+        self,
+        task: str,
+        messages: list[Message],
+        *,
+        temperature: float = 0.4,
+        max_tokens: int = 800,
+        ctx: CallContext | None = None,
+    ) -> AsyncIterator[str]:
+        """Stream text deltas. Falls back to the next route only if a route fails before
+        its first delta; a failure after that raises StreamInterruptedError with the
+        partial text (the user has already seen it)."""
+        ctx = ctx or CallContext()
+        request = CompletionRequest(task, messages, False, temperature, max_tokens)
+        for route, provider in self._usable_routes(task, ctx):
+            breaker = self.circuits.get(route.provider)
+            if not breaker.allow():
+                ctx.attempts.append(Attempt(route.provider, route.model, "circuit open"))
+                continue
+            started = time.perf_counter()
+            parts: list[str] = []
+            final: CompletionResult | None = None
+            chunks = provider.stream(request, route.model)
+            try:
+                while True:
+                    timeout = STREAM_IDLE_TIMEOUT_S if parts else self._timeout(route)
+                    try:
+                        item = await asyncio.wait_for(anext(chunks), timeout=timeout)
+                    except StopAsyncIteration:
+                        break
+                    if isinstance(item, CompletionResult):
+                        final = item
+                    elif item:
+                        parts.append(item)
+                        yield item
+            except (LLMError, TimeoutError) as exc:
+                error = "timeout" if isinstance(exc, TimeoutError) else str(exc) or "error"
+                breaker.record_failure()
+                ctx.attempts.append(Attempt(route.provider, route.model, error))
+                logger.warning("llm_stream_failed", task=task, route=str(route), error=error)
+                await self._record(task, "stream", route, ctx, started, error=error)
+                if parts:
+                    raise StreamInterruptedError(task, "".join(parts), error) from exc
+                continue
+            finally:
+                await chunks.aclose()  # type: ignore[attr-defined]
+            breaker.record_success()
+            result = final or CompletionResult("".join(parts), route.provider, route.model)
+            await self._record(task, "stream", route, ctx, started, result=result)
+            return
         raise AllProvidersFailedError(task, ctx.attempts)
 
     async def embed(

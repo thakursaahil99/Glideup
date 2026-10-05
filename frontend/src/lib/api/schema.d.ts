@@ -74,6 +74,63 @@ export interface paths {
         patch: operations["update_company_api_v1_admin_companies__company_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/interview-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Types */
+        get: operations["list_types_api_v1_admin_interview_types_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/interview-types/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Type
+         * @description Changes apply to interviews started afterwards; running ones keep their settings.
+         */
+        patch: operations["update_type_api_v1_admin_interview_types__key__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Interviews
+         * @description Every user's interviews, newest first (for spotting problems; transcripts stay private).
+         */
+        get: operations["list_interviews_api_v1_admin_interviews_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/job-sources": {
         parameters: {
             query?: never;
@@ -247,6 +304,101 @@ export interface paths {
         get: operations["overview_api_v1_admin_overview_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/prompts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Prompts */
+        get: operations["list_prompts_api_v1_admin_prompts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/prompts/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Prompt */
+        get: operations["get_prompt_api_v1_admin_prompts__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/prompts/{name}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Activate Version
+         * @description Make a version live: publish a new one, or roll back to an older one.
+         */
+        post: operations["activate_version_api_v1_admin_prompts__name__activate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/prompts/{name}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Prompt
+         * @description Render a saved version (or unsaved text) with example variables and run it once
+         *     through the same model route production uses. Nothing is saved.
+         */
+        post: operations["test_prompt_api_v1_admin_prompts__name__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/prompts/{name}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Version
+         * @description Save an edited prompt as a new version (validated first); optionally make it live.
+         */
+        post: operations["create_version_api_v1_admin_prompts__name__versions_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -429,6 +581,116 @@ export interface paths {
          * @description Rotate a refresh token: the old one is revoked, a new pair is returned.
          */
         post: operations["refresh_tokens_api_v1_auth_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Interviews */
+        get: operations["my_interviews_api_v1_interviews_get"];
+        put?: never;
+        /**
+         * Create Interview
+         * @description Set up an interview. Job-specific ones start as `preparing` while the questions are
+         *     written; poll until `ready`, then open the WebSocket and send `start`.
+         */
+        post: operations["create_interview_api_v1_interviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Interview Types */
+        get: operations["interview_types_api_v1_interviews_types_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{interview_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Interview */
+        get: operations["get_interview_api_v1_interviews__interview_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{interview_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Report */
+        get: operations["get_report_api_v1_interviews__interview_id__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{interview_id}/report/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Report */
+        post: operations["retry_report_api_v1_interviews__interview_id__report_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{interview_id}/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Socket Ticket
+         * @description A single-use ticket (valid 60 s) for the interview's WebSocket.
+         */
+        post: operations["socket_ticket_api_v1_interviews__interview_id__ticket_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -857,6 +1119,36 @@ export interface components {
          * @enum {string}
          */
         ATS: "greenhouse" | "lever" | "ashby" | "smartrecruiters";
+        /** AdminInterviewOut */
+        AdminInterviewOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            difficulty: components["schemas"]["Difficulty"];
+            /** End Reason */
+            end_reason: string | null;
+            /** Ended At */
+            ended_at: string | null;
+            /** Hints Used */
+            hints_used: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Title */
+            job_title: string | null;
+            /** Overall Score */
+            overall_score: number | null;
+            report_status: components["schemas"]["ReportStatus"] | null;
+            status: components["schemas"]["InterviewStatus"];
+            /** Type Key */
+            type_key: string;
+            /** User Email */
+            user_email: string;
+        };
         /** AdminJobOut */
         AdminJobOut: {
             /** Apply Url */
@@ -1105,6 +1397,11 @@ export interface components {
             /** Name */
             name?: string | null;
         };
+        /**
+         * Difficulty
+         * @enum {string}
+         */
+        Difficulty: "easy" | "medium" | "hard";
         /** Education */
         Education: {
             /** Degree */
@@ -1202,6 +1499,190 @@ export interface components {
             trigger: string;
             /** Updated */
             updated: number;
+        };
+        /** InterviewCreate */
+        InterviewCreate: {
+            difficulty?: components["schemas"]["Difficulty"] | null;
+            /** Job Id */
+            job_id?: string | null;
+            /** Type Key */
+            type_key: string;
+        };
+        /** InterviewDetail */
+        InterviewDetail: {
+            /** Error */
+            error: string | null;
+            interview: components["schemas"]["InterviewState"];
+            /** Messages */
+            messages: components["schemas"]["InterviewMessageOut"][];
+            /** Overall Score */
+            overall_score: number | null;
+            report_status: components["schemas"]["ReportStatus"] | null;
+            /** Type Name */
+            type_name: string;
+        };
+        /** InterviewMessageOut */
+        InterviewMessageOut: {
+            /** Attachment */
+            attachment: string | null;
+            /** Content */
+            content: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Interrupted */
+            interrupted: boolean;
+            /** Kind */
+            kind: string;
+            /** Question Index */
+            question_index: number | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "interviewer" | "candidate";
+            /** Seq */
+            seq: number;
+        };
+        /**
+         * InterviewState
+         * @description The live state the interview room renders (also sent over the WebSocket).
+         */
+        InterviewState: {
+            /** Company Name */
+            company_name: string | null;
+            /** Current Index */
+            current_index: number;
+            /** Current Kind */
+            current_kind: string | null;
+            difficulty: components["schemas"]["Difficulty"];
+            /** Duration Minutes */
+            duration_minutes: number;
+            /** End Reason */
+            end_reason: string | null;
+            /** Ended At */
+            ended_at: string | null;
+            /** Ends At */
+            ends_at: string | null;
+            /** Followups Used */
+            followups_used: number;
+            /** Hints Used */
+            hints_used: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Title */
+            job_title: string | null;
+            /** Max Followups */
+            max_followups: number;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["InterviewStatus"];
+            /** Total Questions */
+            total_questions: number;
+            /** Type Key */
+            type_key: string;
+        };
+        /**
+         * InterviewStatus
+         * @enum {string}
+         */
+        InterviewStatus: "preparing" | "ready" | "in_progress" | "completed" | "failed";
+        /** InterviewSummary */
+        InterviewSummary: {
+            /** Company Name */
+            company_name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            difficulty: components["schemas"]["Difficulty"];
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Job Title */
+            job_title: string | null;
+            /** Overall Score */
+            overall_score: number | null;
+            report_status: components["schemas"]["ReportStatus"] | null;
+            status: components["schemas"]["InterviewStatus"];
+            /** Type Key */
+            type_key: string;
+            /** Type Name */
+            type_name: string;
+        };
+        /** InterviewTypeAdmin */
+        InterviewTypeAdmin: {
+            /** Description */
+            description: string;
+            difficulty: components["schemas"]["Difficulty"];
+            /** Duration Minutes */
+            duration_minutes: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Key */
+            key: string;
+            /** Max Followups */
+            max_followups: number;
+            /** Name */
+            name: string;
+            /** Question Count */
+            question_count: number;
+            /** Rubric */
+            rubric: components["schemas"]["RubricCriterion"][];
+            /** Sort Order */
+            sort_order: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** InterviewTypeOut */
+        InterviewTypeOut: {
+            /** Description */
+            description: string;
+            difficulty: components["schemas"]["Difficulty"];
+            /** Duration Minutes */
+            duration_minutes: number;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Question Count */
+            question_count: number;
+        };
+        /** InterviewTypeUpdate */
+        InterviewTypeUpdate: {
+            /** Description */
+            description?: string | null;
+            difficulty?: components["schemas"]["Difficulty"] | null;
+            /** Duration Minutes */
+            duration_minutes?: number | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Max Followups */
+            max_followups?: number | null;
+            /** Name */
+            name?: string | null;
+            /** Question Count */
+            question_count?: number | null;
+            /** Rubric */
+            rubric?: components["schemas"]["RubricCriterion"][] | null;
         };
         /** JobCard */
         JobCard: {
@@ -1503,6 +1984,26 @@ export interface components {
             /** Suggestion */
             suggestion?: string | null;
         };
+        /** NextPractice */
+        NextPractice: {
+            /** Focus */
+            focus: string;
+            /** Reason */
+            reason?: string | null;
+            /** Type */
+            type: string;
+        };
+        /** Page[AdminInterviewOut] */
+        Page_AdminInterviewOut_: {
+            /** Items */
+            items: components["schemas"]["AdminInterviewOut"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
         /** Page[AdminJobOut] */
         Page_AdminJobOut_: {
             /** Items */
@@ -1709,6 +2210,114 @@ export interface components {
             /** Url */
             url?: string | null;
         };
+        /** PromptActivate */
+        PromptActivate: {
+            /** Version */
+            version: number;
+        };
+        /** PromptDetail */
+        PromptDetail: {
+            /** Active Version */
+            active_version: number | null;
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+            /** Sample */
+            sample: {
+                [key: string]: unknown;
+            };
+            /** Variables */
+            variables: string[];
+            /** Versions */
+            versions: components["schemas"]["PromptVersionOut"][];
+        };
+        /** PromptSummary */
+        PromptSummary: {
+            /** Active Version */
+            active_version: number | null;
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Versions */
+            versions: number;
+        };
+        /**
+         * PromptTest
+         * @description Render and run a version (or unsaved text) with example variables.
+         */
+        PromptTest: {
+            /** System */
+            system?: string | null;
+            /** User */
+            user?: string | null;
+            /** Variables */
+            variables?: {
+                [key: string]: unknown;
+            };
+            /** Version */
+            version?: number | null;
+        };
+        /** PromptTestResult */
+        PromptTestResult: {
+            /** Latency Ms */
+            latency_ms: number;
+            /** Messages */
+            messages: {
+                [key: string]: string;
+            }[];
+            /** Model */
+            model: string;
+            /** Output */
+            output: string;
+            /** Provider */
+            provider: string;
+        };
+        /** PromptVersionCreate */
+        PromptVersionCreate: {
+            /**
+             * Activate
+             * @default false
+             */
+            activate: boolean;
+            /** Notes */
+            notes?: string | null;
+            /** System */
+            system: string;
+            /**
+             * User
+             * @default
+             */
+            user: string;
+        };
+        /** PromptVersionOut */
+        PromptVersionOut: {
+            /** Active */
+            active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Email */
+            created_by_email: string | null;
+            /** Notes */
+            notes: string | null;
+            /** Source */
+            source: string;
+            /** System */
+            system: string;
+            /** User */
+            user: string;
+            /** Version */
+            version: number;
+        };
         /** Readiness */
         Readiness: {
             /** Checks */
@@ -1755,6 +2364,54 @@ export interface components {
          * @enum {string}
          */
         RemotePreference: "remote" | "hybrid" | "onsite" | "any";
+        /** ReportOut */
+        ReportOut: {
+            /** Error */
+            error: string | null;
+            /** Generated By */
+            generated_by: string | null;
+            interview: components["schemas"]["InterviewSummary"];
+            /** Overall Score */
+            overall_score: number | null;
+            result: components["schemas"]["ReportResult"] | null;
+            status: components["schemas"]["ReportStatus"];
+        };
+        /**
+         * ReportResult
+         * @description Stored on InterviewReport.result and returned by the API.
+         */
+        ReportResult: {
+            /** Answered */
+            answered: number;
+            /** Criteria */
+            criteria: components["schemas"]["ScoredCriterion"][];
+            /** Hints Used */
+            hints_used: number;
+            next_practice: components["schemas"]["NextPractice"] | null;
+            /** Overall Score */
+            overall_score: number;
+            /** Questions */
+            questions: components["schemas"]["ScoredQuestion"][];
+            /** Questions Score */
+            questions_score: number;
+            /** Rubric Score */
+            rubric_score: number | null;
+            /** Strengths */
+            strengths: string[];
+            /** Summary */
+            summary: string;
+            /** Tips */
+            tips: string[];
+            /** Total Questions */
+            total_questions: number;
+            /** Weaknesses */
+            weaknesses: string[];
+        };
+        /**
+         * ReportStatus
+         * @enum {string}
+         */
+        ReportStatus: "pending" | "generating" | "done" | "failed" | "skipped";
         /** ResumeOut */
         ResumeOut: {
             /**
@@ -1850,6 +2507,23 @@ export interface components {
             /** Permissions */
             permissions: string[];
         };
+        /** RubricCriterion */
+        RubricCriterion: {
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Weight
+             * @default 1
+             */
+            weight: number;
+        };
         /** RunStarted */
         RunStarted: {
             /** Source */
@@ -1896,6 +2570,40 @@ export interface components {
              */
             skills: number | null;
         };
+        /** ScoredCriterion */
+        ScoredCriterion: {
+            /** Comment */
+            comment?: string | null;
+            /** Evidence */
+            evidence?: string | null;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Score */
+            score: number | null;
+            /** Weight */
+            weight: number;
+        };
+        /** ScoredQuestion */
+        ScoredQuestion: {
+            /** Answered */
+            answered: boolean;
+            /** Feedback */
+            feedback?: string | null;
+            /** Focus */
+            focus: string;
+            /** Improvements */
+            improvements?: string[];
+            /** Index */
+            index: number;
+            /** Prompt */
+            prompt: string;
+            /** Score */
+            score: number;
+            /** Strengths */
+            strengths?: string[];
+        };
         /** SetRoleRequest */
         SetRoleRequest: {
             role: components["schemas"]["Role"];
@@ -1916,6 +2624,15 @@ export interface components {
             summary: string;
             /** Weak */
             weak?: components["schemas"]["WeakSkill"][];
+        };
+        /** SocketTicket */
+        SocketTicket: {
+            /** Expires In */
+            expires_in: number;
+            /** Ticket */
+            ticket: string;
+            /** Url */
+            url: string;
         };
         /** TokenResponse */
         TokenResponse: {
@@ -2297,6 +3014,158 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_types_api_v1_admin_interview_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewTypeAdmin"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_type_api_v1_admin_interview_types__key__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewTypeUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewTypeAdmin"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_interviews_api_v1_admin_interviews_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["InterviewStatus"] | null;
+                type_key?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AdminInterviewOut_"];
                 };
             };
             /** @description Unauthorized */
@@ -2817,6 +3686,288 @@ export interface operations {
             };
         };
     };
+    list_prompts_api_v1_admin_prompts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptSummary"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_prompt_api_v1_admin_prompts__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    activate_version_api_v1_admin_prompts__name__activate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromptActivate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_prompt_api_v1_admin_prompts__name__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromptTest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptTestResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_version_api_v1_admin_prompts__name__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromptVersionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromptDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_roles_api_v1_admin_roles_get: {
         parameters: {
             query?: never;
@@ -3294,6 +4445,365 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_interviews_api_v1_interviews_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewSummary"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_interview_api_v1_interviews_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    interview_types_api_v1_interviews_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewTypeOut"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_interview_api_v1_interviews__interview_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_report_api_v1_interviews__interview_id__report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_report_api_v1_interviews__interview_id__report_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    socket_ticket_api_v1_interviews__interview_id__ticket_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SocketTicket"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

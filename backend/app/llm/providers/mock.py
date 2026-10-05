@@ -14,7 +14,7 @@ import math
 import random
 import re
 import time
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 
 from app.llm.types import CompletionRequest, CompletionResult, EmbeddingResult, LLMError
 
@@ -82,6 +82,16 @@ class MockProvider:
             completion_tokens=_estimate_tokens(text),
             latency_ms=int((time.perf_counter() - started) * 1000),
         )
+
+    async def stream(
+        self, request: CompletionRequest, model: str
+    ) -> AsyncIterator[str | CompletionResult]:
+        """The same text as `complete`, delivered word by word."""
+        result = await self.complete(request, model)
+        for word in re.findall(r"\S+\s*|\s+", result.text):
+            await asyncio.sleep(0)
+            yield word
+        yield result
 
     async def embed(self, texts: list[str], model: str) -> EmbeddingResult:
         started = time.perf_counter()

@@ -32,7 +32,7 @@ from app.db.models import (
 )
 from app.db.session import session_factory
 from app.jobsources.geo import lookup_metro, metro_cities, parse_location
-from app.llm import prompts
+from app.llm import prompt_store
 from app.llm.factory import get_gateway
 from app.llm.routing import Task
 from app.llm.types import AllProvidersFailedError, CallContext
@@ -379,12 +379,12 @@ async def recommend(
 # ------------------------------------------------------------------ AI skill-gap analysis
 
 
-def _is_fresh(row: JobMatch, job: Job, candidate: Candidate) -> bool:
+def _is_fresh(row: JobMatch, job: Job, candidate: Candidate, prompt: str) -> bool:
     return (
         row.resume_id == (candidate.resume.id if candidate.resume else None)
         and row.job_content_hash == job.content_hash
         and row.skills_fingerprint == candidate.fingerprint
-        and row.prompt_version == prompts.ACTIVE_VERSIONS["skill_gap"]
+        and row.prompt_version == prompt
     )
 
 
@@ -404,7 +404,9 @@ async def match_view(session: AsyncSession, user_id: uuid.UUID, job: Job) -> Mat
     row = await session.scalar(
         select(JobMatch).where(JobMatch.user_id == user_id, JobMatch.job_id == job.id)
     )
-    return MatchView(candidate, match, row, row is not None and not _is_fresh(row, job, candidate))
+    prompt = await prompt_store.active_label("skill_gap")
+    stale = row is not None and not _is_fresh(row, job, candidate, prompt)
+    return MatchView(candidate, match, row, stale)
 
 
 async def request_analysis(session: AsyncSession, user_id: uuid.UUID, job: Job) -> JobMatch:
@@ -418,7 +420,8 @@ async def request_analysis(session: AsyncSession, user_id: uuid.UUID, job: Job) 
     row = await session.scalar(
         select(JobMatch).where(JobMatch.user_id == user_id, JobMatch.job_id == job.id)
     )
-    if row is not None and _is_fresh(row, job, candidate):
+    prompt = await prompt_store.active_label("skill_gap")
+    if row is not None and _is_fresh(row, job, candidate, prompt):
         running = row.status in (MatchAnalysisStatus.PENDING, MatchAnalysisStatus.ANALYZING)
         requested = _aware(row.requested_at) or now
         if row.status == MatchAnalysisStatus.DONE or (
@@ -448,7 +451,7 @@ async def request_analysis(session: AsyncSession, user_id: uuid.UUID, job: Job) 
     row.error = None
     row.job_content_hash = job.content_hash
     row.skills_fingerprint = candidate.fingerprint
-    row.prompt_version = prompts.ACTIVE_VERSIONS["skill_gap"]
+    row.prompt_version = prompt
     row.requested_at = now
     await session.commit()
 
@@ -458,7 +461,7 @@ async def request_analysis(session: AsyncSession, user_id: uuid.UUID, job: Job) 
     return row
 
 
-def _candidate_text(candidate: Candidate) -> str:
+def candidate_text(candidate: Candidate) -> str:
     lines: list[str] = []
     parsed = (
         ParsedResume.model_validate(candidate.resume.parsed)
@@ -504,7 +507,7 @@ async def analyze_match_job(match_id: str) -> None:
 
         match = (await score_jobs(session, candidate, [job])).get(job.id)
         job_text = job.description_text[:JOB_TEXT_CHARS]
-        messages, version = prompts.render(
+        messages, version = await prompt_store.render(
             "skill_gap",
             title=job.title,
             company=job.company_name,
@@ -514,7 +517,7 @@ async def analyze_match_job(match_id: str) -> None:
             job_skills=job.skills,
             missing=match.missing if match else [],
             job_text=f"{job.title}\n{job_text}",
-            candidate=_candidate_text(candidate),
+            candidate=candidate_text(candidate),
         )
         ctx = CallContext(user_id=row.user_id, prompt_version=version)
         try:

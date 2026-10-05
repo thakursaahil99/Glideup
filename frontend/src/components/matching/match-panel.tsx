@@ -279,11 +279,13 @@ export function PrepareCard({ jobId }: { jobId: string }) {
     <Card>
       <CardHeader>
         <CardTitle>Prepare for this job</CardTitle>
-        <CardDescription>Practice tailored to this posting is coming soon.</CardDescription>
+        <CardDescription>An interview written from this posting and your resume.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
-        <Button variant="outline" className="w-full justify-start" disabled title="Coming in phase 5">
-          <MessagesSquare /> Practice interview for this job
+        <Button asChild variant="outline" className="w-full justify-start">
+          <Link href={`/interviews?job=${jobId}`}>
+            <MessagesSquare /> Practice interview for this job
+          </Link>
         </Button>
         <Button variant="outline" className="h-auto w-full justify-start py-2" disabled title="Coming in phase 6">
           <Code2 />
