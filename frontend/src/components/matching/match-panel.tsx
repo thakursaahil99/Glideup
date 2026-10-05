@@ -279,7 +279,7 @@ export function PrepareCard({ jobId }: { jobId: string }) {
     <Card>
       <CardHeader>
         <CardTitle>Prepare for this job</CardTitle>
-        <CardDescription>An interview written from this posting and your resume.</CardDescription>
+        <CardDescription>Practice tailored to this posting.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         <Button asChild variant="outline" className="w-full justify-start">
@@ -287,14 +287,14 @@ export function PrepareCard({ jobId }: { jobId: string }) {
             <MessagesSquare /> Practice interview for this job
           </Link>
         </Button>
-        <Button variant="outline" className="h-auto w-full justify-start py-2" disabled title="Coming in phase 6">
-          <Code2 />
-          <span className="text-left">
-            Take a skill test
-            {stack.length > 0 && (
-              <span className="block text-xs text-muted-foreground">{stack.join(", ")}</span>
-            )}
-          </span>
+        <Button asChild variant="outline" className="h-auto w-full justify-start py-2">
+          <Link href={`/tests${match?.practice.languages[0] ? `?lang=${match.practice.languages[0].toLowerCase()}` : ""}`}>
+            <Code2 />
+            <span className="text-left">
+              Take a skill test
+              {stack.length > 0 && <span className="block text-xs text-muted-foreground">{stack.join(", ")}</span>}
+            </span>
+          </Link>
         </Button>
       </CardContent>
     </Card>

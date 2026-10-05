@@ -95,3 +95,29 @@ export const DIFFICULTIES: { value: Difficulty; label: string }[] = [
   { value: "medium", label: "Medium" },
   { value: "hard", label: "Hard" },
 ];
+
+export type CodeLanguage = Schemas["LanguageOut"];
+export type ProblemSummary = Schemas["ProblemSummary"];
+export type ProblemDetail = Schemas["ProblemDetail"];
+export type RunResult = Schemas["RunResultOut"];
+export type CaseResult = Schemas["CaseResultOut"];
+export type Submission = Schemas["SubmissionOut"];
+export type SubmissionDetail = Schemas["SubmissionDetail"];
+export type Verdict = Submission["verdict"];
+export type LanguageAdmin = Schemas["LanguageAdmin"];
+export type QuestionAdminSummary = Schemas["QuestionAdminSummary"];
+export type QuestionAdminDetail = Schemas["QuestionAdminDetail"];
+export type QuestionIn = Schemas["QuestionIn"];
+export type GenerationItem = Schemas["GenerationOut"];
+
+export const VERDICT_LABELS: Record<Verdict, string> = {
+  queued: "Queued",
+  running: "Running",
+  accepted: "Accepted",
+  wrong_answer: "Wrong answer",
+  compile_error: "Compile error",
+  runtime_error: "Runtime error",
+  time_limit: "Time limit exceeded",
+  memory_limit: "Memory limit exceeded",
+  sandbox_error: "Sandbox unavailable",
+};

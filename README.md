@@ -9,11 +9,11 @@ GlideUp is an AI-powered platform that matches your resume to real jobs, shows y
 runs job-specific mock interviews and coding tests in many languages and frameworks, and tracks
 your applications — from job search to offer.
 
-> **Status:** Phase 5 of 10. AI mock interviews (DSA, system design, behavioral and
-> job-specific) stream live over WebSocket and end with a scored feedback report; admins edit
-> interview settings, rubrics and every prompt (versioned, with rollback and a test
-> playground). Before that: match scores and an AI skill-gap coach on real jobs (Phase 4), the
-> job board (Phase 3), resume parsing (Phase 2) and the foundation (Phase 1). See the
+> **Status:** Phase 6 of 10. Coding tests in six languages graded in a sandbox against hidden
+> tests, with an admin question bank and an AI generation queue whose questions are validated
+> by running their reference solutions. Before that: AI mock interviews with reports (Phase 5),
+> match scores and a skill-gap coach (Phase 4), the job board (Phase 3), resume parsing
+> (Phase 2) and the foundation (Phase 1). See the
 > [build plan](PROJECT_BRIEF.md#13-build-plan-follow-this-order).
 
 ## Architecture
@@ -165,6 +165,22 @@ against the rubric with quotes from your answers. Interview types and rubrics ar
 The browser connects to the API's WebSocket directly, so set `API_PUBLIC_URL` to where
 browsers reach the API (default `http://localhost:8000`) and include the web origin in
 `CORS_ORIGINS`.
+
+### Coding tests
+
+Problems read standard input and print standard output, in Python, JavaScript, TypeScript,
+Java, C++ or Go. **Run** checks the examples; **Submit** grades against hidden tests in a
+sandbox. Start the sandbox and install its runtimes once:
+
+```bash
+docker compose --profile sandbox up -d piston
+cd backend && uv run python -m app.scripts.install_sandbox_runtimes
+```
+
+Admins manage problems, languages and limits in **Admin → Question Bank**, and generate new
+problems in **Admin → AI Generation Queue**: the model writes the problem and a reference
+solution, and the sandbox produces the expected outputs. Design:
+[ADR 0011](docs/adr/0011-code-sandbox-and-question-bank.md).
 
 ### Running without Docker
 

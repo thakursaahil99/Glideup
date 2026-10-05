@@ -36,7 +36,7 @@ export const APP_NAV: NavItem[] = [
   { label: "Profile", href: "/profile", icon: UserRound },
   { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness },
   { label: "Interviews", href: "/interviews", icon: MessagesSquare },
-  { label: "Tests", href: "/tests", icon: Code2, phase: 6 },
+  { label: "Tests", href: "/tests", icon: Code2 },
   { label: "Tracker", href: "/tracker", icon: KanbanSquare, phase: 8 },
 ];
 
@@ -54,14 +54,12 @@ export const ADMIN_NAV: NavItem[] = [
     href: "/admin/questions",
     icon: LibraryBig,
     permission: "questions:manage",
-    phase: 6,
   },
   {
     label: "AI Generation Queue",
     href: "/admin/generation",
     icon: Sparkles,
     permission: "questions:manage",
-    phase: 6,
   },
   {
     label: "Interviews",

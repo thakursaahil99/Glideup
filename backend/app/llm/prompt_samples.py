@@ -82,4 +82,5 @@ SAMPLES: dict[str, dict[str, Any]] = {
             }
         ],
     },
+    "question_generate": {"topic": "sliding window", "difficulty": "medium"},
 }

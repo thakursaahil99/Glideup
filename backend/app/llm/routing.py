@@ -18,6 +18,7 @@ class Task:
     INTERVIEWER = "interviewer"
     INTERVIEW_HINT = "interview_hint"
     INTERVIEW_REPORT = "interview_report"
+    QUESTION_GENERATE = "question_generate"
     EMBEDDING = "embedding"
 
 
@@ -51,6 +52,8 @@ DEFAULT_ROUTES: dict[str, list[str]] = {
     Task.INTERVIEWER: _HOSTED_FIRST,
     Task.INTERVIEW_HINT: _HOSTED_FIRST,
     Task.INTERVIEW_REPORT: _HOSTED_FIRST,
+    # Writing correct problems and solutions is hard for small models; hosted first.
+    Task.QUESTION_GENERATE: _HOSTED_FIRST,
     # Embeddings must come from ONE model: vectors from different models live in different
     # spaces and cannot be compared. So there is deliberately no cross-model fallback here.
     Task.EMBEDDING: ["ollama:nomic-embed-text"],

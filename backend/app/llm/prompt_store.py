@@ -35,6 +35,7 @@ DESCRIPTIONS: dict[str, str] = {
     "interviewer": "The interviewer's replies: follow-ups, and when to move on.",
     "interview_hint": "A small hint when the candidate asks for one.",
     "interview_report": "Scores a finished interview against its rubric.",
+    "question_generate": "Writes a coding problem, test inputs and a reference solution.",
 }
 
 _sandbox = SandboxedEnvironment(

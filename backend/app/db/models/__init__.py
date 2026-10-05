@@ -1,6 +1,17 @@
 """Import every model here so Alembic and `Base.metadata` see the full schema."""
 
 from app.db.models.audit import AuditLog
+from app.db.models.coding import (
+    GenerationStatus,
+    Language,
+    Question,
+    QuestionGeneration,
+    QuestionStatus,
+    QuestionTemplate,
+    Submission,
+    TestCase,
+    Verdict,
+)
 from app.db.models.interview import (
     Difficulty,
     Interview,
@@ -37,6 +48,7 @@ __all__ = [
     "Company",
     "Difficulty",
     "ExperienceLevel",
+    "GenerationStatus",
     "IngestionRun",
     "Interview",
     "InterviewMessage",
@@ -47,12 +59,17 @@ __all__ = [
     "JobMatch",
     "JobSource",
     "LLMUsage",
+    "Language",
     "MatchAnalysisStatus",
     "PortfolioAnalysis",
     "PortfolioKind",
     "Profile",
     "PromptTemplate",
     "PromptTemplateVersion",
+    "Question",
+    "QuestionGeneration",
+    "QuestionStatus",
+    "QuestionTemplate",
     "RefreshToken",
     "RemotePreference",
     "ReportStatus",
@@ -62,8 +79,11 @@ __all__ = [
     "Role",
     "RunStatus",
     "SavedJob",
+    "Submission",
+    "TestCase",
     "User",
     "UserRole",
     "UserStatus",
+    "Verdict",
     "WorkMode",
 ]

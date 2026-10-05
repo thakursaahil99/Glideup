@@ -22,6 +22,7 @@ ACTIVE_VERSIONS: dict[str, str] = {
     "interviewer": "v1",
     "interview_hint": "v1",
     "interview_report": "v1",
+    "question_generate": "v1",
 }
 _ROLES: tuple[Role, ...] = ("system", "user")
 

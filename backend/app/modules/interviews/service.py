@@ -8,6 +8,7 @@ from typing import Any
 import jwt
 import structlog
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -48,8 +49,11 @@ async def ensure_types(session: AsyncSession) -> None:
     existing = set(await session.scalars(select(InterviewType.key)))
     for spec in DEFAULT_TYPES:
         if spec["key"] not in existing:
-            session.add(InterviewType(**spec))
-    await session.flush()
+            try:  # concurrent callers may race; the loser skips the row
+                async with session.begin_nested():
+                    session.add(InterviewType(**spec))
+            except IntegrityError:
+                pass
 
 
 async def list_types(session: AsyncSession, *, enabled_only: bool = True) -> list[InterviewType]:

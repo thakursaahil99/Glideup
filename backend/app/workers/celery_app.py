@@ -41,6 +41,7 @@ celery_app.conf.include = [
     "app.modules.jobs.tasks",
     "app.modules.matching.tasks",
     "app.modules.interviews.tasks",
+    "app.modules.coding.tasks",
 ]
 
 

@@ -1,6 +1,6 @@
 # GlideUp — local stack. One command: `docker compose up --build`
 # Optional extras:  --profile monitoring  (Prometheus + Grafana)
-# The code sandbox (Judge0 / Piston) is added in Phase 6.
+#                   --profile sandbox     (Piston code sandbox for coding tests; privileged)
 # Memory limits keep the whole default stack under ~4 GB so it fits a 16 GB laptop
 # alongside Ollama on the host.
 
@@ -23,6 +23,7 @@ x-backend: &backend
     SMTP_PORT: "1025"
     # Inside containers "localhost" is the container itself; Ollama runs on the host.
     OLLAMA_BASE_URL: ${OLLAMA_DOCKER_URL:-http://host.docker.internal:11434}
+    PISTON_URL: http://piston:2000
   extra_hosts:
     - "host.docker.internal:host-gateway"
   restart: unless-stopped
@@ -172,6 +173,24 @@ services:
     restart: unless-stopped
 
   # ---------------------------------------------------------------- monitoring (opt-in)
+  # ---------------------------------------------------------------- code sandbox
+  # Runs untrusted user code: each run in an isolate box with no network and CPU, memory,
+  # time and output limits. Privileged so isolate can create namespaces/cgroups; it is not
+  # published beyond localhost and only the API talks to it.
+  # First start: install runtimes with `docker compose exec api python -m app.scripts.install_sandbox_runtimes`.
+  piston:
+    profiles: [sandbox]
+    image: ghcr.io/engineer-man/piston:latest
+    privileged: true
+    ports: ["127.0.0.1:${PISTON_PORT:-2000}:2000"]
+    volumes:
+      - piston-packages:/piston/packages
+    tmpfs:
+      - /piston/jobs:exec,uid=1000,gid=1000,mode=711
+      - /tmp:exec
+    restart: unless-stopped
+    deploy: { resources: { limits: { memory: 1g } } }
+
   prometheus:
     profiles: [monitoring]
     image: prom/prometheus:v3.1.0
@@ -199,3 +218,4 @@ volumes:
   meili-data:
   minio-data:
   grafana-data:
+  piston-packages:

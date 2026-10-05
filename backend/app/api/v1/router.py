@@ -5,11 +5,13 @@ from app.api.v1 import (
     admin_interviews,
     admin_jobs,
     admin_prompts,
+    admin_questions,
     auth,
     interviews,
     jobs,
     matches,
     portfolio,
+    problems,
     resumes,
     users,
 )
@@ -22,7 +24,9 @@ api_router.include_router(portfolio.router)
 api_router.include_router(jobs.router)
 api_router.include_router(matches.router)
 api_router.include_router(interviews.router)
+api_router.include_router(problems.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_jobs.router)
 api_router.include_router(admin_interviews.router)
 api_router.include_router(admin_prompts.router)
+api_router.include_router(admin_questions.router)
