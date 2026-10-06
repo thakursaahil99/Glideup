@@ -37,7 +37,7 @@ API (`glideup-api`):
 |---|---|
 | `ENVIRONMENT` | `production` |
 | `TASK_EXECUTION`, `INLINE_JOBS_IN_REQUEST`, `INLINE_SCHEDULER_MINUTES` | `inline`, `true`, `0` |
-| `STORAGE_BACKEND`, `SEARCH_BACKEND`, `REDIS_URL` | `database`, `database`, empty |
+| `STORAGE_BACKEND`, `SEARCH_BACKEND`, `REDIS_URL` | `database`, `database`, `none` |
 | `INTERVIEW_TRANSPORT` | `http` |
 | `CORS_ORIGINS`, `WEB_URL` | `https://glideup-ashen.vercel.app` |
 | `API_PUBLIC_URL` | `https://glideup-api.vercel.app` |

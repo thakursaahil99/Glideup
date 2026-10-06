@@ -400,3 +400,7 @@ def test_vercel_production_requires_production_environment(monkeypatch: pytest.M
     monkeypatch.setenv("VERCEL_ENV", "production")
     with pytest.raises(ValueError, match="ENVIRONMENT must be production"):
         Settings(environment="local", _env_file=None)  # type: ignore[call-arg]
+
+
+def test_redis_url_none_disables_redis() -> None:
+    assert Settings(redis_url="none", _env_file=None).redis_url == ""  # type: ignore[call-arg]

@@ -167,6 +167,14 @@ class Settings(BaseSettings):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
+    @field_validator("redis_url", mode="before")
+    @classmethod
+    def _redis_off(cls, value: object) -> object:
+        """REDIS_URL=none disables Redis (hosts like Vercel reject empty values)."""
+        if isinstance(value, str) and value.strip().lower() in ("none", "off"):
+            return ""
+        return value
+
     @field_validator("database_url", "database_url_unpooled", mode="before")
     @classmethod
     def _asyncpg_url(cls, value: object) -> object:
