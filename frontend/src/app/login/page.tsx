@@ -49,7 +49,9 @@ function GoogleIcon() {
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
   const callbackUrl = typeof params.callbackUrl === "string" ? params.callbackUrl : "/dashboard";
-  const errorCode = typeof params.error === "string" ? params.error : undefined;
+  // Auth.js puts a credentials error's detail in ?code= (e.g. error=CredentialsSignin&code=email_taken).
+  const detail = typeof params.code === "string" && params.code in ERROR_MESSAGES ? params.code : undefined;
+  const errorCode = detail ?? (typeof params.error === "string" ? params.error : undefined);
 
   const session = await auth();
   if (session?.user && !session.error) redirect(callbackUrl.startsWith("/") ? callbackUrl : "/dashboard");
