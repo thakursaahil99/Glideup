@@ -28,6 +28,7 @@ class GoogleSignInRequest(BaseModel):
 class DevSignInRequest(BaseModel):
     email: EmailStr
     name: str | None = Field(default=None, max_length=200)
+    password: str | None = Field(default=None, max_length=200)
 
 
 class RefreshRequest(BaseModel):

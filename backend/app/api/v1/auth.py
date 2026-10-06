@@ -1,5 +1,7 @@
 """Token endpoints. Called server-to-server by the Next.js Auth.js callbacks."""
 
+import hmac
+
 from fastapi import APIRouter, status
 
 from app.api.deps import RequestMetaDep, SessionDep, SettingsDep
@@ -10,7 +12,7 @@ from app.api.v1.schemas import (
     TokenResponse,
 )
 from app.api.v1.users import to_me_response
-from app.core.errors import ErrorResponse, NotFoundError
+from app.core.errors import ErrorResponse, NotFoundError, UnauthorizedError
 from app.db.models import User
 from app.modules.auth import service
 from app.modules.auth.google import verify_google_id_token
@@ -55,9 +57,15 @@ async def sign_in_with_google(
 async def sign_in_for_development(
     body: DevSignInRequest, session: SessionDep, settings: SettingsDep, meta: RequestMetaDep
 ) -> TokenResponse:
-    """Password-less sign-in for local development only. Returns 404 unless explicitly enabled."""
-    if not (settings.auth_dev_login_enabled and settings.is_local):
+    """Email sign-in. Password-less for local development; elsewhere it needs the shared
+    AUTH_DEV_LOGIN_PASSWORD. Returns 404 unless explicitly enabled."""
+    password = settings.auth_dev_login_password
+    if not (settings.auth_dev_login_enabled and (settings.is_local or password)):
         raise NotFoundError("Not found")
+    if password and not hmac.compare_digest(
+        (body.password or "").encode(), password.get_secret_value().encode()
+    ):
+        raise UnauthorizedError("Wrong email or password")
     user, pair = await service.sign_in(
         session,
         settings,

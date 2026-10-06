@@ -67,6 +67,8 @@ class Settings(BaseSettings):
     # Dev-only password-less login so the app is usable before Google OAuth is configured.
     # Refused outright outside the "local"/"test" environments (see validator below).
     auth_dev_login_enabled: bool = False
+    # Email sign-in outside local/test needs this shared password (no Google sign-in yet).
+    auth_dev_login_password: SecretStr | None = None
     # Emails that are granted `super_admin` on sign-in. The only bootstrap path to admin.
     admin_emails: Annotated[list[str], NoDecode] = Field(default_factory=list)
 
@@ -211,8 +213,14 @@ class Settings(BaseSettings):
         if os.environ.get("VERCEL_ENV") == "production" and self.environment != "production":
             raise ValueError("ENVIRONMENT must be production on a Vercel production deploy")
         if self.environment in ("staging", "production"):
-            if self.auth_dev_login_enabled:
-                raise ValueError("AUTH_DEV_LOGIN_ENABLED must be false outside local/test")
+            password = self.auth_dev_login_password
+            if self.auth_dev_login_enabled and (
+                password is None or len(password.get_secret_value()) < 12
+            ):
+                raise ValueError(
+                    "AUTH_DEV_LOGIN_ENABLED outside local/test needs "
+                    "AUTH_DEV_LOGIN_PASSWORD (12+ chars)"
+                )
             if self.llm_allow_mock_fallback:
                 raise ValueError("LLM_ALLOW_MOCK_FALLBACK must be false outside local/test")
             secret = self.jwt_secret.get_secret_value()

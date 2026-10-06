@@ -54,7 +54,13 @@ API (`glideup-api`):
 Web (`glideup`): `API_INTERNAL_URL=https://glideup-api.vercel.app`, `AUTH_URL`, `AUTH_SECRET`,
 `AUTH_TRUST_HOST=true`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`.
 
-## 3. Google sign-in
+## 3. Sign-in
+Until Google sign-in is set up, email sign-in works with one shared password: set
+`AUTH_DEV_LOGIN_ENABLED=true` in **both** projects and `AUTH_DEV_LOGIN_PASSWORD` (12+ chars) in
+`glideup-api`. Anyone with the password can sign in as any email, including `ADMIN_EMAILS`, so
+share it only with people you trust and switch it off once Google works.
+
+### Google
 console.cloud.google.com → APIs & Services → Credentials → the OAuth client:
 - Authorized JavaScript origin: `https://glideup-ashen.vercel.app`
 - Authorized redirect URI: `https://glideup-ashen.vercel.app/api/auth/callback/google`

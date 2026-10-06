@@ -1867,6 +1867,18 @@
               }
             ],
             "title": "Name"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
           }
         },
         "required": [
@@ -12600,7 +12612,7 @@
     },
     "/api/v1/auth/dev-login": {
       "post": {
-        "description": "Password-less sign-in for local development only. Returns 404 unless explicitly enabled.",
+        "description": "Email sign-in. Password-less for local development; elsewhere it needs the shared\nAUTH_DEV_LOGIN_PASSWORD. Returns 404 unless explicitly enabled.",
         "operationId": "sign_in_for_development_api_v1_auth_dev_login_post",
         "requestBody": {
           "content": {

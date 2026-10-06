@@ -109,14 +109,19 @@ if (serverEnv.devLoginEnabled) {
   providers.push(
     Credentials({
       id: "dev-login",
-      name: "Developer login",
-      credentials: { email: { label: "Email", type: "email" }, name: { label: "Name" } },
+      name: "Email login",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        name: { label: "Name" },
+        password: { label: "Password", type: "password" },
+      },
       async authorize(credentials) {
         const email = String(credentials?.email ?? "").trim();
         if (!email) return null;
         const name = String(credentials?.name ?? "").trim() || undefined;
+        const password = String(credentials?.password ?? "") || undefined;
         try {
-          const data = await backendAuth("dev-login", { email, name });
+          const data = await backendAuth("dev-login", { email, name, password });
           return { id: data.user.id, email: data.user.email, name: data.user.name, glideup: data };
         } catch {
           return null;

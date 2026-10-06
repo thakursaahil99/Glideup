@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 import jwt
 import pytest
 from httpx import ASGITransport, AsyncClient
+from pydantic import SecretStr
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -246,3 +247,42 @@ async def test_login_fixture_grants_role(client: AsyncClient, login: LoginFn) ->
     headers = await login("editor@example.com", Role.CONTENT_EDITOR)
     me = (await client.get("/api/v1/users/me", headers=headers)).json()
     assert set(me["roles"]) == {"user", "content_editor"}
+
+
+async def test_dev_login_with_password_outside_local(settings: Settings) -> None:
+    hosted = settings.model_copy(
+        update={
+            "environment": "production",
+            "auth_dev_login_password": SecretStr("a-long-shared-password"),
+        }
+    )
+    app = create_app(hosted)
+    app.dependency_overrides[get_settings] = lambda: hosted
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        url = "/api/v1/auth/dev-login"
+        missing = await c.post(url, json={"email": "x@example.com"})
+        wrong = await c.post(url, json={"email": "x@example.com", "password": "nope"})
+        right = await c.post(
+            url, json={"email": "x@example.com", "password": "a-long-shared-password"}
+        )
+    assert missing.status_code == wrong.status_code == 401
+    assert right.status_code == 200
+
+
+async def test_dev_login_outside_local_without_password_returns_404(settings: Settings) -> None:
+    hosted = settings.model_copy(update={"environment": "production"})
+    app = create_app(hosted)
+    app.dependency_overrides[get_settings] = lambda: hosted
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        response = await c.post("/api/v1/auth/dev-login", json={"email": "x@example.com"})
+    assert response.status_code == 404
+
+
+def test_production_dev_login_needs_strong_password() -> None:
+    base = {"_env_file": None, "environment": "production", "jwt_secret": "x" * 40}
+    with pytest.raises(ValueError, match="AUTH_DEV_LOGIN_PASSWORD"):
+        Settings(**base, auth_dev_login_enabled=True)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="AUTH_DEV_LOGIN_PASSWORD"):
+        Settings(**base, auth_dev_login_enabled=True, auth_dev_login_password="short")  # type: ignore[arg-type]
+    ok = Settings(**base, auth_dev_login_enabled=True, auth_dev_login_password="x" * 12)  # type: ignore[arg-type]
+    assert ok.auth_dev_login_enabled

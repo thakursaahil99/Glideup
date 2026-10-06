@@ -20,6 +20,7 @@ export async function signInForDevelopment(formData: FormData) {
     await signIn("dev-login", {
       email: formData.get("email"),
       name: formData.get("name"),
+      password: formData.get("password"),
       redirectTo: safeCallback(formData.get("callbackUrl")),
     });
   } catch (error) {

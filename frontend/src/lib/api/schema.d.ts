@@ -953,7 +953,8 @@ export interface paths {
         put?: never;
         /**
          * Sign In For Development
-         * @description Password-less sign-in for local development only. Returns 404 unless explicitly enabled.
+         * @description Email sign-in. Password-less for local development; elsewhere it needs the shared
+         *     AUTH_DEV_LOGIN_PASSWORD. Returns 404 unless explicitly enabled.
          */
         post: operations["sign_in_for_development_api_v1_auth_dev_login_post"];
         delete?: never;
@@ -2516,6 +2517,8 @@ export interface components {
             email: string;
             /** Name */
             name?: string | null;
+            /** Password */
+            password?: string | null;
         };
         /**
          * Difficulty

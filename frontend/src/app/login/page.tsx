@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Sign in" };
 const ERROR_MESSAGES: Record<string, string> = {
   account_suspended: "This account has been suspended. Contact support if you think this is a mistake.",
   email_not_verified: "Your Google email address isn't verified yet.",
-  CredentialsSignin: "Developer sign-in failed. Is the API running with AUTH_DEV_LOGIN_ENABLED=true?",
+  CredentialsSignin: "Wrong email or password.",
   backend_unreachable: "We couldn't reach the GlideUp API. Please try again in a moment.",
   SessionExpired: "Your session has expired. Please sign in again.",
 };
@@ -91,7 +91,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         {serverEnv.devLoginEnabled && (
           <form action={signInForDevelopment} className="mt-6 space-y-3 rounded-xl border border-dashed p-4">
             <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-              <Terminal className="size-3.5" aria-hidden /> Local development sign-in
+              <Terminal className="size-3.5" aria-hidden /> Sign in with email
             </p>
             <input type="hidden" name="callbackUrl" value={callbackUrl} />
             <div className="space-y-1.5">
@@ -109,8 +109,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
               <Label htmlFor="name">Name (optional)</Label>
               <Input id="name" name="name" placeholder="Sahil Thakur" autoComplete="name" />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" name="password" type="password" autoComplete="current-password" />
+            </div>
             <Button type="submit" className="w-full">
-              Sign in for development
+              Sign in
             </Button>
           </form>
         )}
