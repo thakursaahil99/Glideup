@@ -394,3 +394,9 @@ async def test_requests_wait_for_their_inline_jobs() -> None:
 
     await DrainInlineJobsMiddleware(inner)({"type": "http"}, nothing, nothing)
     assert done == ["job"]  # the request did not finish before its job
+
+
+def test_vercel_production_requires_production_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VERCEL_ENV", "production")
+    with pytest.raises(ValueError, match="ENVIRONMENT must be production"):
+        Settings(environment="local", _env_file=None)  # type: ignore[call-arg]

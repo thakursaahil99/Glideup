@@ -4,6 +4,7 @@ Every value here has a matching, documented entry in the repo-root `.env.example
 Nothing environment-specific (URLs, secrets, hostnames) may be hardcoded elsewhere.
 """
 
+import os
 import re
 from functools import lru_cache
 from typing import Annotated, Literal
@@ -198,6 +199,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _guard_production(self) -> "Settings":
+        # A hosted deploy without ENVIRONMENT would run on local defaults (known JWT secret).
+        if os.environ.get("VERCEL_ENV") == "production" and self.environment != "production":
+            raise ValueError("ENVIRONMENT must be production on a Vercel production deploy")
         if self.environment in ("staging", "production"):
             if self.auth_dev_login_enabled:
                 raise ValueError("AUTH_DEV_LOGIN_ENABLED must be false outside local/test")
