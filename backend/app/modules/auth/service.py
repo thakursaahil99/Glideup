@@ -1,5 +1,6 @@
 """Sign-in, token issuing and refresh-token rotation."""
 
+import asyncio
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -9,7 +10,8 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.core.errors import ForbiddenError, UnauthorizedError
+from app.core.errors import ConflictError, ForbiddenError, UnauthorizedError
+from app.core.passwords import dummy_hash, hash_password, verify_password
 from app.core.rbac import ROLE_DESCRIPTIONS, Role
 from app.core.security import create_token, decode_token
 from app.db.models import RefreshToken, User, UserRole
@@ -85,11 +87,66 @@ async def sign_in(
         await session.flush()
         await _grant(session, user, Role.USER)
     else:
+        if google_sub and user.google_sub is None:
+            # Google proved ownership of the email; drop any password someone else may have set
+            # by registering it first (registration doesn't verify emails).
+            user.password_hash = None
         user.email = email
         user.name = user.name or name
         user.avatar_url = avatar_url or user.avatar_url
         user.google_sub = user.google_sub or google_sub
 
+    return await _complete_sign_in(session, settings, user, email=email, meta=meta, created=created)
+
+
+async def register(
+    session: AsyncSession,
+    settings: Settings,
+    *,
+    email: str,
+    name: str | None,
+    password: str,
+    meta: RequestMeta,
+) -> tuple[User, TokenPair]:
+    """Create an email + password account and sign it in."""
+    email = email.lower()
+    # Emails aren't verified, so allowlisted admin emails can't be claimed by registering.
+    if email in settings.admin_emails:
+        raise ForbiddenError("This email can't be registered here", code="registration_blocked")
+    if await session.scalar(select(User.id).where(User.email == email)):
+        raise ConflictError(
+            "An account with this email already exists. Sign in instead.", code="email_taken"
+        )
+    password_hash = await asyncio.to_thread(hash_password, password)
+    user = User(email=email, name=name, password_hash=password_hash)
+    session.add(user)
+    await session.flush()
+    await _grant(session, user, Role.USER)
+    return await _complete_sign_in(session, settings, user, email=email, meta=meta, created=True)
+
+
+async def password_sign_in(
+    session: AsyncSession, settings: Settings, *, email: str, password: str, meta: RequestMeta
+) -> tuple[User, TokenPair]:
+    email = email.lower()
+    user = await session.scalar(select(User).where(User.email == email))
+    stored = user.password_hash if user else None
+    valid = await asyncio.to_thread(verify_password, password, stored or dummy_hash())
+    if user is None or stored is None or not valid:
+        raise UnauthorizedError("Wrong email or password", code="invalid_credentials")
+    return await _complete_sign_in(session, settings, user, email=email, meta=meta, created=False)
+
+
+async def _complete_sign_in(
+    session: AsyncSession,
+    settings: Settings,
+    user: User,
+    *,
+    email: str,
+    meta: RequestMeta,
+    created: bool,
+) -> tuple[User, TokenPair]:
+    """Suspension check, admin allowlist, and fresh tokens."""
     if not user.is_active:
         raise ForbiddenError("This account is suspended", code="account_suspended")
 

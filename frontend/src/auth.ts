@@ -7,7 +7,7 @@
  * tokens live only inside the encrypted cookie and server-side code; the browser
  * talks to FastAPI through the /api/backend proxy (see ADR 0003).
  */
-import NextAuth, { type DefaultSession } from "next-auth";
+import NextAuth, { CredentialsSignin, type DefaultSession } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -105,31 +105,57 @@ async function refresh(token: JWT): Promise<JWT> {
 
 const providers: Provider[] = [];
 if (serverEnv.googleEnabled) providers.push(Google);
-if (serverEnv.devLoginEnabled) {
-  providers.push(
-    Credentials({
-      id: "dev-login",
-      name: "Email login",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        name: { label: "Name" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        const email = String(credentials?.email ?? "").trim();
-        if (!email) return null;
-        const name = String(credentials?.name ?? "").trim() || undefined;
-        const password = String(credentials?.password ?? "") || undefined;
-        try {
-          const data = await backendAuth("dev-login", { email, name, password });
-          return { id: data.user.id, email: data.user.email, name: data.user.name, glideup: data };
-        } catch {
-          return null;
-        }
-      },
-    }),
-  );
+/** Carries the backend error code (e.g. "email_taken") back to the login page. */
+class PasswordSignInError extends CredentialsSignin {
+  constructor(code: string) {
+    super();
+    this.code = code;
+  }
 }
+
+async function passwordSignIn(email: string, password: string): Promise<TokenResponse> {
+  try {
+    return await backendAuth("login", { email, password });
+  } catch (error) {
+    // Accounts without their own password (e.g. admins until Google sign-in is set up) can use
+    // the shared AUTH_DEV_LOGIN_PASSWORD; locally, dev login accepts any password.
+    if (!serverEnv.devLoginEnabled || !(error instanceof BackendAuthError) || error.status !== 401)
+      throw error;
+    try {
+      return await backendAuth("dev-login", { email, password });
+    } catch {
+      throw error;
+    }
+  }
+}
+
+providers.push(
+  Credentials({
+    id: "password",
+    name: "Email and password",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      name: { label: "Name" },
+      password: { label: "Password", type: "password" },
+      mode: { label: "Mode" },
+    },
+    async authorize(credentials) {
+      const email = String(credentials?.email ?? "").trim();
+      const password = String(credentials?.password ?? "");
+      if (!email || !password) return null;
+      const name = String(credentials?.name ?? "").trim() || undefined;
+      try {
+        const data =
+          credentials?.mode === "register"
+            ? await backendAuth("register", { email, name, password })
+            : await passwordSignIn(email, password);
+        return { id: data.user.id, email: data.user.email, name: data.user.name, glideup: data };
+      } catch (error) {
+        throw new PasswordSignInError(error instanceof BackendAuthError ? error.code : "backend_unreachable");
+      }
+    },
+  }),
+);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,

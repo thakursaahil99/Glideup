@@ -8,11 +8,14 @@ from app.api.deps import RequestMetaDep, SessionDep, SettingsDep
 from app.api.v1.schemas import (
     DevSignInRequest,
     GoogleSignInRequest,
+    PasswordSignInRequest,
     RefreshRequest,
+    RegisterRequest,
     TokenResponse,
 )
 from app.api.v1.users import to_me_response
 from app.core.errors import ErrorResponse, NotFoundError, UnauthorizedError
+from app.core.ratelimit import enforce
 from app.db.models import User
 from app.modules.auth import service
 from app.modules.auth.google import verify_google_id_token
@@ -49,6 +52,37 @@ async def sign_in_with_google(
         avatar_url=identity.picture,
         google_sub=identity.sub,
         meta=meta,
+    )
+    return _token_response(user, pair)
+
+
+@router.post("/register", response_model=TokenResponse, responses={409: {"model": ErrorResponse}})
+async def register(
+    body: RegisterRequest, session: SessionDep, settings: SettingsDep, meta: RequestMetaDep
+) -> TokenResponse:
+    """Create an email + password account. Returns 404 when registration is switched off."""
+    if not settings.auth_registration_enabled:
+        raise NotFoundError("Not found")
+    await enforce("auth", str(body.email).lower())
+    user, pair = await service.register(
+        session,
+        settings,
+        email=str(body.email),
+        name=body.name,
+        password=body.password,
+        meta=meta,
+    )
+    return _token_response(user, pair)
+
+
+@router.post("/login", response_model=TokenResponse)
+async def sign_in_with_password(
+    body: PasswordSignInRequest, session: SessionDep, settings: SettingsDep, meta: RequestMetaDep
+) -> TokenResponse:
+    """Sign in to an email + password account."""
+    await enforce("auth", str(body.email).lower())
+    user, pair = await service.password_sign_in(
+        session, settings, email=str(body.email), password=body.password, meta=meta
     )
     return _token_response(user, pair)
 

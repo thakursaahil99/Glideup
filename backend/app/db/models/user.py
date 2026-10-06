@@ -30,6 +30,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     avatar_url: Mapped[str | None] = mapped_column(Text)
     # Google's stable account id ("sub" claim). Email can change; this cannot.
     google_sub: Mapped[str | None] = mapped_column(String(255), unique=True)
+    # scrypt hash for email + password accounts (app.core.passwords); None for Google-only.
+    password_hash: Mapped[str | None] = mapped_column(String(255))
     status: Mapped[UserStatus] = mapped_column(
         Enum(UserStatus, name="user_status", values_callable=lambda e: [m.value for m in e]),
         default=UserStatus.ACTIVE,

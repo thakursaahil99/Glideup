@@ -66,6 +66,8 @@ class Settings(BaseSettings):
     google_jwks_url: str = "https://www.googleapis.com/oauth2/v3/certs"
     # Dev-only password-less login so the app is usable before Google OAuth is configured.
     # Refused outright outside the "local"/"test" environments (see validator below).
+    # Email + password accounts: anyone can register (emails aren't verified).
+    auth_registration_enabled: bool = True
     auth_dev_login_enabled: bool = False
     # Email sign-in outside local/test needs this shared password (no Google sign-in yet).
     auth_dev_login_password: SecretStr | None = None

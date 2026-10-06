@@ -286,3 +286,63 @@ def test_production_dev_login_needs_strong_password() -> None:
         Settings(**base, auth_dev_login_enabled=True, auth_dev_login_password="short")  # type: ignore[arg-type]
     ok = Settings(**base, auth_dev_login_enabled=True, auth_dev_login_password="x" * 12)  # type: ignore[arg-type]
     assert ok.auth_dev_login_enabled
+
+
+async def test_register_then_sign_in_with_password(client: AsyncClient) -> None:
+    created = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "New@Example.com", "name": "New", "password": "correct horse"},
+    )
+    assert created.status_code == 200
+    assert created.json()["user"]["roles"] == ["user"]
+
+    ok = await client.post(
+        "/api/v1/auth/login", json={"email": "new@example.com", "password": "correct horse"}
+    )
+    assert ok.status_code == 200
+    assert ok.json()["user"]["email"] == "new@example.com"
+
+    wrong = await client.post(
+        "/api/v1/auth/login", json={"email": "new@example.com", "password": "wrong horse"}
+    )
+    assert wrong.status_code == 401
+    assert wrong.json()["error"]["code"] == "invalid_credentials"
+
+
+async def test_register_rejects_taken_admin_and_short_passwords(client: AsyncClient) -> None:
+    await dev_login(client, "taken@example.com")
+    url = "/api/v1/auth/register"
+    taken = await client.post(url, json={"email": "taken@example.com", "password": "long enough"})
+    admin = await client.post(url, json={"email": ROOT_ADMIN_EMAIL, "password": "long enough"})
+    short = await client.post(url, json={"email": "short@example.com", "password": "short"})
+    assert taken.status_code == 409
+    assert admin.status_code == 403
+    assert short.status_code == 422
+
+
+async def test_password_login_fails_for_accounts_without_password(client: AsyncClient) -> None:
+    await dev_login(client, "nopass@example.com")
+    response = await client.post(
+        "/api/v1/auth/login", json={"email": "nopass@example.com", "password": "anything"}
+    )
+    assert response.status_code == 401
+
+
+async def test_google_sign_in_clears_password_set_by_someone_else(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await client.post(
+        "/api/v1/auth/register", json={"email": "owner@example.com", "password": "squatter pass"}
+    )
+
+    async def fake_verify(_settings: Settings, _token: str) -> GoogleIdentity:
+        return GoogleIdentity(sub="g-owner", email="owner@example.com", name="Owner", picture=None)
+
+    monkeypatch.setattr(auth_router, "verify_google_id_token", fake_verify)
+    assert (
+        await client.post("/api/v1/auth/google", json={"id_token": "x" * 20})
+    ).status_code == 200
+    response = await client.post(
+        "/api/v1/auth/login", json={"email": "owner@example.com", "password": "squatter pass"}
+    )
+    assert response.status_code == 401

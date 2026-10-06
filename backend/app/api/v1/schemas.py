@@ -31,6 +31,17 @@ class DevSignInRequest(BaseModel):
     password: str | None = Field(default=None, max_length=200)
 
 
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    name: str | None = Field(default=None, max_length=200)
+    password: str = Field(min_length=8, max_length=200)
+
+
+class PasswordSignInRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=1, max_length=200)
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str = Field(min_length=20, max_length=4096)
 

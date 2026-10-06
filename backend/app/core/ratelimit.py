@@ -59,6 +59,7 @@ LIMITS: dict[str, Limit] = {
     "llm": Limit(capacity=6, per_minute=12),  # AI analyses, interview setup, playground
     "code": Limit(capacity=10, per_minute=20),  # run / submit
     "upload": Limit(capacity=5, per_minute=5),
+    "auth": Limit(capacity=10, per_minute=10),  # password sign-in / register, per email
     "interview": Limit(capacity=20, per_minute=30),  # live interview messages (LLM turns)
 }
 

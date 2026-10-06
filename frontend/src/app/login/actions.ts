@@ -1,6 +1,6 @@
 "use server";
 
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { signIn } from "@/auth";
@@ -15,17 +15,26 @@ export async function signInWithGoogle(formData: FormData) {
   await signIn("google", { redirectTo: safeCallback(formData.get("callbackUrl")) });
 }
 
-export async function signInForDevelopment(formData: FormData) {
+/** Sign in, or create an account when the form sends mode=register. */
+export async function signInWithPassword(formData: FormData) {
+  const mode = formData.get("mode") === "register" ? "register" : "login";
+  const callbackUrl = safeCallback(formData.get("callbackUrl"));
   try {
-    await signIn("dev-login", {
+    await signIn("password", {
       email: formData.get("email"),
       name: formData.get("name"),
       password: formData.get("password"),
-      redirectTo: safeCallback(formData.get("callbackUrl")),
+      mode,
+      redirectTo: callbackUrl,
     });
   } catch (error) {
     // signIn throws a redirect on success; only AuthErrors are real failures.
-    if (error instanceof AuthError) redirect(`/login?error=${error.type}`);
+    if (error instanceof AuthError) {
+      const code = error instanceof CredentialsSignin ? error.code : error.type;
+      const query = new URLSearchParams({ error: code, callbackUrl });
+      if (mode === "register") query.set("mode", "register");
+      redirect(`/login?${query}`);
+    }
     throw error;
   }
 }

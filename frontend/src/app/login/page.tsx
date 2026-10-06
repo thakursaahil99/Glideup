@@ -1,4 +1,4 @@
-import { AlertCircle, Terminal } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/primitives";
 import { serverEnv } from "@/lib/env";
 
-import { signInForDevelopment, signInWithGoogle } from "./actions";
+import { signInWithGoogle, signInWithPassword } from "./actions";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -17,6 +17,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   account_suspended: "This account has been suspended. Contact support if you think this is a mistake.",
   email_not_verified: "Your Google email address isn't verified yet.",
   CredentialsSignin: "Wrong email or password.",
+  invalid_credentials: "Wrong email or password.",
+  email_taken: "An account with this email already exists. Sign in instead.",
+  registration_blocked: "This email can't be registered here. Sign in instead.",
+  validation_error: "Check your details: the password needs at least 8 characters.",
+  rate_limited: "Too many attempts. Please wait a minute and try again.",
   backend_unreachable: "We couldn't reach the GlideUp API. Please try again in a moment.",
   SessionExpired: "Your session has expired. Please sign in again.",
 };
@@ -54,7 +59,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     : session?.error
       ? ERROR_MESSAGES.SessionExpired
       : undefined;
-  const noProviders = !serverEnv.googleEnabled && !serverEnv.devLoginEnabled;
+  const registering = params.mode === "register";
+  const switchQuery = new URLSearchParams({ callbackUrl });
+  if (!registering) switchQuery.set("mode", "register");
+  const switchHref = `/login?${switchQuery}`;
 
   return (
     <main
@@ -66,8 +74,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <Logo className="text-xl" />
       </Link>
       <div className="mt-8 w-full max-w-sm rounded-2xl border bg-card p-8 shadow-lg">
-        <h1 className="text-2xl font-semibold">Welcome aboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Sign in to find jobs and practice interviews.</p>
+        <h1 className="text-2xl font-semibold">{registering ? "Create your account" : "Welcome aboard"}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {registering ? "Sign up" : "Sign in"} to find jobs and practice interviews.
+        </p>
 
         {errorMessage && (
           <div
@@ -88,44 +98,54 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </form>
         )}
 
-        {serverEnv.devLoginEnabled && (
-          <form action={signInForDevelopment} className="mt-6 space-y-3 rounded-xl border border-dashed p-4">
-            <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-              <Terminal className="size-3.5" aria-hidden /> Sign in with email
-            </p>
-            <input type="hidden" name="callbackUrl" value={callbackUrl} />
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                placeholder="you@example.com"
-                autoComplete="email"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Name (optional)</Label>
-              <Input id="name" name="name" placeholder="Sahil Thakur" autoComplete="name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" autoComplete="current-password" />
-            </div>
-            <Button type="submit" className="w-full">
-              Sign in
-            </Button>
-          </form>
+        {serverEnv.googleEnabled && (
+          <p className="mt-6 text-center text-xs text-muted-foreground">or with email</p>
         )}
 
-        {noProviders && (
-          <p className="mt-6 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-            No sign-in method is configured. Set <code>AUTH_GOOGLE_ID</code> and{" "}
-            <code>AUTH_GOOGLE_SECRET</code>, or <code>AUTH_DEV_LOGIN_ENABLED=true</code> for local
-            development. See the README.
-          </p>
-        )}
+        <form action={signInWithPassword} className="mt-6 space-y-3">
+          <input type="hidden" name="callbackUrl" value={callbackUrl} />
+          <input type="hidden" name="mode" value={registering ? "register" : "login"} />
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </div>
+          {registering && (
+            <div className="space-y-1.5">
+              <Label htmlFor="name">Name (optional)</Label>
+              <Input id="name" name="name" maxLength={200} placeholder="Your name" autoComplete="name" />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minLength={registering ? 8 : undefined}
+              maxLength={200}
+              autoComplete={registering ? "new-password" : "current-password"}
+            />
+            {registering && <p className="text-xs text-muted-foreground">At least 8 characters.</p>}
+          </div>
+          <Button type="submit" size="lg" className="w-full">
+            {registering ? "Create account" : "Sign in"}
+          </Button>
+        </form>
+
+        <p className="mt-5 text-center text-sm text-muted-foreground">
+          {registering ? "Already have an account? " : "New to GlideUp? "}
+          <Link href={switchHref} className="font-medium text-foreground hover:underline">
+            {registering ? "Sign in" : "Create an account"}
+          </Link>
+        </p>
       </div>
       <p className="mt-6 text-sm text-muted-foreground">
         Built by{" "}
