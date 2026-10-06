@@ -111,3 +111,18 @@ class SecurityHeadersMiddleware:
             await send(message)
 
         await self.app(scope, receive, send_with_headers)
+
+
+class DrainInlineJobsMiddleware:
+    """Serverless hosts freeze the process once the response is sent, which would strand
+    inline background jobs. Keep the request open until the jobs it started have finished."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        await self.app(scope, receive, send)
+        if scope["type"] == "http":
+            from app.workers.runtime import drain_inline_jobs
+
+            await drain_inline_jobs()

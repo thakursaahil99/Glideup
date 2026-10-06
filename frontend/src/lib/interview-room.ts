@@ -35,6 +35,8 @@ export type ServerEvent =
 type LocalEvent =
   | { type: "connection"; value: Connection; error?: string | null }
   | { type: "sending" }
+  /** An HTTP request finished: whatever happened, the action is no longer in flight. */
+  | { type: "idle" }
   | { type: "local_error"; message: string };
 
 export function initialRoomState(detail?: InterviewDetail): RoomState {
@@ -95,6 +97,8 @@ export function roomReducer(state: RoomState, event: ServerEvent | LocalEvent): 
       };
     case "sending":
       return { ...state, busy: true, error: null };
+    case "idle":
+      return state.busy || state.streaming ? { ...state, busy: false, streaming: null } : state;
     case "local_error":
       return { ...state, error: event.message };
   }
@@ -109,15 +113,73 @@ export function newClientId(): string {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+/**
+ * Reads NDJSON server events from an HTTP response (the transport for hosts without
+ * WebSockets) and hands each one over as it arrives.
+ */
+export async function readEventStream(response: Response, onEvent: (event: ServerEvent) => void) {
+  if (!response.body) return;
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const lines = buffer.split("\n");
+    buffer = done ? "" : (lines.pop() ?? "");
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        onEvent(JSON.parse(line) as ServerEvent);
+      } catch {
+        // ignore malformed lines
+      }
+    }
+    if (done) return;
+  }
+}
+
+const roomPath = (id: string, rest: string) => `/api/backend/interviews/${encodeURIComponent(id)}/${rest}`;
+
 export function useInterviewRoom(id: string, initial?: InterviewDetail) {
   const [state, dispatch] = useReducer(roomReducer, initial, initialRoomState);
   const socket = useRef<WebSocket | null>(null);
+  // "http" when the API runs where WebSockets aren't available (serverless hosting).
+  const transport = useRef<"websocket" | "http" | null>(null);
   const finished = useRef(initial?.interview.status === "completed");
   const status = state.interview?.status;
 
   useEffect(() => {
     if (status === "completed") finished.current = true;
   }, [status]);
+
+  const receive = useCallback((event: ServerEvent) => {
+    if (event.type === "ended") finished.current = true;
+    dispatch(event);
+  }, []);
+
+  const post = useCallback(
+    async (event: Record<string, unknown>) => {
+      const response = await fetch(roomPath(id, "events"), {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/x-ndjson" },
+        body: JSON.stringify(event),
+      });
+      if (!response.ok) {
+        let message = "Something went wrong. Please try again.";
+        try {
+          const body = (await response.json()) as { error?: { message?: string } };
+          message = body.error?.message ?? message;
+        } catch {
+          // not JSON
+        }
+        receive({ type: "error", code: `http_${response.status}`, message });
+        return;
+      }
+      await readEventStream(response, receive);
+    },
+    [id, receive],
+  );
 
   useEffect(() => {
     let stopped = false;
@@ -129,6 +191,21 @@ export function useInterviewRoom(id: string, initial?: InterviewDetail) {
       attempts += 1;
       dispatch({ type: "connection", value: "reconnecting", error: message });
       timer = window.setTimeout(() => void connect(), Math.min(MAX_BACKOFF_MS, 500 * 2 ** attempts));
+    }
+
+    async function connectHttp() {
+      try {
+        const response = await fetch(roomPath(id, "live"), { headers: { accept: "application/json" } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const event = (await response.json()) as ServerEvent;
+        if (stopped) return;
+        transport.current = "http";
+        attempts = 0;
+        dispatch({ type: "connection", value: "open", error: null });
+        receive(event);
+      } catch {
+        retry("Connection lost. Reconnecting…");
+      }
     }
 
     async function connect() {
@@ -147,6 +224,11 @@ export function useInterviewRoom(id: string, initial?: InterviewDetail) {
         return;
       }
       if (stopped) return;
+      if (ticket.transport === "http") {
+        await connectHttp();
+        return;
+      }
+      transport.current = "websocket";
       const ws = new WebSocket(`${ticket.url}?ticket=${encodeURIComponent(ticket.ticket)}`);
       socket.current = ws;
       ws.onopen = () => {
@@ -155,9 +237,7 @@ export function useInterviewRoom(id: string, initial?: InterviewDetail) {
       };
       ws.onmessage = (message) => {
         try {
-          const event = JSON.parse(String(message.data)) as ServerEvent;
-          if (event.type === "ended") finished.current = true;
-          dispatch(event);
+          receive(JSON.parse(String(message.data)) as ServerEvent);
         } catch {
           // ignore malformed frames
         }
@@ -174,7 +254,10 @@ export function useInterviewRoom(id: string, initial?: InterviewDetail) {
 
     void connect();
     const ping = window.setInterval(() => {
-      if (socket.current?.readyState === WebSocket.OPEN) {
+      if (transport.current === "http") {
+        // Also lets the server end an interview whose time ran out.
+        if (!finished.current) void post({ type: "ping" }).catch(() => undefined);
+      } else if (socket.current?.readyState === WebSocket.OPEN) {
         socket.current.send(JSON.stringify({ type: "ping" }));
       }
     }, PING_MS);
@@ -184,19 +267,32 @@ export function useInterviewRoom(id: string, initial?: InterviewDetail) {
       window.clearInterval(ping);
       socket.current?.close(1000);
       socket.current = null;
+      transport.current = null;
     };
-  }, [id]);
+  }, [id, post, receive]);
 
-  const send = useCallback((event: Record<string, unknown>) => {
-    const ws = socket.current;
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      dispatch({ type: "local_error", message: "Not connected yet. Please wait a moment." });
-      return false;
-    }
-    ws.send(JSON.stringify(event));
-    dispatch({ type: "sending" });
-    return true;
-  }, []);
+  const send = useCallback(
+    (event: Record<string, unknown>) => {
+      if (transport.current === "http") {
+        dispatch({ type: "sending" });
+        post(event)
+          .catch(() =>
+            receive({ type: "error", code: "network", message: "Couldn't reach the server. Please try again." }),
+          )
+          .finally(() => dispatch({ type: "idle" }));
+        return true;
+      }
+      const ws = socket.current;
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        dispatch({ type: "local_error", message: "Not connected yet. Please wait a moment." });
+        return false;
+      }
+      ws.send(JSON.stringify(event));
+      dispatch({ type: "sending" });
+      return true;
+    },
+    [post, receive],
+  );
 
   return {
     state,

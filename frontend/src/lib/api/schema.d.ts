@@ -1186,6 +1186,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/interviews/{interview_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Event */
+        post: operations["post_event_api_v1_interviews__interview_id__events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/interviews/{interview_id}/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Live State
+         * @description The "state" event the WebSocket sends on connect.
+         */
+        get: operations["live_state_api_v1_interviews__interview_id__live_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/interviews/{interview_id}/report": {
         parameters: {
             query?: never;
@@ -2346,6 +2383,23 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "degraded" | "down" | "off";
+        };
+        /** ClientEvent */
+        ClientEvent: {
+            /** Attachment */
+            attachment?: string | null;
+            /** Client Id */
+            client_id?: string | null;
+            /**
+             * Text
+             * @default
+             */
+            text: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "start" | "answer" | "hint" | "skip" | "end" | "ping";
         };
         /** CodeIn */
         CodeIn: {
@@ -4208,6 +4262,12 @@ export interface components {
             expires_in: number;
             /** Ticket */
             ticket: string;
+            /**
+             * Transport
+             * @default websocket
+             * @enum {string}
+             */
+            transport: "websocket" | "http";
             /** Url */
             url: string;
         };
@@ -8092,6 +8152,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InterviewDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_event_api_v1_interviews__interview_id__events_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientEvent"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    live_state_api_v1_interviews__interview_id__live_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Unauthorized */

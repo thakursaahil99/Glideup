@@ -10,6 +10,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { serverEnv } from "@/lib/env";
 
+// AI-backed calls (interview turns, grading) can take a while on free hosting.
+export const maxDuration = 300;
+
 const FORWARDED_REQUEST_HEADERS = ["content-type", "accept", "idempotency-key", "x-request-id"];
 const FORWARDED_RESPONSE_HEADERS = ["content-type", "x-request-id", "content-disposition"];
 

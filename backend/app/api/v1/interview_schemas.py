@@ -89,6 +89,8 @@ class SocketTicket(BaseModel):
     ticket: str
     url: str  # ws(s)://.../ws/interviews/{id}; append ?ticket=
     expires_in: int
+    # "http": no WebSocket on this host; use GET /live and POST /events instead.
+    transport: Literal["websocket", "http"] = "websocket"
 
 
 class ReportOut(BaseModel):

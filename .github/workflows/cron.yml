@@ -1,0 +1,22 @@
+# Periodic jobs for the serverless API (Vercel has no Celery Beat, and Hobby crons run once a day):
+# expire stale interviews, send reminders, ingest and embed jobs.
+# Repository settings -> Secrets and variables -> Actions:
+#   variable API_URL     = https://glideup-api.vercel.app
+#   secret   CRON_SECRET = the same value as the API's CRON_SECRET
+name: cron
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    if: ${{ vars.API_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - run: >-
+          curl -fsS --retry 2 --retry-delay 20 --max-time 300
+          -X POST -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          "${{ vars.API_URL }}/api/v1/internal/cron"

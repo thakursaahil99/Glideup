@@ -2,6 +2,7 @@
 the interview / prompt admin screens."""
 
 import asyncio
+import json
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -663,3 +664,55 @@ def test_admin_templates_run_in_a_sandbox() -> None:
     assert prompt_store.validate("interviewer", "{{ question.__class__ }}", "") == []
     with pytest.raises((SecurityError, UndefinedError)):
         prompt_store.render_text("{{ question.__class__.__mro__ }}", "", question="q")
+
+
+# --- HTTP transport (hosts without WebSockets) ---
+
+
+def _events(response: Any) -> list[dict[str, Any]]:
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    return [json.loads(line) for line in response.text.splitlines() if line]
+
+
+async def test_interview_over_http_transport(
+    client: AsyncClient, login: LoginFn, use_settings: UseSettings
+) -> None:
+    use_settings(interview_transport="http")
+    headers = await login("candidate@example.com")
+    created = await new_interview(client, headers, type_key="behavioral")
+    interview_id = created["interview"]["id"]
+    ticket = (
+        await client.post(f"/api/v1/interviews/{interview_id}/ticket", headers=headers)
+    ).json()
+    assert ticket["transport"] == "http"
+    assert ticket["ticket"] == ""
+
+    state = (await client.get(f"/api/v1/interviews/{interview_id}/live", headers=headers)).json()
+    assert state["type"] == "state"
+    assert state["interview"]["status"] == "ready"
+
+    path = f"/api/v1/interviews/{interview_id}/events"
+    events = _events(await client.post(path, json={"type": "start"}, headers=headers))
+    kinds = [e["message"]["kind"] for e in events if e["type"] == "message"]
+    assert kinds == ["intro", "question"]
+    assert events[-1]["interview"]["status"] == "in_progress"
+
+    events = _events(
+        await client.post(
+            path,
+            json={"type": "answer", "text": "We used Redis.", "client_id": "h1"},
+            headers=headers,
+        )
+    )
+    assert [e["type"] for e in events][:2] == ["message", "stream_start"]
+    assert any(e["type"] == "stream_end" for e in events)
+
+    assert _events(await client.post(path, json={"type": "ping"}, headers=headers))[-1] == {
+        "type": "pong"
+    }
+    ended = _events(await client.post(path, json={"type": "end"}, headers=headers))
+    assert any(e["type"] == "ended" for e in ended)
+
+    other = await login("someone-else@example.com")
+    assert (await client.post(path, json={"type": "start"}, headers=other)).status_code == 404

@@ -1,11 +1,14 @@
 """Mock interviews: REST for setup, history and reports; a WebSocket for the live room."""
 
 import asyncio
+import json
 import uuid
+from collections.abc import AsyncIterator
 from typing import Annotated, Any, Literal
 
 import structlog
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 
@@ -30,6 +33,7 @@ from app.db.models import (
     InterviewStatus,
     InterviewType,
     ReportStatus,
+    User,
 )
 from app.db.session import session_factory
 from app.modules.interviews import engine, service
@@ -147,6 +151,8 @@ async def socket_ticket(
     interview = await service.get_owned(session, user, interview_id)
     if interview.status not in (InterviewStatus.READY, InterviewStatus.IN_PROGRESS):
         raise ConflictError("This interview isn't open.", code="interview_closed")
+    if get_settings().interview_transport == "http":
+        return SocketTicket(ticket="", url="", expires_in=0, transport="http")
     ticket = await service.issue_ticket(session, interview)
     base = get_settings().api_public_url.rstrip("/").replace("http", "ws", 1)
     return SocketTicket(
@@ -204,6 +210,80 @@ class ClientEvent(BaseModel):
     client_id: str | None = Field(default=None, max_length=64)
 
 
+async def _handle(
+    event: ClientEvent, interview_id: uuid.UUID, user: User, send: engine.Send
+) -> None:
+    """One client event, shared by the WebSocket and HTTP transports."""
+    try:
+        if event.type in ("answer", "hint", "skip"):  # each one costs a model call
+            await enforce("interview", str(user.id))
+        if event.type == "ping":
+            await engine.check_time(interview_id, user, send)
+            await send({"type": "pong"})
+        elif event.type == "start":
+            await engine.start(interview_id, user, send)
+        elif event.type == "answer":
+            await engine.answer(
+                interview_id, user, event.text,
+                attachment=event.attachment, client_id=event.client_id, send=send,
+            )  # fmt: skip
+        elif event.type == "hint":
+            await engine.hint(interview_id, user, send)
+        elif event.type == "skip":
+            await engine.skip(interview_id, user, send)
+        elif event.type == "end":
+            await engine.end(interview_id, user, send)
+    except AppError as exc:
+        await send({"type": "error", "code": exc.code, "message": exc.message})
+
+
+# ------------------------------------------------------------------ HTTP transport
+# Same events as the WebSocket, for hosts without WebSockets (serverless): the client sends
+# one event per POST and reads the server's events back as NDJSON while they stream.
+
+
+@router.get("/{interview_id}/live")
+async def live_state(
+    interview_id: uuid.UUID, session: SessionDep, user: CurrentUser
+) -> dict[str, Any]:
+    """The "state" event the WebSocket sends on connect."""
+    interview = await service.get_owned(session, user, interview_id)
+    detail = await _detail(session, interview)
+    return {"type": "state", **detail.model_dump(mode="json"), "busy": engine.is_busy(interview_id)}
+
+
+@router.post("/{interview_id}/events", response_class=StreamingResponse)
+async def post_event(
+    interview_id: uuid.UUID, event: ClientEvent, session: SessionDep, user: CurrentUser
+) -> StreamingResponse:
+    await service.get_owned(session, user, interview_id)
+    queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
+
+    async def run() -> None:
+        try:
+            await _handle(event, interview_id, user, queue.put)
+        except Exception:
+            logger.exception("interview_event_failed", interview_id=str(interview_id))
+            failure = {"type": "error", "code": "internal", "message": "Something went wrong."}
+            await queue.put(failure)
+        finally:
+            await queue.put(None)
+
+    async def lines() -> AsyncIterator[bytes]:
+        task = asyncio.create_task(run())
+        try:
+            while (item := await queue.get()) is not None:
+                yield (json.dumps(item) + "\n").encode()
+        finally:
+            await task
+
+    return StreamingResponse(
+        lines(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )
+
+
 @ws_router.websocket("/ws/interviews/{interview_id}")
 async def interview_socket(
     websocket: WebSocket,
@@ -255,26 +335,10 @@ async def interview_socket(
                     {"type": "error", "code": "bad_event", "message": "Unrecognised message."}
                 )
                 continue
-            try:
-                if event.type in ("answer", "hint", "skip"):  # each one costs a model call
-                    await enforce("interview", str(user.id))
-                if event.type == "ping":
-                    await send({"type": "pong"})
-                elif event.type == "start":
-                    await engine.start(interview_id, user, send)
-                elif event.type == "answer":
-                    await engine.answer(
-                        interview_id, user, event.text,
-                        attachment=event.attachment, client_id=event.client_id, send=send,
-                    )  # fmt: skip
-                elif event.type == "hint":
-                    await engine.hint(interview_id, user, send)
-                elif event.type == "skip":
-                    await engine.skip(interview_id, user, send)
-                elif event.type == "end":
-                    await engine.end(interview_id, user, send)
-            except AppError as exc:
-                await send({"type": "error", "code": exc.code, "message": exc.message})
+            if event.type == "ping":  # the receive timeout already checks the clock
+                await send({"type": "pong"})
+            else:
+                await _handle(event, interview_id, user, send)
     except WebSocketDisconnect:
         log.debug("interview_socket_closed")
     except RuntimeError:  # sending on a socket the client already closed

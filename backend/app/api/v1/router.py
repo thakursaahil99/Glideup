@@ -7,6 +7,7 @@ from app.api.v1 import (
     admin_prompts,
     admin_questions,
     auth,
+    internal,
     interviews,
     jobs,
     matches,
@@ -36,3 +37,4 @@ api_router.include_router(admin_jobs.router)
 api_router.include_router(admin_interviews.router)
 api_router.include_router(admin_prompts.router)
 api_router.include_router(admin_questions.router)
+api_router.include_router(internal.router)

@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # --- Database / cache ---
     database_url: str = "postgresql+asyncpg://glideup:glideup@localhost:5432/glideup"
     database_pool_size: int = 10
+    # Neon's Vercel integration sets DATABASE_URL to its pgbouncer pooler, which breaks asyncpg's
+    # prepared statements and session advisory locks. Its direct URL wins when present.
+    database_url_unpooled: str | None = None
     # Match-score calibration override for a different embedding model (see matching/scoring.py).
     match_semantic_floor: float | None = None
     match_semantic_ceiling: float | None = None
@@ -70,6 +73,13 @@ class Settings(BaseSettings):
     # "celery" sends tasks to Redis for the worker; "inline" runs them in the API process
     # (local development without Redis, and tests). Same task code either way.
     task_execution: Literal["celery", "inline"] = "celery"
+    # Serverless hosts (Vercel) freeze the process after the response: run a request's inline
+    # jobs to completion before the request ends.
+    inline_jobs_in_request: bool = False
+    # Shared secret for /api/v1/internal/cron (Vercel Cron sends "Authorization: Bearer ...").
+    cron_secret: SecretStr | None = None
+    # "http" streams interview events over plain HTTP for hosts without WebSockets.
+    interview_transport: Literal["websocket", "http"] = "websocket"
 
     # --- File storage ---
     storage_backend: Literal["s3", "local", "database"] = "s3"
@@ -156,7 +166,7 @@ class Settings(BaseSettings):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
-    @field_validator("database_url", mode="before")
+    @field_validator("database_url", "database_url_unpooled", mode="before")
     @classmethod
     def _asyncpg_url(cls, value: object) -> object:
         """Accept the URLs hosts hand out (Neon, Render: postgres://...?sslmode=require)."""
@@ -179,6 +189,12 @@ class Settings(BaseSettings):
     @classmethod
     def _lower_emails(cls, value: list[str]) -> list[str]:
         return [email.lower() for email in value]
+
+    @model_validator(mode="after")
+    def _prefer_direct_database_url(self) -> "Settings":
+        if self.database_url_unpooled:
+            self.database_url = self.database_url_unpooled
+        return self
 
     @model_validator(mode="after")
     def _guard_production(self) -> "Settings":

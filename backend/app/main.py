@@ -14,6 +14,7 @@ from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import (
     REQUEST_ID_HEADER,
+    DrainInlineJobsMiddleware,
     RequestContextMiddleware,
     SecurityHeadersMiddleware,
 )
@@ -60,6 +61,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         max_upload=6 * 1024 * 1024,  # resumes are capped at 5 MB by the upload validator
         hsts=settings.environment == "production",
     )
+
+    if settings.task_execution == "inline" and settings.inline_jobs_in_request:
+        app.add_middleware(DrainInlineJobsMiddleware)
 
     register_exception_handlers(app)
     app.include_router(health.router)

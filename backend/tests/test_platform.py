@@ -326,6 +326,12 @@ def test_hosted_database_urls_are_normalised() -> None:
         database_url="postgres://u:p@ep-x.neon.tech/db?sslmode=require&channel_binding=require",
     )
     assert settings.database_url == "postgresql+asyncpg://u:p@ep-x.neon.tech/db?ssl=require"
+    pooled = Settings(
+        _env_file=None,
+        database_url="postgres://u:p@ep-x-pooler.neon.tech/db?sslmode=require",
+        database_url_unpooled="postgres://u:p@ep-x.neon.tech/db?sslmode=require",
+    )
+    assert pooled.database_url == "postgresql+asyncpg://u:p@ep-x.neon.tech/db?ssl=require"
 
 
 async def test_database_storage_round_trip(session: AsyncSession) -> None:
@@ -347,3 +353,44 @@ def test_semantic_calibration_override(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = Settings(_env_file=None, match_semantic_floor=0.2, match_semantic_ceiling=0.6)
     monkeypatch.setattr(scoring, "get_settings", lambda: settings)
     assert scoring.semantic_score(0.4) == pytest.approx(0.5)
+
+
+async def test_cron_endpoint_requires_the_secret(client: AsyncClient, use_settings: Any) -> None:
+    from pydantic import SecretStr
+
+    path = "/api/v1/internal/cron"
+    assert (await client.post(path)).status_code == 404  # no secret configured: disabled
+    use_settings(cron_secret=SecretStr("s3cret-value"))
+    assert (await client.post(path, headers={"Authorization": "Bearer nope"})).status_code == 404
+    response = await client.post(path, headers={"Authorization": "Bearer s3cret-value"})
+    assert response.status_code == 200, response.text
+    assert set(response.json()) == {
+        "interviews_expired",
+        "reminders_sent",
+        "ingestions_started",
+        "embeddings",
+    }
+
+
+async def test_requests_wait_for_their_inline_jobs() -> None:
+    import asyncio
+
+    from app.core.middleware import DrainInlineJobsMiddleware
+    from app.workers import runtime as jobs
+
+    done: list[str] = []
+
+    async def job() -> None:
+        await asyncio.sleep(0.05)
+        done.append("job")
+
+    async def inner(scope: Any, receive: Any, send: Any) -> None:
+        task = asyncio.get_running_loop().create_task(job())
+        jobs._inline_tasks.add(task)
+        task.add_done_callback(jobs._inline_tasks.discard)
+
+    async def nothing(*_: Any) -> Any:
+        return None
+
+    await DrainInlineJobsMiddleware(inner)({"type": "http"}, nothing, nothing)
+    assert done == ["job"]  # the request did not finish before its job
